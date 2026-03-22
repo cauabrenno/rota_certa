@@ -11,7 +11,7 @@ const routes = [
   { path: '/cadastro', component: Register },
   { path: '/home', component: HomeCliente },
   { path: '/esqueci-senha', component: () => import('../views/ForgotPassword.vue') },
-    { path: '/dashboard-lojista', component: () => import('../views/LojistaDashboard.vue') },
+  { path: '/dashboard-lojista', component: () => import('../views/LojistaDashboard.vue') },
   { path: '/painel-entregador', component: () => import('../views/EntregadorPainel.vue') },
   { path: '/meus-pedidos', component: () => import('../views/ClientePainel.vue') }
 ]
