@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Selection from '../views/LoginSelection.vue'
 import Register from '../views/Register.vue'
-// AQUI: Importamos a nova tela que vamos criar
 import HomeCliente from '../views/HomeCliente.vue'
 
 const routes = [
@@ -10,7 +9,6 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/selecao', component: Selection },
   { path: '/cadastro', component: Register },
-  // AQUI: A rota para a tela de compras
   { path: '/home', component: HomeCliente },
   { path: '/esqueci-senha', component: () => import('../views/ForgotPassword.vue') },
     { path: '/dashboard-lojista', component: () => import('../views/LojistaDashboard.vue') },
