@@ -13,7 +13,8 @@ const routes = [
   { path: '/esqueci-senha', component: () => import('../views/ForgotPassword.vue') },
   { path: '/dashboard-lojista', component: () => import('../views/LojistaDashboard.vue') },
   { path: '/painel-entregador', component: () => import('../views/EntregadorPainel.vue') },
-  { path: '/meus-pedidos', component: () => import('../views/ClientePainel.vue') }
+  { path: '/meus-pedidos', component: () => import('../views/ClientePainel.vue') },
+  { path: '/carrinho', component: () => import('../views/Carrinho.vue') }
 ]
 
 const router = createRouter({
