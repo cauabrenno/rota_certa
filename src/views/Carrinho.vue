@@ -106,15 +106,21 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+// Importando as imagens reais da sua pasta assets
+import arrozBranco from '../assets/arrozBranco.jpg'
+import feijaoCarioca from '../assets/feijaoCarioca.jpg'
+
 const router = useRouter()
-const enderecoEntrega = ref('Rua das Flores, 123 - Centro')
+// Endereço ajustado
+const enderecoEntrega = ref('Centro - Trindade, PE')
 const metodoPago = ref('pix')
 const frete = ref(7.00)
-const desconto = ref(3.50) // Desconto fixo para teste
+const desconto = ref(3.50)
 
+// Array atualizado para usar os imports reais
 const itensNoCarrinho = ref([
-  { id: 1, nome: 'Arroz Branco 1kg', marca: 'Camil', preco: 5.89, qtd: 2, foto: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-v1hS01fL-7kMv6pX0r8E9_9y1o-k-Y7-rA&s' },
-  { id: 2, nome: 'Leite Integral 1L', marca: 'Itambé', preco: 4.50, qtd: 1, foto: 'https://itambe.com.br/portal/images/produtos/leite-uht-itambe-integral-1l-370.png' }
+  { id: 1, nome: 'Arroz Branco 1kg', marca: 'Camil', preco: 5.89, qtd: 2, foto: arrozBranco },
+  { id: 2, nome: 'Feijão Carioca 1kg', marca: 'Kicaldo', preco: 8.90, qtd: 1, foto: feijaoCarioca }
 ])
 
 const metodos = [
