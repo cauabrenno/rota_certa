@@ -18,21 +18,18 @@
     </nav>
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
-      
       <router-link to="/home" class="flex flex-col items-center gap-1 text-[#C2F2D9]">
         <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all">
           <span class="text-2xl">🏠</span>
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
-
       <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
         <div class="p-2">
           <span class="text-2xl grayscale opacity-80">📄</span>
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
-
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
           <span class="text-2xl grayscale opacity-80">🛒</span>
@@ -40,7 +37,6 @@
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Cesta</span>
       </button>
-
       <router-link to="/perfil" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
         <div class="p-2">
           <span class="text-2xl grayscale opacity-80">👤</span>
@@ -49,8 +45,41 @@
       </router-link>
     </div>
 
-    <main class="p-4 md:p-6 lg:p-12 max-w-7xl mx-auto space-y-12">
+    <main class="p-4 md:p-6 lg:p-12 max-w-7xl mx-auto space-y-8 lg:space-y-12">
       
+      <section>
+        <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
+          
+          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+             <div class="relative z-10 w-2/3">
+               <span class="bg-white/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">🔥 Oferta do Dia</span>
+               <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Semana do Consumidor</h4>
+               <p class="text-xs font-medium opacity-90">Até 40% OFF no app</p>
+             </div>
+             <div class="absolute -right-4 -bottom-4 text-7xl lg:text-8xl opacity-20 transform rotate-12">🛍️</div>
+          </div>
+
+          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#2D4483] to-blue-600 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+             <div class="relative z-10 w-3/4">
+               <span class="bg-[#C2F2D9] text-[#1A1A1A] px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">🧀 O melhor queijo</span>
+               <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Laticínios Deleite</h4>
+               <p class="text-xs font-medium opacity-90">Compre e ganhe pontos em dobro!</p>
+             </div>
+             <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-20 transform -rotate-12">🧀</div>
+          </div>
+          
+          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#1A1A1A] to-gray-800 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+             <div class="relative z-10 w-2/3">
+               <span class="bg-white/10 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">🛵 RotaCerta Express</span>
+               <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Frete Grátis</h4>
+               <p class="text-xs font-medium opacity-90">Nas compras acima de R$ 150</p>
+             </div>
+             <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-10">🚀</div>
+          </div>
+
+        </div>
+      </section>
+
       <div class="space-y-4">
         <div class="relative group">
           <span class="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-30">🔍</span>
@@ -61,6 +90,25 @@
           <p class="text-sm font-black">{{ enderecoAtual }} <span class="text-[#2D4483] ml-2">Mudar ➔</span></p>
         </div>
       </div>
+
+      <section>
+        <div class="bg-gradient-to-r from-[#1A1A1A] to-[#2D4483] rounded-3xl p-6 lg:p-8 text-white shadow-xl flex justify-between items-center relative overflow-hidden">
+          <div class="absolute -right-6 -top-10 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+          
+          <div class="relative z-10">
+            <p class="text-[9px] lg:text-[10px] uppercase tracking-widest text-[#C2F2D9] font-black mb-1">Clube RotaCerta</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-4xl lg:text-5xl font-black italic tracking-tighter">340</span>
+              <span class="text-xs lg:text-sm font-bold opacity-80">pontos</span>
+            </div>
+            <p class="text-[10px] font-medium opacity-60 mt-1">Acumule mais 60 pts para R$ 15 off</p>
+          </div>
+          
+          <button class="relative z-10 bg-[#C2F2D9] text-[#1A1A1A] px-5 py-3 lg:px-8 lg:py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all">
+            Resgatar
+          </button>
+        </div>
+      </section>
 
       <section>
         <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
