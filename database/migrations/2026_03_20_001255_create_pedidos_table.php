@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('cliente_nome');
             $table->string('endereco');
+            $table->string('descricao');
             $table->string('status')->default('pendente');
 
             $table->timestamps();
