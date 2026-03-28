@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] pb-32 md:pb-24 text-[#1A1A1A] relative">
+  <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] pb-32 md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
     
     <nav class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-6 md:px-8">
       <div class="flex items-center gap-2">
@@ -8,9 +8,10 @@
       </div>
       
       <div class="hidden md:flex gap-6 items-center">
+        <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
         <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
         <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
-        <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all">
+        <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
           🛒
           <span class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">3</span>
         </button>
@@ -49,7 +50,6 @@
       
       <section>
         <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
-          
           <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
              <div class="relative z-10 w-2/3">
                <span class="bg-white/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">🔥 Oferta do Dia</span>
@@ -76,7 +76,6 @@
              </div>
              <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-10">🚀</div>
           </div>
-
         </div>
       </section>
 
@@ -85,9 +84,10 @@
           <span class="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-30">🔍</span>
           <input type="text" placeholder="Buscar produtos ou mercados..." class="w-full p-6 pl-16 rounded-[2rem] bg-white shadow-xl shadow-black/5 border-none outline-none focus:ring-4 focus:ring-[#C2F2D9] transition-all font-medium" />
         </div>
-        <div @click="trocarEndereco" class="flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl cursor-pointer hover:bg-[#C2F2D9] transition-all w-fit border border-black/5 shadow-sm">
+        
+        <div @click="abrirModalEnderecos" class="flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl cursor-pointer hover:bg-[#C2F2D9] transition-all w-fit border border-black/5 shadow-sm">
           <span class="text-lg">📍</span>
-          <p class="text-sm font-black">{{ enderecoAtual }} <span class="text-[#2D4483] ml-2">Mudar ➔</span></p>
+          <p class="text-sm font-black">{{ enderecoAtual.rua }}, {{ enderecoAtual.numero }} <span class="text-[#2D4483] ml-2">Mudar ➔</span></p>
         </div>
       </div>
 
@@ -180,13 +180,32 @@
                <p class="text-[#2D4483] font-black text-xs uppercase mt-4">{{ prodSel.marca }}</p>
                <h2 class="text-2xl lg:text-3xl font-black uppercase italic leading-tight text-[#1A1A1A]">{{ prodSel.nome }}</h2>
             </div>
-            <p class="text-gray-500 text-xs font-medium leading-relaxed">Produto selecionado com rigoroso controle de qualidade. Garantia de frescor e procedência {{ prodSel.lojaNome }}.</p>
-          </div>
-          <div class="mt-8 lg:mt-10">
-            <div class="flex items-baseline gap-3 mb-6">
+            
+            <div class="flex items-baseline gap-3 mb-4">
                <p v-if="prodSel.precoAntigo" class="text-lg text-red-500 font-bold line-through opacity-50 italic">R$ {{ prodSel.precoAntigo.toFixed(2) }}</p>
                <p class="text-4xl lg:text-5xl font-black italic tracking-tighter text-[#1A1A1A]">R$ {{ prodSel.preco.toFixed(2) }}</p>
             </div>
+
+            <div v-if="prodSel.comparativo && prodSel.comparativo.length > 0" class="mt-4 mb-8 bg-gray-50 rounded-2xl p-4 border border-black/5">
+              <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-3">Preços em outras lojas:</p>
+              <div class="space-y-2">
+                <div v-for="comp in prodSel.comparativo" :key="comp.nome" class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-black/5 hover:border-[#C2F2D9] transition-colors cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full overflow-hidden bg-white border border-gray-100 flex items-center justify-center p-0.5">
+                      <img :src="comp.logo" class="w-full h-auto object-contain" />
+                    </div>
+                    <span class="text-[10px] font-bold uppercase">{{ comp.nome }}</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-black text-[#1A1A1A]">R$ {{ comp.preco.toFixed(2) }}</span>
+                    <span v-if="comp.preco < prodSel.preco" class="text-[8px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Mais Barato</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="mt-4 lg:mt-6">
             <div class="flex flex-col xl:flex-row gap-4">
               <div class="flex items-center justify-between xl:justify-center gap-4 bg-gray-100 px-6 py-2 xl:py-0 rounded-2xl border border-black/5 font-black">
                 <button @click="qtdModal > 1 ? qtdModal-- : null" class="text-2xl px-2">-</button>
@@ -201,6 +220,67 @@
         </div>
       </div>
     </div>
+
+    <div v-if="modalEnderecosAberto" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
+      <div @click="fecharModalEnderecos" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
+      <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <button @click="fecharModalEnderecos" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Endereços</h2>
+          <p class="text-gray-500 text-xs font-medium">Selecione onde vamos entregar suas compras</p>
+        </div>
+
+        <div v-if="!mostrandoFormEndereco" class="space-y-4">
+          <div 
+            v-for="(end, index) in enderecosSalvos" :key="index" 
+            @click="selecionarEndereco(end)"
+            class="flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer relative group"
+            :class="enderecoAtual.titulo === end.titulo ? 'border-[#1A1A1A] bg-gray-50' : 'border-transparent bg-white shadow-sm hover:border-black/10 hover:shadow-md'"
+          >
+            <div class="text-2xl">📍</div>
+            <div class="flex-1">
+              <p class="font-black text-xs uppercase">{{ end.titulo }}</p>
+              <p class="text-[11px] text-gray-500 mt-1">{{ end.rua }}, {{ end.numero }}</p>
+              <p class="text-[11px] text-gray-500">{{ end.bairro }} - {{ end.cidade }}</p>
+            </div>
+            <div v-if="enderecoAtual.titulo === end.titulo" class="w-6 h-6 bg-[#1A1A1A] text-[#C2F2D9] rounded-full flex items-center justify-center text-xs font-black">
+              ✓
+            </div>
+          </div>
+
+          <button @click="mostrandoFormEndereco = true" class="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-xs hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all">
+            + Adicionar Novo Endereço
+          </button>
+        </div>
+
+        <form v-if="mostrandoFormEndereco" @submit.prevent="salvarEndereco" class="space-y-4">
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome do Local</label>
+            <input v-model="novoEndereco.titulo" type="text" placeholder="Ex: Casa da Mãe" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">CEP</label>
+              <input v-model="novoEndereco.cep" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Número</label>
+              <input v-model="novoEndereco.numero" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
+            <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <button type="button" @click="mostrandoFormEndereco = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
+            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -224,7 +304,49 @@ import papelNeve from '../assets/papelNeve.jpg'
 import ype from '../assets/ype.jpg'
 
 const router = useRouter()
-const enderecoAtual = ref('Rua das Flores, 123')
+
+// === DADOS E LÓGICA DE ENDEREÇO ===
+const modalEnderecosAberto = ref(false)
+const mostrandoFormEndereco = ref(false)
+
+const enderecosSalvos = ref([
+  { titulo: 'Casa', rua: 'Rua das Flores', numero: '123', bairro: 'Centro', cidade: 'Trindade - PE' },
+  { titulo: 'Trabalho', rua: 'Av. Principal', numero: '450', bairro: 'Empresarial', cidade: 'Araripina - PE' }
+])
+
+const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '' })
+const enderecoAtual = ref(enderecosSalvos.value[0]) // Inicia selecionando a "Casa"
+
+const abrirModalEnderecos = () => {
+  modalEnderecosAberto.value = true
+  mostrandoFormEndereco.value = false
+}
+
+const fecharModalEnderecos = () => {
+  modalEnderecosAberto.value = false
+}
+
+const selecionarEndereco = (end) => {
+  enderecoAtual.value = end
+  fecharModalEnderecos()
+}
+
+const salvarEndereco = () => {
+  const novoEnd = {
+    titulo: novoEndereco.value.titulo,
+    rua: novoEndereco.value.rua,
+    numero: novoEndereco.value.numero,
+    bairro: 'Bairro Padrão',
+    cidade: 'Cidade Nova - UF'
+  }
+  enderecosSalvos.value.push(novoEnd)
+  enderecoAtual.value = novoEnd // Já seleciona o novo
+  mostrandoFormEndereco.value = false
+  fecharModalEnderecos()
+  novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '' }
+}
+
+// === RESTANTE DA LÓGICA DA HOME ===
 const prodSel = ref(null)
 const qtdModal = ref(1)
 
@@ -259,11 +381,26 @@ const catalogo = ref([
   }
 ])
 
-const abrirProduto = (p) => { prodSel.value = p; qtdModal.value = 1 }
+const abrirProduto = (p) => { 
+  const concorrentes = lojas.value
+    .filter(l => l.nome !== p.lojaNome)
+    .map((l, index) => {
+      const variacao = index === 0 ? -0.25 : (index === 1 ? 0.40 : 0.15);
+      return { 
+        nome: l.nome, 
+        logo: l.logo, 
+        preco: p.preco + variacao 
+      }
+    })
+    .sort((a, b) => a.preco - b.preco);
+
+  prodSel.value = { ...p, comparativo: concorrentes };
+  qtdModal.value = 1;
+}
+
 const adicionarPeloModal = () => { alert(`${qtdModal.value}x ${prodSel.value.nome} adicionados!`); prodSel.value = null }
 const adicionarRapido = (p) => { alert(`${p.nome} adicionado!`) }
 const irParaCarrinho = () => { router.push('/carrinho') }
-const trocarEndereco = () => { const n = prompt("Novo endereço:"); if(n) enderecoAtual.value = n }
 </script>
 
 <style scoped>
