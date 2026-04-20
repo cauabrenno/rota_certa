@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Suas cores personalizadas do wireframe */
+:root {
+  --rc-green: #C2F2D9;
+  --rc-dark: #101426;
+  --rc-light: #F2F9E1;
+  --rc-blue: #2EB7CC;
+}
+
+body {
+  background-color: var(--rc-green);
+}
