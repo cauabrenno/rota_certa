@@ -6,17 +6,12 @@
       <div class="hidden md:flex w-1/2 bg-[#1A1A1A] items-center justify-center relative overflow-hidden">
         <div class="absolute inset-0 bg-black/20 z-10"></div>
         
-<img 
-  src="../assets/entregador.jpg" 
-  alt="Entregador RotaCerta" 
-  class="absolute inset-0 w-full h-full object-cover transition-transform duration-[3000ms] hover:scale-110"
-> 
-
-  <div class="mb-10 text-center md:text-left">
-    <h2 class="text-4xl font-black text-[#1A1A1A] tracking-tighter mb-2">Bem-vindo!</h2>
-    <p class="text-[#1A1A1A]/60 font-medium italic">RotaCerta</p>
-  </div>
-      </div>
+        <img 
+          src="../assets/entregador.jpg" 
+          alt="Entregador RotaCerta" 
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-[3000ms] hover:scale-110"
+        > 
+        </div>
 
       <div class="w-full md:w-1/2 p-10 lg:p-20 flex flex-col justify-center bg-white/40">
         <div class="mb-10 text-center md:text-left">
@@ -59,26 +54,44 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import BaseInput from '../components/BaseInput.vue'
+import BaseInput from '../components/BaseInput.vue' // IMPORT CORRIGIDO E MANTIDO
+import api from '../services/api' // CONEXÃO COM O LARAVEL
 
 const router = useRouter()
 const email = ref('')
 const senha = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
+  // Validação básica do front
   if (!email.value || !senha.value) {
     alert("Por favor, preencha tudo!");
     return;
   }
 
-  const userEmail = email.value.toLowerCase();
+  try {
+    // Tenta disparar para o Laravel rodando localmente
+    const response = await api.post('/login', {
+      email: email.value,
+      password: senha.value
+    })
 
-  if (userEmail.includes('entregador')) {
-    router.push('/painel-entregador');
-  } else if (userEmail.includes('cliente')) {
-    router.push('/home'); 
-  } else {
-    router.push('/dashboard-lojista');
+    // Pegamos o token JWT que a API devolve
+    const token = response.data.token
+    
+    if (token) {
+      localStorage.setItem('token', token)
+      router.push('/home'); // Login funcionou!
+    }
+
+  } catch (error) {
+    console.error("Erro do servidor:", error)
+    
+    // Se o Laravel disser que a senha tá errada ou o e-mail não existe
+    if (error.response && error.response.status === 401) {
+      alert("E-mail ou senha incorretos.");
+    } else {
+      alert("Erro ao conectar. O 'php artisan serve' está rodando no outro terminal?");
+    }
   }
 }
 </script>
