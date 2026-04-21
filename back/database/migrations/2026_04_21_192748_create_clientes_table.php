@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comercios', function (Blueprint $table) {
+        Schema::create('clientes', function (Blueprint $table) {
             $table->id();
-
+            
+            // Ligação à tabela de users (Se apagar o user, apaga o cliente)
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-
-            $table->string('cnpj');
-            $table->string('nome_fantasia');
-            $table->string('endereco');
-            $table->string('telefone');
-            $table->float('nota')->default(0);
-
+            
+            // Campos específicos do cliente (nullable para o momento do registo)
+            $table->string('telefone')->nullable();
+            $table->string('endereco')->nullable();
+            
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cormercios');
+        Schema::dropIfExists('clientes');
     }
 };

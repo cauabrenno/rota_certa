@@ -11,14 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('entregadores', function (Blueprint $table) {
+        Schema::create('comercios', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            
-            $table->string('cpf');
-            $table->string('cnh');
-            $table->string('status')->default('disponivel');
-            
+
+            $table->string('cnpj');
+            $table->string('nome_fantasia');
+            $table->string('endereco');
+            $table->string('telefone');
+            $table->float('nota')->default(0);
+
             $table->timestamps();
         });
     }
@@ -28,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('entregadores');
+        Schema::dropIfExists('Logistas');
     }
 };
