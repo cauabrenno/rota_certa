@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pedidos', function (Blueprint $table) {
+        Schema::create('lojista', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('cliente_nome');
-            $table->string('endereco');
-            $table->string('descricao');
-            $table->string('status')->default('pendente');
+
+            $table->string('cnpj');
+            $table->string('endereco')->nullable();
+            $table->string('telefone')->nullable();
+            $table->float('nota')->default(0);
 
             $table->timestamps();
         });
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pedidos');
+        Schema::dropIfExists('Logistas');
     }
 };

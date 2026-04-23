@@ -12,6 +12,14 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        // 🚨 A MÁGICA ENTRA AQUI: Validação antes de tudo!
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users', // Garante que não tenha 2 emails iguais
+            'password' => 'required|string|min:6|confirmed', // Exige o password_confirmation!
+            'tipo' => 'required|string',
+        ]);
+
         // 1. Inicia uma transação na base de dados para segurança
         DB::beginTransaction();
 
@@ -37,12 +45,11 @@ class AuthController extends Controller
 
             } elseif ($request->tipo === 'lojista') {
                 
-                DB::table('comercios')->insert([
+                DB::table('lojista')->insert([
                     'user_id' => $user->id,
-                    'cnpj' => $request->cnpj, 
-                    'nome_fantasia' => $request->nome_fantasia, 
-                    'endereco' => $request->endereco, 
-                    'telefone' => $request->telefone,
+                    'cnpj' => $request->cnpj,  
+                    'endereco' => $request->endereco ?? null, 
+                    'telefone' => $request->telefone ?? null,
                     'nota' => 0, // Valor default
                     'created_at' => now(),
                     'updated_at' => now(),

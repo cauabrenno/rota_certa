@@ -8,9 +8,10 @@ class Produto extends Model
 {
     // Liberando os campos para serem salvos
     protected $fillable = [
-        'comercio_id', 
+        'lojista_id', 
         'nome', 
         'marca', 
+        'categoria',
         'preco', 
         'preco_antigo', 
         'imagem_url'
