@@ -57,7 +57,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import BaseInput from '../components/BaseInput.vue'
+import BaseInput from '../components/BaseInput.vue' // <-- O HERÓI QUE ESTAVA FALTANDO!
+import api from '../services/api' 
 
 const route = useRoute()
 const router = useRouter()
@@ -70,13 +71,45 @@ const form = ref({
   nome: '', email: '', senha: '', confirmarSenha: '', cpf: '', cnh: ''
 })
 
-const handleCadastro = () => {
+const handleCadastro = async () => {
+  // Validação básica do Front-end
   if (form.value.senha !== form.value.confirmarSenha) {
     alert("As senhas não coincidem!");
     return;
   }
-  
-  alert("Cadastro realizado com sucesso! Agora faça seu login.");
-  router.push('/'); // Volta para a tela de Login
+
+  // Define o tipo exato que o banco de dados PostgreSQL está esperando
+  const tipoUsuario = isFuncionario.value ? tipoFuncionario.value : 'cliente';
+
+  try {
+    // Monta o "pacote" com os nomes das colunas exatamente como o Laravel espera
+    const payload = {
+      name: form.value.nome,
+      email: form.value.email,
+      password: form.value.senha,
+      password_confirmation: form.value.confirmarSenha,
+      tipo: tipoUsuario,
+      cpf: form.value.cpf, 
+      cnh: form.value.cnh
+    }
+
+    // Bate na porta de registro do back-end
+    const response = await api.post('/register', payload)
+
+    alert("Cadastro realizado com sucesso! Bem-vindo ao RotaCerta.");
+    
+    // Sucesso! Joga o usuário de volta para a tela de Login
+    router.push('/login'); 
+
+  } catch (error) {
+    console.error("Erro ao cadastrar:", error)
+    
+    // Se o Laravel devolver erro de validação
+    if (error.response && error.response.status === 422) {
+      alert("Erro nos dados: Verifique se este e-mail já está em uso ou se a senha tem no mínimo 8 caracteres.");
+    } else {
+      alert("Erro no servidor. O 'php artisan serve' está rodando no outro terminal?");
+    }
+  }
 }
 </script>
