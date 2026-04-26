@@ -6,6 +6,7 @@ use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProdutoController;
 use App\Models\Lojista;
 use App\Http\Controllers\BuscaController;
+use App\Http\Controllers\ClienteController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -22,3 +23,7 @@ Route::get('/lojistas', function () {
 });
 
 Route::get('/busca', [BuscaController::class, 'index']);
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+});

@@ -39,6 +39,7 @@ class AuthController extends Controller
                     'user_id' => $user->id,
                     'telefone' => $request->telefone ?? null,
                     'endereco' => $request->endereco ?? null,
+                    'pontos' => 0,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
