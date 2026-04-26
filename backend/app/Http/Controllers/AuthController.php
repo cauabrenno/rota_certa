@@ -103,4 +103,31 @@ class AuthController extends Controller
             'token' => $token
         ]);
     }
+
+    public function me()
+    {
+        // 1. Pega o usuário dono do Token
+        $user = auth()->user();
+
+        $endereco = null;
+
+        // 2. Vai buscar o endereço dele dependendo de qual tabela ele pertence
+        if ($user->tipo === 'cliente') {
+            $cliente = \Illuminate\Support\Facades\DB::table('clientes')->where('user_id', $user->id)->first();
+            $endereco = $cliente ? $cliente->endereco : null;
+            
+        } elseif ($user->tipo === 'lojista') {
+            $lojista = \Illuminate\Support\Facades\DB::table('lojistas')->where('user_id', $user->id)->first();
+            $endereco = $lojista ? $lojista->endereco : null;
+        }
+
+        // 3. Devolve um pacote completo pro front-end
+        return response()->json([
+            'id' => $user->id,
+            'nome' => $user->name,
+            'email' => $user->email,
+            'tipo' => $user->tipo,
+            'endereco_atual' => $endereco
+        ], 200);
+    }
 }

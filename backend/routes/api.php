@@ -27,3 +27,8 @@ Route::get('/busca', [BuscaController::class, 'index']);
 Route::middleware('auth:api')->group(function () {
     Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
 });
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+    Route::get('/me', [AuthController::class, 'me']); // <-- ADICIONE ESTA LINHA!
+});
