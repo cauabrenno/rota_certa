@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProdutoController;
 use App\Models\Lojista;
+use App\Http\Controllers\BuscaController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -19,3 +20,5 @@ Route::post('/produtos', [ProdutoController::class, 'store']);
 Route::get('/lojistas', function () {
     return response()->json(Lojista::all());
 });
+
+Route::get('/busca', [BuscaController::class, 'index']);
