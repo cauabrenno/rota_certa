@@ -7,23 +7,52 @@ use Illuminate\Http\Request;
 
 class PedidoController extends Controller {
 
-    public function store(Request $request) {
-        
+    public function store(Request $request)
+    {
         try {
+            // 1. Começamos a conta do valor total com a taxa de entrega
+            $valorTotal = $request->taxa_entrega;
+            $itensComprados = [];
+            $descricaoArray = [];
 
+            // 2. Lemos a lista de itens que o frontend mandou e calculamos os preços
+            foreach ($request->itens as $item) {
+                // Busca o produto real no banco de dados
+                $produto = \App\Models\Produto::find($item['id']);
+                
+                if (!$produto) {
+                    return response()->json(['message' => "Produto ID {$item['id']} não encontrado"], 404);
+                }
+
+                // Soma no valor total da compra
+                $valorTotal += ($produto->preco * $item['quantidade']);
+
+                // Prepara os dados para salvar na nossa tabela pivot nova
+                $itensComprados[$produto->id] = [
+                    'quantidade' => $item['quantidade'],
+                    'preco_unitario' => $produto->preco
+                ];
+
+                // Monta aquela descrição em texto automaticamente (ex: "2x Arroz")
+                $descricaoArray[] = $item['quantidade'] . 'x ' . $produto->nome;
+            }
+
+            // 3. Gera o código de segurança e cria o pedido
             $codigoAleatorio = (string) rand(1000, 9999);
             
-            $pedido = Pedido::create([
-                'user_id' => auth()->id(), 
-                'lojista_id' => $request->lojista_id, 
-                'valor_total' => $request->valor_total,
-                'taxa_entrega' => $request->taxa_entrega ?? 0, // Se não mandar taxa, fica 0
-                'endereco_entrega' => $request->endereco_entrega, 
-                'descricao' => $request->descricao,
-                'status' => 'pendente',
-                'codigo_entrega' => $codigoAleatorio,
-                'forma_pagamento' => $request->forma_pagamento
+            $pedido = \App\Models\Pedido::create([
+                'user_id' => auth()->id(),
+                'lojista_id' => $request->lojista_id,
+                'valor_total' => $valorTotal, // <-- Agora o valor total é calculado por nós!
+                'taxa_entrega' => $request->taxa_entrega,
+                'endereco_entrega' => $request->endereco_entrega,
+                'descricao' => implode(', ', $descricaoArray), // Junta os nomes com vírgula
+                'forma_pagamento' => $request->forma_pagamento,
+                'codigo_entrega' => $codigoAleatorio
             ]);
+
+            // 4. Salva os produtos na tabela pivot (A MÁGICA!)
+            $pedido->produtos()->attach($itensComprados);
 
             return response()->json([
                 'message' => 'Pedido criado com sucesso!',
@@ -46,6 +75,7 @@ class PedidoController extends Controller {
 
             // 2. Vai no banco, pega só os pedidos dele e ordena do mais novo pro mais velho
             $pedidos = \App\Models\Pedido::where('user_id', $user->id)
+                                         ->with('produtos')
                                          ->orderBy('created_at', 'desc')
                                          ->get();
 
@@ -71,6 +101,7 @@ class PedidoController extends Controller {
             // 2. Busca o pedido específico, mas garante que pertence a este usuário
             $pedido = \App\Models\Pedido::where('id', $id)
                                         ->where('user_id', $user->id)
+                                        ->with('produtos')
                                         ->first();
 
             // Se o pedido não existir ou for de outra pessoa, bloqueia

@@ -18,4 +18,12 @@ class Pedido extends Model
         'codigo_entrega',
         'forma_pagamento'
     ];
+
+    // Relacionamento: Um pedido tem vários produtos
+    public function produtos()
+    {
+        return $this->belongsToMany(Produto::class, 'pedido_produto')
+                    ->withPivot('quantidade', 'preco_unitario')
+                    ->withTimestamps();
+    }
 }
