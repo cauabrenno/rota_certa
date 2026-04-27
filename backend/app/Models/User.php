@@ -61,4 +61,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function enderecos()
+    {
+        return $this->hasMany(Endereco::class);
+    }
 }

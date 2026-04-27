@@ -7,6 +7,7 @@ use App\Http\Controllers\ProdutoController;
 use App\Models\Lojista;
 use App\Http\Controllers\BuscaController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\EnderecoController;
 
 // ROTAS PÚBLICAS (Qualquer um acessa)
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,5 +33,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/pedidos', [PedidoController::class, 'store']);
     Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']); 
+
+    Route::post('/enderecos', [EnderecoController::class, 'store']);
     
 });
