@@ -33,4 +33,28 @@ class PedidoController extends Controller {
             ], 500);
         }
     }
+
+    public function meusPedidos()
+    {
+        try {
+            // 1. Descobre quem é o cliente logado através do Token
+            $user = auth()->user();
+
+            // 2. Vai no banco, pega só os pedidos dele e ordena do mais novo pro mais velho
+            $pedidos = \App\Models\Pedido::where('user_id', $user->id)
+                                         ->orderBy('created_at', 'desc')
+                                         ->get();
+
+            // 3. Devolve a lista para o frontend desenhar a tela
+            return response()->json([
+                'pedidos' => $pedidos
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao buscar o histórico de pedidos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

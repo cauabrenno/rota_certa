@@ -32,3 +32,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
     Route::get('/me', [AuthController::class, 'me']); // <-- ADICIONE ESTA LINHA!
 });
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+    Route::get('/me', [AuthController::class, 'me']);
+    
+    Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']); 
+});
