@@ -59,10 +59,13 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/') // Chuta de volta para o Login
   } 
-  // REGRA 2: Já está logado e tenta ver a tela de Login ou Cadastro de novo
+  
+// REGRA 2: Já está logado e tenta ver a tela de Login ou Cadastro de novo
   else if ((to.path === '/' || to.path === '/login' || to.path === '/cadastro') && isAuthenticated) {
     next('/home') // Redireciona direto para dentro do sistema
   } 
+
+ 
   // REGRA 3: Tudo certo, tem permissão!
   else {
     next() 

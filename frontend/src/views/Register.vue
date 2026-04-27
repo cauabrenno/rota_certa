@@ -31,8 +31,57 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <BaseInput label="Nome Completo" v-model="form.nome" placeholder="Seu nome aqui" />
           <BaseInput label="E-mail" v-model="form.email" type="email" placeholder="email@exemplo.com" />
-          <BaseInput label="Senha" v-model="form.senha" type="password" placeholder="••••••••" />
-          <BaseInput label="Confirmar Senha" v-model="form.confirmarSenha" type="password" placeholder="••••••••" />
+          
+          <div>
+            <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Senha</label>
+            <div class="relative w-full">
+              <input 
+                :type="mostrarSenha ? 'text' : 'password'" 
+                v-model="form.senha" 
+                placeholder="••••••••" 
+                class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-3 pl-4 pr-12 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
+              >
+              <button 
+                type="button" 
+                @click="mostrarSenha = !mostrarSenha" 
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#1A1A1A] transition-colors"
+              >
+                <svg v-if="mostrarSenha" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Confirmar Senha</label>
+            <div class="relative w-full">
+              <input 
+                :type="mostrarConfirmarSenha ? 'text' : 'password'" 
+                v-model="form.confirmarSenha" 
+                placeholder="••••••••" 
+                class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-3 pl-4 pr-12 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
+              >
+              <button 
+                type="button" 
+                @click="mostrarConfirmarSenha = !mostrarConfirmarSenha" 
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#1A1A1A] transition-colors"
+              >
+                <svg v-if="mostrarConfirmarSenha" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
         </div>
 
         <div v-if="isFuncionario" class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-black/5">
@@ -57,13 +106,16 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import BaseInput from '../components/BaseInput.vue' // <-- O HERÓI QUE ESTAVA FALTANDO!
+import BaseInput from '../components/BaseInput.vue' 
 import api from '../services/api' 
+
+// ✨ Adicionamos as duas variáveis independentes para controlar os olhinhos
+const mostrarSenha = ref(false)
+const mostrarConfirmarSenha = ref(false)
 
 const route = useRoute()
 const router = useRouter()
 
-// Verifica se veio da tela de "Sou Funcionário" ou "Sou Cliente"
 const isFuncionario = computed(() => route.query.perfil === 'funcionario')
 const tipoFuncionario = ref('lojista')
 
@@ -72,17 +124,14 @@ const form = ref({
 })
 
 const handleCadastro = async () => {
-  // Validação básica do Front-end
   if (form.value.senha !== form.value.confirmarSenha) {
     alert("As senhas não coincidem!");
     return;
   }
 
-  // Define o tipo exato que o banco de dados PostgreSQL está esperando
   const tipoUsuario = isFuncionario.value ? tipoFuncionario.value : 'cliente';
 
   try {
-    // Monta o "pacote" com os nomes das colunas exatamente como o Laravel espera
     const payload = {
       name: form.value.nome,
       email: form.value.email,
@@ -93,18 +142,15 @@ const handleCadastro = async () => {
       cnh: form.value.cnh
     }
 
-    // Bate na porta de registro do back-end
     const response = await api.post('/register', payload)
 
     alert("Cadastro realizado com sucesso! Bem-vindo ao RotaCerta.");
     
-    // Sucesso! Joga o usuário de volta para a tela de Login
     router.push('/login'); 
 
   } catch (error) {
     console.error("Erro ao cadastrar:", error)
     
-    // Se o Laravel devolver erro de validação
     if (error.response && error.response.status === 422) {
       alert("Erro nos dados: Verifique se este e-mail já está em uso ou se a senha tem no mínimo 8 caracteres.");
     } else {
