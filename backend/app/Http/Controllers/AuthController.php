@@ -130,4 +130,36 @@ class AuthController extends Controller
             'endereco_atual' => $endereco
         ], 200);
     }
+
+    public function updatePerfil(Request $request)
+    {
+        try {
+            // Pega o usuário que está logado no momento
+            $user = auth()->user();
+
+            // Atualiza o nome se o frontend tiver enviado
+            if ($request->has('name')) {
+                $user->name = $request->name;
+            }
+
+            // Atualiza o telefone se o frontend tiver enviado
+            if ($request->has('telefone')) {
+                $user->telefone = $request->telefone;
+            }
+
+            // Salva as alterações no banco de dados
+            $user->save();
+
+            return response()->json([
+                'message' => 'Perfil atualizado com sucesso!',
+                'user' => $user
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao atualizar o perfil.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

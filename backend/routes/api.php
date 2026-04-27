@@ -25,6 +25,7 @@ Route::middleware('auth:api')->group(function () {
     
     // Perfil e Pontos
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/perfil', [AuthController::class, 'updatePerfil']);
     Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
     
     // Pedidos
