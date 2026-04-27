@@ -15,6 +15,7 @@ class Pedido extends Model
         'endereco_entrega',
         'descricao',
         'status',
-        'codigo_entrega'
+        'codigo_entrega',
+        'forma_pagamento'
     ];
 }

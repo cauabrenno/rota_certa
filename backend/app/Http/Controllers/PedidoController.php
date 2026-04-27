@@ -21,8 +21,8 @@ class PedidoController extends Controller {
                 'endereco_entrega' => $request->endereco_entrega, 
                 'descricao' => $request->descricao,
                 'status' => 'pendente',
-
-                'codigo_entrega' => $codigoAleatorio 
+                'codigo_entrega' => $codigoAleatorio,
+                'forma_pagamento' => $request->forma_pagamento
             ]);
 
             return response()->json([
