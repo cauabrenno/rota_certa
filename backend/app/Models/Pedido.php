@@ -14,6 +14,7 @@ class Pedido extends Model
         'taxa_entrega',
         'endereco_entrega',
         'descricao',
-        'status'
+        'status',
+        'codigo_entrega'
     ];
 }

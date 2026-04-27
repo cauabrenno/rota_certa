@@ -8,34 +8,28 @@ use App\Models\Lojista;
 use App\Http\Controllers\BuscaController;
 use App\Http\Controllers\ClienteController;
 
+// ROTAS PÚBLICAS (Qualquer um acessa)
 Route::post('/register', [AuthController::class, 'register']);
-
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:api')->post('/pedidos', [PedidoController::class, 'store']);
-
+Route::get('/busca', [BuscaController::class, 'index']);
 Route::get('/produtos', [ProdutoController::class, 'index']);
-
 Route::post('/produtos', [ProdutoController::class, 'store']);
 
 Route::get('/lojistas', function () {
     return response()->json(Lojista::all());
 });
 
-Route::get('/busca', [BuscaController::class, 'index']);
-
+// ROTAS PROTEGIDAS (Precisa de Token)
 Route::middleware('auth:api')->group(function () {
-    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
-});
-
-Route::middleware('auth:api')->group(function () {
-    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
-    Route::get('/me', [AuthController::class, 'me']); // <-- ADICIONE ESTA LINHA!
-});
-
-Route::middleware('auth:api')->group(function () {
-    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
-    Route::get('/me', [AuthController::class, 'me']);
     
-    Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']); 
+    // Perfil e Pontos
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+    
+    // Pedidos
+    Route::post('/pedidos', [PedidoController::class, 'store']);
+    Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
+    Route::get('/pedidos/{id}', [PedidoController::class, 'show']); 
+    
 });
