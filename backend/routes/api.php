@@ -8,6 +8,7 @@ use App\Models\Lojista;
 use App\Http\Controllers\BuscaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EnderecoController;
+use App\Http\Controllers\CartaoController;
 
 // ROTAS PÚBLICAS (Qualquer um acessa)
 Route::post('/register', [AuthController::class, 'register']);
@@ -28,13 +29,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'updatePerfil']);
     Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+    Route::post('/enderecos', [EnderecoController::class, 'store']);
+    Route::put('/perfil/senha', [\App\Http\Controllers\AuthController::class, 'alterarSenha']);
+    Route::post('/cartoes', [CartaoController::class, 'store']);
     
     // Pedidos
     Route::post('/pedidos', [PedidoController::class, 'store']);
     Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']); 
 
-    Route::post('/enderecos', [EnderecoController::class, 'store']);
-    Route::put('/perfil/senha', [\App\Http\Controllers\AuthController::class, 'alterarSenha']);
     
 });
