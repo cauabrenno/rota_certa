@@ -162,4 +162,40 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function alterarSenha(\Illuminate\Http\Request $request)
+    {
+        try {
+            // Pega o usuário logado
+            $user = auth()->user();
+
+            // 1. Verifica se a "Senha Atual" que ele digitou bate com a do banco
+            if (!\Illuminate\Support\Facades\Hash::check($request->senha_atual, $user->password)) {
+                return response()->json([
+                    'message' => 'A senha atual está incorreta. Tente novamente.'
+                ], 400);
+            }
+
+            // 2. Verifica se a "Nova Senha" e a "Confirmação" são iguais
+            if ($request->nova_senha !== $request->confirmar_nova_senha) {
+                return response()->json([
+                    'message' => 'A nova senha e a confirmação não combinam.'
+                ], 400);
+            }
+
+            // 3. Se tudo deu certo, criptografa a nova senha e salva!
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->nova_senha);
+            $user->save();
+
+            return response()->json([
+                'message' => 'Senha atualizada com sucesso!'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao atualizar a senha.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -35,5 +35,6 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']); 
 
     Route::post('/enderecos', [EnderecoController::class, 'store']);
+    Route::put('/perfil/senha', [\App\Http\Controllers\AuthController::class, 'alterarSenha']);
     
 });
