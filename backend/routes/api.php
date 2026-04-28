@@ -11,37 +11,45 @@ use App\Http\Controllers\EnderecoController;
 use App\Http\Controllers\CartaoController;
 use App\Http\Controllers\TicketSuporteController;
 use App\Http\Controllers\FreteController;
+use App\Http\Middleware\VerificaTipoUsuario;
 
-// ROTAS PÚBLICAS (Qualquer um acessa)
+// --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
 Route::get('/busca', [BuscaController::class, 'index']);
 Route::get('/produtos', [ProdutoController::class, 'index']);
-Route::post('/produtos', [ProdutoController::class, 'store']);
-
-Route::get('/lojistas', function () {
-    return response()->json(Lojista::all());
-});
 Route::post('/frete/calcular', [FreteController::class, 'calcular']);
+Route::get('/lojistas', function () { return response()->json(Lojista::all()); });
 
-// ROTAS PROTEGIDAS (Precisa de Token)
+// --- ROTAS PROTEGIDAS (Precisa de Token) ---
 Route::middleware('auth:api')->group(function () {
     
-    // Perfil e Pontos
+    // Perfil Comum
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'updatePerfil']);
-    Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
-    Route::post('/enderecos', [EnderecoController::class, 'store']);
-    Route::put('/perfil/senha', [\App\Http\Controllers\AuthController::class, 'alterarSenha']);
-    Route::post('/cartoes', [CartaoController::class, 'store']);
-    Route::post('/suporte', [TicketSuporteController::class, 'store']);
-    
-    // Pedidos
-    Route::post('/pedidos', [PedidoController::class, 'store']);
-    Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
-    Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
-    Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
+    Route::put('/perfil/senha', [AuthController::class, 'alterarSenha']);
 
-    
+    // Pedido Show (Liberado para todos os tipos logados, 
+    // pois Cliente e Entregador precisam ver detalhes)
+    Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
+
+    // --- ÁREA DO CLIENTE ---
+    Route::middleware(VerificaTipoUsuario::class . ':cliente')->group(function () {
+        Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+        Route::post('/enderecos', [EnderecoController::class, 'store']);
+        Route::post('/cartoes', [CartaoController::class, 'store']);
+        Route::post('/suporte', [TicketSuporteController::class, 'store']);
+        Route::post('/pedidos', [PedidoController::class, 'store']);
+        Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
+    });
+
+    // --- ÁREA DO LOJISTA ---
+    Route::middleware(VerificaTipoUsuario::class . ':lojista')->group(function () {
+        Route::post('/produtos', [ProdutoController::class, 'store']);
+    });
+
+    // --- ÁREA DO ENTREGADOR ---
+    Route::middleware(VerificaTipoUsuario::class . ':entregador')->group(function () {
+        Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
+    });
 });
