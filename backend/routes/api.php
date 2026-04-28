@@ -12,6 +12,7 @@ use App\Http\Controllers\CartaoController;
 use App\Http\Controllers\TicketSuporteController;
 use App\Http\Controllers\FreteController;
 use App\Http\Middleware\VerificaTipoUsuario;
+use App\Http\Controllers\ResetSenhaController;
 
 // --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,6 +21,8 @@ Route::get('/busca', [BuscaController::class, 'index']);
 Route::get('/produtos', [ProdutoController::class, 'index']);
 Route::post('/frete/calcular', [FreteController::class, 'calcular']);
 Route::get('/lojistas', function () { return response()->json(Lojista::all()); });
+Route::post('/esqueceu-senha', [ResetSenhaController::class, 'enviarLink']);
+Route::post('/resetar-senha', [ResetSenhaController::class, 'resetar'])->name('password.reset');
 
 // --- ROTAS PROTEGIDAS (Precisa de Token) ---
 Route::middleware('auth:api')->group(function () {
