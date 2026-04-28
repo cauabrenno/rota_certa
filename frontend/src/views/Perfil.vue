@@ -2,21 +2,21 @@
   <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] pb-32 md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
     
 <nav class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-6 md:px-8">
-      <div class="flex items-center gap-2">
-        <span class="text-3xl">⚡</span>
-        <h1 class="text-2xl font-black italic uppercase tracking-tighter">Perfil</h1>
-      </div>
-      
-      <div class="hidden md:flex gap-6 items-center">
-        <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">🏠</router-link>
-        <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
-        <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-100">👤</router-link>
-        <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
-          🛒
-          <span class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">3</span>
-        </button>
-      </div>
-    </nav>
+  <div class="flex items-center gap-3">
+    <img :src="iRota" alt="Rota Certa" class="w-10 h-10 object-contain drop-shadow-sm">
+    <h1 class="text-2xl font-black italic uppercase tracking-tighter">Perfil</h1>
+  </div>
+  
+  <div class="hidden md:flex gap-6 items-center">
+    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
+    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
+    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
+    <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      🛒
+      <span class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">3</span>
+    </button>
+  </div>
+</nav>
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
       <router-link to="/home" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
@@ -421,6 +421,7 @@
 </template>
 
 <script setup>
+import iRota from '../assets/iRota.png'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
