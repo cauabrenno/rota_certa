@@ -177,16 +177,33 @@
               <p class="text-xs font-medium text-gray-400 mt-1">Último repasse: Há 2 dias</p>
             </div>
           </div>
-          <div class="bg-gray-50 rounded-2xl p-4 border border-black/5 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Veículo</span>
-              <span class="font-bold text-[#1A1A1A]">Honda CG 160 • ABC-1234</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">CNH</span>
-              <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md uppercase">Validada</span>
-            </div>
-          </div>
+<div class="bg-gray-50 rounded-2xl p-5 border border-black/5 space-y-4">
+  <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Dados do Veículo</p>
+  
+  <div class="space-y-3">
+    <div>
+      <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Modelo da Moto</label>
+      <input 
+        type="text" 
+        v-model="nomeMoto" 
+        @input="salvarDadosVeiculo"
+        placeholder="Ex: Honda Biz 125"
+        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-[#1A1A1A] focus:border-[#1A1A1A] outline-none transition-all"
+      >
+    </div>
+    
+    <div>
+      <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Placa</label>
+      <input 
+        type="text" 
+        v-model="placaMoto" 
+        @input="salvarDadosVeiculo"
+        placeholder="ABC-0000"
+        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-black text-[#1A1A1A] uppercase tracking-widest focus:border-[#1A1A1A] outline-none transition-all"
+      >
+    </div>
+  </div>
+</div>
           <button @click="realizarLogout" class="w-full py-4 bg-red-50 text-red-500 font-black rounded-2xl hover:bg-red-100 transition-all uppercase tracking-widest shadow-sm mt-2">
             Sair do Sistema
           </button>
@@ -229,6 +246,16 @@ const atualizarPin = (novoPin) => {
 const carregarStatusSeguro = () => {
   const salvo = localStorage.getItem('statusPedido');
   return (salvo && salvo !== 'null' && salvo !== 'undefined') ? salvo : null;
+}
+
+// 💾 Dados do Veículo (Persistidos)
+const nomeMoto = ref(localStorage.getItem('nomeMoto') || 'Honda CG 160')
+const placaMoto = ref(localStorage.getItem('placaMoto') || 'ABC-1234')
+
+// Função para salvar sempre que editar
+const salvarDadosVeiculo = () => {
+  localStorage.setItem('nomeMoto', nomeMoto.value)
+  localStorage.setItem('placaMoto', placaMoto.value)
 }
 
 const isOnline = ref(localStorage.getItem('isOnline') === 'true')
