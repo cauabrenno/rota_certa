@@ -40,7 +40,8 @@ Route::middleware('auth:api')->group(function () {
     // Pedidos
     Route::post('/pedidos', [PedidoController::class, 'store']);
     Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
-    Route::get('/pedidos/{id}', [PedidoController::class, 'show']); 
+    Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
+    Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
 
     
 });

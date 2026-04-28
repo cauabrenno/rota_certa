@@ -121,4 +121,33 @@ class PedidoController extends Controller {
             ], 500);
         }
     }
+
+    // A NOSSA NOVA FUNÇÃO ENTRA AQUI 
+    public function atualizarStatus(Request $request, $id)
+    {
+        // 1. Valida se o front-end mandou o status
+        $request->validate([
+            'status' => 'required|string', 
+        ]);
+
+        try {
+            // 2. Procura o pedido no banco de dados pelo ID
+            $pedido = \App\Models\Pedido::findOrFail($id);
+
+            // 3. Atualiza apenas o status e salva
+            $pedido->status = $request->status;
+            $pedido->save();
+
+            return response()->json([
+                'message' => 'Status do pedido atualizado com sucesso!',
+                'pedido' => $pedido
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao atualizar o pedido.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
