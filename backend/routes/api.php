@@ -9,6 +9,7 @@ use App\Http\Controllers\BuscaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EnderecoController;
 use App\Http\Controllers\CartaoController;
+use App\Http\Controllers\TicketSuporteController;
 
 // ROTAS PÚBLICAS (Qualquer um acessa)
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,6 +33,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/enderecos', [EnderecoController::class, 'store']);
     Route::put('/perfil/senha', [\App\Http\Controllers\AuthController::class, 'alterarSenha']);
     Route::post('/cartoes', [CartaoController::class, 'store']);
+    Route::post('/suporte', [TicketSuporteController::class, 'store']);
     
     // Pedidos
     Route::post('/pedidos', [PedidoController::class, 'store']);
