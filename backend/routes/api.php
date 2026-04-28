@@ -10,6 +10,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EnderecoController;
 use App\Http\Controllers\CartaoController;
 use App\Http\Controllers\TicketSuporteController;
+use App\Http\Controllers\FreteController;
 
 // ROTAS PÚBLICAS (Qualquer um acessa)
 Route::post('/register', [AuthController::class, 'register']);
@@ -22,6 +23,7 @@ Route::post('/produtos', [ProdutoController::class, 'store']);
 Route::get('/lojistas', function () {
     return response()->json(Lojista::all());
 });
+Route::post('/frete/calcular', [FreteController::class, 'calcular']);
 
 // ROTAS PROTEGIDAS (Precisa de Token)
 Route::middleware('auth:api')->group(function () {
