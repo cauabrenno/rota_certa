@@ -24,6 +24,7 @@ Route::get('/lojistas', function () { return response()->json(Lojista::all()); }
 Route::post('/esqueceu-senha', [ResetSenhaController::class, 'enviarLink']);
 Route::post('/resetar-senha', [ResetSenhaController::class, 'resetar'])->name('password.reset');
 
+
 // --- ROTAS PROTEGIDAS (Precisa de Token) ---
 Route::middleware('auth:api')->group(function () {
     
