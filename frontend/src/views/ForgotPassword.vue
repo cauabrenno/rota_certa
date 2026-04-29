@@ -1,79 +1,70 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-[#C2F2D9] to-[#91d1b0] flex items-center justify-center p-4 relative overflow-hidden">
+  <div class="min-h-screen bg-gradient-to-br from-[#C2F2D9] to-[#91d1b0] flex items-center justify-center p-4">
     
-    <div class="absolute -top-16 -left-16 w-64 h-64 bg-[#1A1A1A] rounded-full opacity-10"></div>
-    <div class="absolute top-1/2 -right-20 w-48 h-48 bg-[#1A1A1A] rounded-full opacity-10"></div>
-    <div class="absolute -bottom-10 left-1/4 w-40 h-40 bg-[#1A1A1A] rounded-full opacity-10"></div>
-
-    <div class="bg-white/70 backdrop-blur-2xl border border-white/50 p-10 rounded-[3rem] shadow-2xl w-full max-w-lg z-10">
+    <div class="bg-white/70 backdrop-blur-2xl border border-white/50 rounded-[3rem] shadow-2xl p-10 lg:p-16 max-w-lg w-full">
       
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-black text-[#1A1A1A] tracking-tighter uppercase">Redefinir Senha</h2>
-        <p class="text-[#1A1A1A]/60 font-medium text-sm mt-2">Informe seu e-mail para recuperar o acesso</p>
+      <div v-if="!linkEnviado">
+        <div class="mb-10 text-center">
+          <div class="flex justify-center mb-6">
+            <img :src="iRota" alt="Rota Certa" class="h-24 object-contain">
+          </div>
+          <h2 class="text-3xl font-black text-[#1A1A1A] tracking-tighter mb-2 italic">Recuperar Senha</h2>
+          <p class="text-[#1A1A1A]/60 font-medium">Enviaremos um link de recuperação para o seu e-mail.</p>
+        </div>
+
+        <form @submit.prevent="solicitarLink" class="space-y-6">
+          <div>
+            <label class="block text-sm font-bold text-[#1A1A1A] mb-2 ml-1">Seu E-mail</label>
+            <input 
+              type="email" 
+              v-model="email" 
+              placeholder="seu-email@exemplo.com" 
+              required
+              class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-4 px-4 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
+            >
+          </div>
+
+          <button type="submit" :disabled="loading" class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black transition-all shadow-xl uppercase tracking-widest flex items-center justify-center gap-3">
+            <span v-if="loading" class="animate-spin text-xl">⏳</span>
+            {{ loading ? 'Enviando...' : 'Enviar Link' }}
+          </button>
+        </form>
       </div>
 
-      <form @submit.prevent="handleReset" class="space-y-5">
-        <BaseInput 
-          label="Informe seu e-mail:" 
-          v-model="email" 
-          type="email" 
-          placeholder="exemplo@email.com" 
-        />
+      <div v-else class="text-center py-8">
+        <div class="text-6xl mb-6">📩</div>
+        <h2 class="text-2xl font-black text-[#1A1A1A] mb-4">Link Enviado!</h2>
+        <p class="text-gray-500 font-medium mb-10">Verifique sua caixa de entrada e a pasta de spam em <b>{{ email }}</b>.</p>
+        
+        <router-link to="/login" class="text-[#1A1A1A] font-black hover:underline uppercase tracking-widest text-sm">
+          Voltar para o Login
+        </router-link>
+      </div>
 
-        <div class="pt-4 border-t border-[#1A1A1A]/10 space-y-5">
-          <BaseInput 
-            label="Digite sua nova senha:" 
-            v-model="novaSenha" 
-            type="password" 
-            placeholder="••••••••" 
-          />
-          <BaseInput 
-            label="Confirme sua senha:" 
-            v-model="confirmarSenha" 
-            type="password" 
-            placeholder="••••••••" 
-          />
-        </div>
-
-        <button 
-          type="submit"
-          class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl mt-6 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/20 uppercase tracking-widest"
-        >
-          Redefinir
-        </button>
-
-        <div class="text-center mt-6">
-          <router-link to="/" class="text-[#2D4483] font-black text-sm hover:underline uppercase tracking-tighter">
-            Voltar para o Login
-          </router-link>
-        </div>
-      </form>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import BaseInput from '../components/BaseInput.vue'
+import iRota from '../assets/iRota.png'
+import api from '../services/api'
 
-const router = useRouter()
 const email = ref('')
-const novaSenha = ref('')
-const confirmarSenha = ref('')
+const loading = ref(false)
+const linkEnviado = ref(false)
 
-const handleReset = () => {
-  if (!email.value || !novaSenha.value || !confirmarSenha.value) {
-    alert("Por favor, preencha todos os campos!");
-    return;
+const solicitarLink = async () => {
+  loading.value = true
+  try {
+    // Esse endpoint deve estar configurado no seu Laravel (Fortify ou manualmente)
+    await api.post('/esqueceu-senha', { email: email.value })
+    linkEnviado.value = true
+  } catch (error) {
+    console.error(error)
+    alert("Erro ao enviar e-mail. Verifique se o endereço está correto.")
+  } finally {
+    loading.value = false
   }
-
-  if (novaSenha.value !== confirmarSenha.value) {
-    alert("As senhas não coincidem!");
-    return;
-  }
-
-  alert("Senha redefinida com sucesso! Você será levado ao login.");
-  router.push('/');
 }
 </script>
