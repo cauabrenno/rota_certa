@@ -13,7 +13,9 @@
     <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
     <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
       🛒
-      <span class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">3</span>
+      <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
+        {{ totalItensCarrinho }}
+      </span>
     </button>
   </div>
 </nav>
@@ -34,7 +36,9 @@
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
           <span class="text-2xl grayscale opacity-80">🛒</span>
-          <span class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">3</span>
+          <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
+            {{ totalItensCarrinho }}
+          </span>
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Cesta</span>
       </button>
@@ -63,7 +67,7 @@
              <div class="relative z-10 w-3/4">
                <span class="bg-[#C2F2D9] text-[#1A1A1A] px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">🧀 O melhor queijo</span>
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Laticínios Deleite</h4>
-               <p class="text-xs font-medium opacity-90">Compre e ganhe pontos em dobro!</p>
+               <p class="text-xs font-medium opacity-90">Compre e ganhe pontos em double!</p>
              </div>
              <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-20 transform -rotate-12">🧀</div>
           </div>
@@ -285,7 +289,7 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
 
@@ -306,6 +310,16 @@ const lojas = ref([])
 const catalogo = ref([])
 const categorias = ['🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria']
 
+// === ESTADO DO CARRINHO ===
+// Fallback seguro: se não achar nada no localStorage, usa a string '[]' e NUNCA quebra.
+const carrinho = ref(JSON.parse(localStorage.getItem('carrinho') || '[]'))
+
+const totalItensCarrinho = computed(() => {
+  // Proteção: Garante que a tela não fique branca se o carrinho for inválido
+  if (!Array.isArray(carrinho.value)) return 0
+  return carrinho.value.reduce((total, item) => total + item.quantidade, 0)
+})
+
 // === FUNÇÕES DE ENDEREÇO ===
 const abrirModalEnderecos = () => { modalEnderecosAberto.value = true; mostrandoFormEndereco.value = false }
 const fecharModalEnderecos = () => { modalEnderecosAberto.value = false }
@@ -323,14 +337,11 @@ const salvarEndereco = async () => {
     }
 
     const response = await api.post('/enderecos', payload)
-
-    // ✨ Pega o endereço que veio de dentro da resposta do Laravel
     const endBanco = response.data.endereco
 
-    // ✨ Traduz do formato do Banco para o formato do Vue
     const endFormatado = {
       ...endBanco,
-      titulo: endBanco.nome_local, // A mágica acontece aqui!
+      titulo: endBanco.nome_local, 
       bairro: endBanco.bairro || 'Bairro Padrão',
       cidade: endBanco.cidade || 'Cidade Nova - UF'
     }
@@ -368,7 +379,7 @@ const carregarDadosDaHome = async () => {
         marca: prod.marca || 'Diversos', 
         preco: Number(prod.preco) || 0,
         precoAntigo: null,
-        foto: prod.foto_url || 'https://via.placeholder.com/150',
+        foto: prod.imagem_url || 'https://via.placeholder.com/150',
         lojaNome: prod.lojista ? prod.lojista.nome : 'RotaCerta',
         lojaLogo: prod.lojista ? prod.lojista.logo : ''
       }))
@@ -377,10 +388,9 @@ const carregarDadosDaHome = async () => {
     pontosClube.value = resPontos.data.pontos || 0
 
     if (resEnderecos.data.length > 0) {
-      // ✨ Quando carregar a tela, também traduz do Banco para o Vue
       enderecosSalvos.value = resEnderecos.data.map(end => ({
         ...end,
-        titulo: end.nome_local, // Traduzindo de novo!
+        titulo: end.nome_local, 
         bairro: end.bairro || 'Sem Bairro',
         cidade: end.cidade || 'Sem Cidade'
       }))
@@ -412,8 +422,31 @@ const abrirProduto = (p) => {
   qtdModal.value = 1;
 }
 
-const adicionarPeloModal = () => { alert(`${qtdModal.value}x ${prodSel.value.nome} adicionados!`); prodSel.value = null }
-const adicionarRapido = (p) => { alert(`${p.nome} adicionado!`) }
+const salvarCarrinho = () => {
+  localStorage.setItem('carrinho', JSON.stringify(carrinho.value))
+}
+
+const adicionarAoCarrinho = (produto, quantidade) => {
+  const itemExistente = carrinho.value.find(item => item.id === produto.id)
+  
+  if (itemExistente) {
+    itemExistente.quantidade += quantidade
+  } else {
+    carrinho.value.push({ ...produto, quantidade: quantidade })
+  }
+  
+  salvarCarrinho()
+}
+
+const adicionarPeloModal = () => { 
+  adicionarAoCarrinho(prodSel.value, qtdModal.value)
+  prodSel.value = null 
+}
+
+const adicionarRapido = (p) => { 
+  adicionarAoCarrinho(p, 1) 
+}
+
 const irParaCarrinho = () => { router.push('/carrinho') }
 </script>
 
