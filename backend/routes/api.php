@@ -41,6 +41,7 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware(VerificaTipoUsuario::class . ':cliente')->group(function () {
         Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);
+        Route::get('/enderecos', [EnderecoController::class, 'index']); // ⬅️ Nova linha para LISTAR!
         Route::post('/cartoes', [CartaoController::class, 'store']);
         Route::post('/suporte', [TicketSuporteController::class, 'store']);
         Route::post('/pedidos', [PedidoController::class, 'store']);

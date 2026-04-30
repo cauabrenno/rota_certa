@@ -532,7 +532,14 @@ const irParaCarrinho = () => {
 }
 
 const fazerLogout = () => {
-  if(confirm("Tem certeza que deseja sair?")) {
+  if(confirm("Tem certeza que deseja sair da sua conta?")) {
+    // 1. Apaga o "crachá" (Token) da memória do navegador
+    localStorage.removeItem('token')
+    
+    // (Opcional) Se você salva os dados do usuário também, limpe-os:
+    localStorage.removeItem('user') 
+    
+    // 2. Manda o usuário de volta para a tela de Login
     router.push('/')
   }
 }

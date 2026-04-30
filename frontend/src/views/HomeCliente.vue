@@ -98,8 +98,7 @@
           <div class="relative z-10">
             <p class="text-[9px] lg:text-[10px] uppercase tracking-widest text-[#C2F2D9] font-black mb-1">Clube RotaCerta</p>
             <div class="flex items-baseline gap-2">
-              <span class="text-4xl lg:text-5xl font-black italic tracking-tighter">340</span>
-              <span class="text-xs lg:text-sm font-bold opacity-80">pontos</span>
+              <span class="text-4xl lg:text-5xl font-black italic tracking-tighter">{{ pontosClube }}</span>              <span class="text-xs lg:text-sm font-bold opacity-80">pontos</span>
             </div>
             <p class="text-[10px] font-medium opacity-60 mt-1">Acumule mais 60 pts para R$ 15 off</p>
           </div>
@@ -286,114 +285,126 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
-
-import logoMix from '../assets/logoMix.png'
-import novoAtacarejo from '../assets/novoAtacarejo.jpg'
-import assai from '../assets/assai.png'
-import atacadao from '../assets/atacadao.png'
-
-import arrozBranco from '../assets/arrozBranco.jpg'
-import acucarUniao from '../assets/acucarUniao.jpg'
-import amaciante from '../assets/amaciante.jpg'
-import cafeSanta from '../assets/cafeSanta.png'
-import feijaoCarioca from '../assets/feijaoCarioca.jpg'
-import oleoSoja from '../assets/oleoSoja.jpg'
-import omo from '../assets/OMO.jpg'
-import papelNeve from '../assets/papelNeve.jpg'
-import ype from '../assets/ype.jpg'
-
+import api from '../services/api' 
 
 const router = useRouter()
 
-// === DADOS E LÓGICA DE ENDEREÇO ===
+// === VARIÁVEIS DE ESTADO ===
 const modalEnderecosAberto = ref(false)
 const mostrandoFormEndereco = ref(false)
-
-const enderecosSalvos = ref([
-  { titulo: 'Casa', rua: 'Rua das Flores', numero: '123', bairro: 'Centro', cidade: 'Trindade - PE' },
-  { titulo: 'Trabalho', rua: 'Av. Principal', numero: '450', bairro: 'Empresarial', cidade: 'Araripina - PE' }
-])
-
-const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '' })
-const enderecoAtual = ref(enderecosSalvos.value[0]) // Inicia selecionando a "Casa"
-
-const abrirModalEnderecos = () => {
-  modalEnderecosAberto.value = true
-  mostrandoFormEndereco.value = false
-}
-
-const fecharModalEnderecos = () => {
-  modalEnderecosAberto.value = false
-}
-
-const selecionarEndereco = (end) => {
-  enderecoAtual.value = end
-  fecharModalEnderecos()
-}
-
-const salvarEndereco = () => {
-  const novoEnd = {
-    titulo: novoEndereco.value.titulo,
-    rua: novoEndereco.value.rua,
-    numero: novoEndereco.value.numero,
-    bairro: 'Bairro Padrão',
-    cidade: 'Cidade Nova - UF'
-  }
-  enderecosSalvos.value.push(novoEnd)
-  enderecoAtual.value = novoEnd // Já seleciona o novo
-  mostrandoFormEndereco.value = false
-  fecharModalEnderecos()
-  novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '' }
-}
-
-// === RESTANTE DA LÓGICA DA HOME ===
 const prodSel = ref(null)
 const qtdModal = ref(1)
 
+// === DADOS REATIVOS (Vazios esperando a API) ===
+const enderecosSalvos = ref([])
+const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '' })
+const enderecoAtual = ref({ titulo: 'Carregando...', rua: 'Buscando endereço', numero: '' })
+const pontosClube = ref(0)
+const lojas = ref([])
+const catalogo = ref([])
 const categorias = ['🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria']
 
-const lojas = ref([
-  { nome: 'Mix Mateus', logo: logoMix },
-  { nome: 'Novo Atacarejo', logo: novoAtacarejo },
-  { nome: 'Assaí', logo: assai },
-  { nome: 'Atacadão', logo: atacadao }
-])
+// === FUNÇÕES DE ENDEREÇO ===
+const abrirModalEnderecos = () => { modalEnderecosAberto.value = true; mostrandoFormEndereco.value = false }
+const fecharModalEnderecos = () => { modalEnderecosAberto.value = false }
+const selecionarEndereco = (end) => { enderecoAtual.value = end; fecharModalEnderecos() }
 
-const catalogo = ref([
-  {
-    titulo: '🔥 Super Ofertas',
-    itens: [
-      { id: 1, nome: 'Arroz Branco 1kg', marca: 'Camil', preco: 5.89, precoAntigo: 7.50, foto: arrozBranco, lojaNome: 'Mix Mateus', lojaLogo: logoMix },
-      { id: 2, nome: 'Açúcar União 1kg', marca: 'União', preco: 4.20, precoAntigo: 5.10, foto: acucarUniao, lojaNome: 'Atacadão', lojaLogo: atacadao },
-      { id: 3, nome: 'Feijão Carioca 1kg', marca: 'Kicaldo', preco: 8.90, precoAntigo: 10.50, foto: feijaoCarioca, lojaNome: 'Novo Atacarejo', lojaLogo: novoAtacarejo },
-      { id: 4, nome: 'Óleo de Soja 900ml', marca: 'Soya', preco: 6.45, precoAntigo: 7.20, foto: oleoSoja, lojaNome: 'Assaí', lojaLogo: assai },
-      { id: 5, nome: 'Café Santa Clara 250g', marca: 'Santa Clara', preco: 11.90, precoAntigo: 14.00, foto: cafeSanta, lojaNome: 'Mix Mateus', lojaLogo: logoMix },
-    ]
-  },
-  {
-    titulo: '🧼 Higiene e Limpeza',
-    itens: [
-      { id: 6, nome: 'Detergente Ypê 500ml', marca: 'Ypê', preco: 2.39, precoAntigo: null, foto: ype, lojaNome: 'Atacadão', lojaLogo: atacadao },
-      { id: 7, nome: 'Sabão Omo 800g', marca: 'Omo', preco: 16.50, precoAntigo: 18.90, foto: omo, lojaNome: 'Assaí', lojaLogo: assai },
-      { id: 8, nome: 'Amaciante Downy', marca: 'Downy', preco: 19.90, precoAntigo: 22.50, foto: amaciante, lojaNome: 'Novo Atacarejo', lojaLogo: novoAtacarejo },
-      { id: 9, nome: 'Papel Neve 12un', marca: 'Neve', preco: 22.00, precoAntigo: 25.00, foto: papelNeve, lojaNome: 'Mix Mateus', lojaLogo: logoMix },
-    ]
+const salvarEndereco = async () => {
+  try {
+    const payload = {
+      titulo: novoEndereco.value.titulo,
+      cep: novoEndereco.value.cep,
+      numero: novoEndereco.value.numero,
+      rua: novoEndereco.value.rua,
+      bairro: 'Bairro Padrão', 
+      cidade: 'Cidade Nova - UF'
+    }
+
+    const response = await api.post('/enderecos', payload)
+
+    // ✨ Pega o endereço que veio de dentro da resposta do Laravel
+    const endBanco = response.data.endereco
+
+    // ✨ Traduz do formato do Banco para o formato do Vue
+    const endFormatado = {
+      ...endBanco,
+      titulo: endBanco.nome_local, // A mágica acontece aqui!
+      bairro: endBanco.bairro || 'Bairro Padrão',
+      cidade: endBanco.cidade || 'Cidade Nova - UF'
+    }
+
+    enderecosSalvos.value.push(endFormatado)
+    enderecoAtual.value = endFormatado
+    
+    mostrandoFormEndereco.value = false
+    fecharModalEnderecos()
+    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '' }
+    
+  } catch (error) {
+    console.error("Erro ao salvar endereço:", error)
+    alert("Não foi possível salvar o endereço. Verifique os dados.")
   }
-])
+}
 
+// === CARREGAMENTO INICIAL (API) ===
+const carregarDadosDaHome = async () => {
+  try {
+    const [resLojas, resProdutos, resPontos, resEnderecos] = await Promise.all([
+      api.get('/lojistas'),
+      api.get('/produtos'),
+      api.get('/meus-pontos'),
+      api.get('/enderecos')
+    ])
+
+    lojas.value = resLojas.data
+    
+    catalogo.value = [{
+      titulo: '🔥 Novidades e Ofertas',
+      itens: resProdutos.data.map(prod => ({
+        id: prod.id,
+        nome: prod.nome,
+        marca: prod.marca || 'Diversos', 
+        preco: Number(prod.preco) || 0,
+        precoAntigo: null,
+        foto: prod.foto_url || 'https://via.placeholder.com/150',
+        lojaNome: prod.lojista ? prod.lojista.nome : 'RotaCerta',
+        lojaLogo: prod.lojista ? prod.lojista.logo : ''
+      }))
+    }]
+
+    pontosClube.value = resPontos.data.pontos || 0
+
+    if (resEnderecos.data.length > 0) {
+      // ✨ Quando carregar a tela, também traduz do Banco para o Vue
+      enderecosSalvos.value = resEnderecos.data.map(end => ({
+        ...end,
+        titulo: end.nome_local, // Traduzindo de novo!
+        bairro: end.bairro || 'Sem Bairro',
+        cidade: end.cidade || 'Sem Cidade'
+      }))
+      enderecoAtual.value = enderecosSalvos.value[0] 
+    } else {
+      enderecoAtual.value = { titulo: 'Sem endereço', rua: 'Clique para adicionar', numero: '' }
+    }
+
+  } catch (error) {
+    console.error("Deu ruim ao buscar os dados do Back-end:", error)
+  }
+}
+
+onMounted(() => {
+  carregarDadosDaHome()
+})
+
+// === FUNÇÕES DE PRODUTO E CARRINHO ===
 const abrirProduto = (p) => { 
   const concorrentes = lojas.value
     .filter(l => l.nome !== p.lojaNome)
     .map((l, index) => {
       const variacao = index === 0 ? -0.25 : (index === 1 ? 0.40 : 0.15);
-      return { 
-        nome: l.nome, 
-        logo: l.logo, 
-        preco: p.preco + variacao 
-      }
+      return { nome: l.nome, logo: l.logo, preco: p.preco + variacao }
     })
     .sort((a, b) => a.preco - b.preco);
 
