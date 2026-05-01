@@ -423,9 +423,11 @@ const carregarDadosDaHome = async () => {
       precoAntigo: null,
       foto: prod.imagem_url || 'https://via.placeholder.com/150',
       lojaNome: prod.lojista ? prod.lojista.nome : 'RotaCerta',
+      lojista_id: prod.lojista_id,
       lojaLogo: prod.lojista && prod.lojista.logo ? prod.lojista.logo : 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'
     }))
 
+    
     pontosClube.value = resPontos.data.pontos || 0
 
     if (resEnderecos.data.length > 0) {
