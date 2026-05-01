@@ -32,6 +32,10 @@
           <BaseInput label="Nome Completo" v-model="form.nome" placeholder="Seu nome aqui" />
           <BaseInput label="E-mail" v-model="form.email" type="email" placeholder="email@exemplo.com" />
           
+          <div class="md:col-span-2">
+            <BaseInput label="Telefone / WhatsApp" v-model="form.telefone" placeholder="(00) 90000-0000" />
+          </div>
+          
           <div>
             <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Senha</label>
             <div class="relative w-full">
@@ -109,7 +113,6 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseInput from '../components/BaseInput.vue' 
 import api from '../services/api' 
 
-// ✨ Adicionamos as duas variáveis independentes para controlar os olhinhos
 const mostrarSenha = ref(false)
 const mostrarConfirmarSenha = ref(false)
 
@@ -119,8 +122,9 @@ const router = useRouter()
 const isFuncionario = computed(() => route.query.perfil === 'funcionario')
 const tipoFuncionario = ref('lojista')
 
+// ✨ Variável 'telefone' adicionada no form inicial
 const form = ref({
-  nome: '', email: '', senha: '', confirmarSenha: '', cpf: '', cnh: ''
+  nome: '', email: '', telefone: '', senha: '', confirmarSenha: '', cpf: '', cnh: ''
 })
 
 const handleCadastro = async () => {
@@ -135,6 +139,7 @@ const handleCadastro = async () => {
     const payload = {
       name: form.value.nome,
       email: form.value.email,
+      telefone: form.value.telefone, // ✨ Telefone enviado no Payload
       password: form.value.senha,
       password_confirmation: form.value.confirmarSenha,
       tipo: tipoUsuario,

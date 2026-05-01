@@ -5,14 +5,21 @@ import Register from '../views/Register.vue'
 import HomeCliente from '../views/HomeCliente.vue'
 
 const routes = [
-  //ROTAS PÚBLICAS (Qualquer um acessa)
+  // ROTAS PÚBLICAS (Qualquer um acessa)
   { path: '/', component: Login },
   { path: '/login', component: Login },
   { path: '/selecao', component: Selection },
   { path: '/cadastro', component: Register },
   { path: '/esqueci-senha', component: () => import('../views/ForgotPassword.vue') },
+  
+  // ✨ NOVA ROTA: Redefinição de Senha (Pública)
+  { 
+    path: '/reset-password', 
+    component: () => import('../views/ResetPassword.vue'),
+    name: 'ResetPassword'
+  },
 
-  //ROTAS PROTEGIDAS (Exigem Token JWT)
+  // ROTAS PROTEGIDAS (Exigem Token JWT)
   { 
     path: '/home', 
     component: HomeCliente,
@@ -52,21 +59,17 @@ const router = createRouter({
 
 // O SEGURANÇA DA BALADA (Guarda de Rota)
 router.beforeEach((to, from, next) => {
-  // Verifica no cofre do navegador se o usuário tem o Token do Laravel
   const isAuthenticated = localStorage.getItem('token')
 
   // REGRA 1: Tenta acessar rota protegida sem estar logado
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/') // Chuta de volta para o Login
+    next('/') 
   } 
-  
-// REGRA 2: Já está logado e tenta ver a tela de Login ou Cadastro de novo
+  // REGRA 2: Já está logado e tenta ver a tela de Login ou Cadastro (exceto Reset Password)
   else if ((to.path === '/' || to.path === '/login' || to.path === '/cadastro') && isAuthenticated) {
-    next('/home') // Redireciona direto para dentro do sistema
+    next('/home')
   } 
-
- 
-  // REGRA 3: Tudo certo, tem permissão!
+  // REGRA 3: Tudo certo!
   else {
     next() 
   }
