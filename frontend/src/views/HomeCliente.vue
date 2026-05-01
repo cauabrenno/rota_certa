@@ -84,9 +84,9 @@
       </section>
 
       <div class="space-y-4">
-        <div class="relative group">
+       <div class="relative group">
           <span class="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-30">🔍</span>
-          <input type="text" placeholder="Buscar produtos ou mercados..." class="w-full p-6 pl-16 rounded-[2rem] bg-white shadow-xl shadow-black/5 border-none outline-none focus:ring-4 focus:ring-[#C2F2D9] transition-all font-medium" />
+          <input v-model="termoBusca" type="text" placeholder="Buscar produtos ou marcas..." class="w-full p-6 pl-16 rounded-[2rem] bg-white shadow-xl shadow-black/5 border-none outline-none focus:ring-4 focus:ring-[#C2F2D9] transition-all font-medium" />
         </div>
         
         <div @click="abrirModalEnderecos" class="flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl cursor-pointer hover:bg-[#C2F2D9] transition-all w-fit border border-black/5 shadow-sm">
@@ -115,7 +115,12 @@
 
       <section>
         <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-          <button v-for="cat in categorias" :key="cat" class="px-8 py-4 bg-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-md hover:bg-[#1A1A1A] hover:text-white transition-all whitespace-nowrap border border-black/5">
+          <button 
+            v-for="cat in categorias" 
+            :key="cat" 
+            @click="categoriaAtiva = cat"
+            :class="categoriaAtiva === cat ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]' : 'bg-white text-[#1A1A1A] border-black/5 hover:bg-gray-50'"
+            class="px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-md transition-all whitespace-nowrap border">
             {{ cat }}
           </button>
         </div>
@@ -306,9 +311,42 @@ const enderecosSalvos = ref([])
 const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '' })
 const enderecoAtual = ref({ titulo: 'Carregando...', rua: 'Buscando endereço', numero: '' })
 const pontosClube = ref(0)
+// === DADOS REATIVOS ===
 const lojas = ref([])
-const catalogo = ref([])
-const categorias = ['🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria']
+const produtosOriginais = ref([]) // Guarda TODOS os produtos do banco
+const termoBusca = ref('') // Guarda o que o usuário digita
+const categoriaAtiva = ref('⭐ Todas') // Categoria selecionada
+const categorias = ['⭐ Todas', '🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria', '🧀 Laticínios']
+
+// O Catalogo agora é "inteligente". Ele se refaz sozinho sempre que você digita ou clica!
+const catalogo = computed(() => {
+  let filtrados = produtosOriginais.value
+
+  // 1. Filtra pelo que foi digitado na Busca
+  if (termoBusca.value) {
+    const termo = termoBusca.value.toLowerCase()
+    filtrados = filtrados.filter(p => 
+      p.nome.toLowerCase().includes(termo) || 
+      p.marca.toLowerCase().includes(termo)
+    )
+  }
+
+  // 2. Filtra pela Categoria clicada
+  if (categoriaAtiva.value !== '⭐ Todas') {
+    const nomeCat = categoriaAtiva.value.split(' ')[1] // Pega só a palavra depois do emoji
+    filtrados = filtrados.filter(p => p.categoria && p.categoria.includes(nomeCat))
+  }
+
+  // 3. Se não achar nada, mostra mensagem de vazio
+  if (filtrados.length === 0) {
+    return [{ titulo: 'Nenhum produto encontrado 😕', itens: [] }]
+  }
+
+  return [{
+    titulo: termoBusca.value ? 'Resultados da Busca' : (categoriaAtiva.value !== '⭐ Todas' ? categoriaAtiva.value : '🔥 Novidades e Ofertas'),
+    itens: filtrados
+  }]
+})
 
 // === ESTADO DO CARRINHO ===
 // Fallback seguro: se não achar nada no localStorage, usa a string '[]' e NUNCA quebra.
@@ -369,21 +407,24 @@ const carregarDadosDaHome = async () => {
       api.get('/enderecos')
     ])
 
-    lojas.value = resLojas.data
+    // Arruma as Lojas (colocando uma imagem padrão de lojinha se faltar no banco)
+    lojas.value = resLojas.data.map(loja => ({
+      nome: loja.nome || loja.user?.name || 'Mercado',
+      logo: loja.logo || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'
+    }))
     
-    catalogo.value = [{
-      titulo: '🔥 Novidades e Ofertas',
-      itens: resProdutos.data.map(prod => ({
-        id: prod.id,
-        nome: prod.nome,
-        marca: prod.marca || 'Diversos', 
-        preco: Number(prod.preco) || 0,
-        precoAntigo: null,
-        foto: prod.imagem_url || 'https://via.placeholder.com/150',
-        lojaNome: prod.lojista ? prod.lojista.nome : 'RotaCerta',
-        lojaLogo: prod.lojista ? prod.lojista.logo : ''
-      }))
-    }]
+    // Salva os produtos na variável de "Originais" com a categoria incluída e logo da loja
+    produtosOriginais.value = resProdutos.data.map(prod => ({
+      id: prod.id,
+      nome: prod.nome,
+      marca: prod.marca || 'Diversos', 
+      categoria: prod.categoria || '', // Puxando a categoria que você criou no banco!
+      preco: Number(prod.preco) || 0,
+      precoAntigo: null,
+      foto: prod.imagem_url || 'https://via.placeholder.com/150',
+      lojaNome: prod.lojista ? prod.lojista.nome : 'RotaCerta',
+      lojaLogo: prod.lojista && prod.lojista.logo ? prod.lojista.logo : 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'
+    }))
 
     pontosClube.value = resPontos.data.pontos || 0
 
