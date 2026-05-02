@@ -378,9 +378,7 @@ const finalizarCompra = async () => {
   try {
     // Montando o pacote EXATAMENTE com as colunas que o seu banco pede
     const payload = {
-      // ✨ A correção mágica aqui:
       endereco_entrega: enderecoEntrega.value.id, 
-      
       forma_pagamento: metodoPago.value,
       valor_total: parseFloat(totalFinal.value),
       taxa_entrega: parseFloat(frete.value),
@@ -396,10 +394,16 @@ const finalizarCompra = async () => {
 
     await api.post('/pedidos', payload)
 
+    //A CORREÇÃO DO 1º PROBLEMA AQUI:
+    // Nós "congelamos" o valor dos pontos ganhos em uma variável estática
+    // ANTES de mandar o Vue esvaziar o carrinho!
+    const pontosConquistados = pontosGanhos.value;
+
     itensNoCarrinho.value = []
     localStorage.removeItem('carrinho')
     
-    alert(`🎉 Pedido realizado com sucesso! Você ganhou ${pontosGanhos.value} pontos no Clube RotaCerta!`)
+    // Agora o alert puxa a variável congelada, mostrando os pontos exatos!
+    alert(`🎉 Pedido realizado com sucesso! Você ganhou ${pontosConquistados} pontos no Clube RotaCerta!`)
     router.push('/meus-pedidos')
 
   } catch (error) {

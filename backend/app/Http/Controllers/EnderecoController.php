@@ -6,22 +6,22 @@ use Illuminate\Http\Request;
 
 class EnderecoController extends Controller
 {
-public function store(Request $request)
+    public function index()
+    {
+        // Pega todos os endereços onde o user_id é o do cliente logado
+        $enderecos = \App\Models\Endereco::where('user_id', auth()->id())->get();
+        return response()->json($enderecos, 200);
+    }
+
+    public function store(Request $request)
     {
         try {
             $endereco = \App\Models\Endereco::create([
                 'user_id' => auth()->id(),
-                
-                // ✨ Aqui fazemos a ponte: a coluna do banco (nome_local) recebe o dado do Vue (titulo)
-                'nome_local' => $request->titulo, 
-                
+                'nome_local' => $request->nome_local, // <-- Nomes certinhos batendo com o banco!
                 'cep' => $request->cep,
                 'rua' => $request->rua,
-                'numero' => $request->numero,
-                
-                // Se você tiver essas colunas no banco de dados, pode descomentar:
-                // 'bairro' => $request->bairro,
-                // 'cidade' => $request->cidade
+                'numero' => $request->numero
             ]);
 
             return response()->json([
@@ -37,11 +37,11 @@ public function store(Request $request)
         }
     }
 
-    public function index()
+    public function destroy($id)
     {
-        // Busca os endereços apenas do cliente que está logado no momento
-        $enderecos = auth()->user()->enderecos; 
+        // Procura o endereço e garante que ele é do usuário logado antes de apagar
+        \App\Models\Endereco::where('id', $id)->where('user_id', auth()->id())->delete();
         
-        return response()->json($enderecos);
+        return response()->json(['message' => 'Endereço excluído com sucesso!'], 200);
     }
 }
