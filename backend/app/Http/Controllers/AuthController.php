@@ -13,19 +13,16 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // 🚨 A MÁGICA ENTRA AQUI: Validação antes de tudo!
         $request->validate([
             'name' => 'required|string',
-            'email' => 'required|email|unique:users', // Garante que não tenha 2 emails iguais
-            'password' => 'required|string|min:6|confirmed', // Exige o password_confirmation!
+            'email' => 'required|email|unique:users', 
+            'password' => 'required|string|min:6|confirmed', 
             'tipo' => 'required|string',
         ]);
 
-        // 1. Inicia uma transação na base de dados para segurança
         DB::beginTransaction();
 
         try {
-            // 2. Cria o Utilizador Base (comum a todos)
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -33,9 +30,7 @@ class AuthController extends Controller
                 'tipo' => $request->tipo,
             ]);
 
-            // 3. Verifica o tipo e guarda na tabela específica correta
             if ($request->tipo === 'cliente') {
-                
                 DB::table('clientes')->insert([
                     'user_id' => $user->id,
                     'telefone' => $request->telefone ?? null,
@@ -46,30 +41,27 @@ class AuthController extends Controller
                 ]);
 
             } elseif ($request->tipo === 'lojista') {
-                
                 DB::table('lojista')->insert([
                     'user_id' => $user->id,
                     'cnpj' => $request->cnpj,  
                     'endereco' => $request->endereco ?? null, 
                     'telefone' => $request->telefone ?? null,
-                    'nota' => 0, // Valor default
+                    'nota' => 0, 
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
             } elseif ($request->tipo === 'entregador') {
-                
                 DB::table('entregadores')->insert([
                     'user_id' => $user->id,
                     'cpf' => $request->cpf,
                     'cnh' => $request->cnh,
-                    'status' => 'disponivel', // Valor default
+                    'status' => 'disponivel', 
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
 
-            // Se tudo correu bem, confirma as gravações na base de dados
             DB::commit();
 
             return response()->json([
@@ -78,9 +70,7 @@ class AuthController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            // Se deu algum erro, desfaz tudo para não guardar dados pela metade
             DB::rollBack();
-            
             return response()->json([
                 'message' => 'Erro ao criar conta.',
                 'error' => $e->getMessage()
@@ -88,7 +78,6 @@ class AuthController extends Controller
         }
     }
 
-    // A sua função de login continua igual!
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
@@ -107,49 +96,58 @@ class AuthController extends Controller
 
     public function me()
     {
-        // 1. Pega o usuário dono do Token
         $user = auth()->user();
-
         $endereco = null;
+        $telefone = null;
 
-        // 2. Vai buscar o endereço dele dependendo de qual tabela ele pertence
         if ($user->tipo === 'cliente') {
-            $cliente = \Illuminate\Support\Facades\DB::table('clientes')->where('user_id', $user->id)->first();
+            $cliente = DB::table('clientes')->where('user_id', $user->id)->first();
             $endereco = $cliente ? $cliente->endereco : null;
+            $telefone = $cliente ? $cliente->telefone : null; // Puxa o telefone corretamente
             
         } elseif ($user->tipo === 'lojista') {
-            $lojista = \Illuminate\Support\Facades\DB::table('lojistas')->where('user_id', $user->id)->first();
+            $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
             $endereco = $lojista ? $lojista->endereco : null;
+            $telefone = $lojista ? $lojista->telefone : null; // Puxa o telefone corretamente
         }
 
-        // 3. Devolve um pacote completo pro front-end
         return response()->json([
             'id' => $user->id,
             'nome' => $user->name,
             'email' => $user->email,
             'tipo' => $user->tipo,
-            'endereco_atual' => $endereco
+            'telefone' => $telefone, // Envia para o Vue!
+            'endereco_atual' => $endereco,
+            'created_at' => $user->created_at // Envia a data para o "Cliente desde XXXX"
         ], 200);
     }
 
     public function updatePerfil(Request $request)
     {
         try {
-            // Pega o usuário que está logado no momento
             $user = auth()->user();
 
-            // Atualiza o nome se o frontend tiver enviado
-            if ($request->has('name')) {
-                $user->name = $request->name;
+            // Atualiza na tabela USERS
+            if ($request->has('nome')) {
+                $user->name = $request->nome; // Match: Vue manda 'nome', BD salva 'name'
             }
-
-            // Atualiza o telefone se o frontend tiver enviado
-            if ($request->has('telefone')) {
-                $user->telefone = $request->telefone;
+            if ($request->has('email')) {
+                $user->email = $request->email;
             }
-
-            // Salva as alterações no banco de dados
             $user->save();
+
+            // Atualiza o Telefone na tabela certa (Clientes ou Lojista)
+            if ($request->has('telefone')) {
+                if ($user->tipo === 'cliente') {
+                    DB::table('clientes')
+                        ->where('user_id', $user->id)
+                        ->update(['telefone' => $request->telefone]);
+                } elseif ($user->tipo === 'lojista') {
+                    DB::table('lojista')
+                        ->where('user_id', $user->id)
+                        ->update(['telefone' => $request->telefone]);
+                }
+            }
 
             return response()->json([
                 'message' => 'Perfil atualizado com sucesso!',
@@ -167,25 +165,22 @@ class AuthController extends Controller
     public function alterarSenha(\Illuminate\Http\Request $request)
     {
         try {
-            // Pega o usuário logado
             $user = auth()->user();
 
-            // 1. Verifica se a "Senha Atual" que ele digitou bate com a do banco
-            if (!\Illuminate\Support\Facades\Hash::check($request->senha_atual, $user->password)) {
+            if (!Hash::check($request->senha_atual, $user->password)) {
                 return response()->json([
                     'message' => 'A senha atual está incorreta. Tente novamente.'
                 ], 400);
             }
 
-            // 2. Verifica se a "Nova Senha" e a "Confirmação" são iguais
-            if ($request->nova_senha !== $request->confirmar_nova_senha) {
+            // O Vue manda "nova_senha_confirmation"
+            if ($request->nova_senha !== $request->nova_senha_confirmation) {
                 return response()->json([
                     'message' => 'A nova senha e a confirmação não combinam.'
                 ], 400);
             }
 
-            // 3. Se tudo deu certo, criptografa a nova senha e salva!
-            $user->password = \Illuminate\Support\Facades\Hash::make($request->nova_senha);
+            $user->password = Hash::make($request->nova_senha);
             $user->save();
 
             return response()->json([

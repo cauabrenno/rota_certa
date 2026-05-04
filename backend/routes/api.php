@@ -40,8 +40,11 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware(VerificaTipoUsuario::class . ':cliente')->group(function () {
         
         // Clube RotaCerta
-        Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
-        
+        Route::get('/meus-pontos', function (\Illuminate\Http\Request $request) {
+            return response()->json([
+                'pontos' => $request->user()->pontos ?? 0
+            ], 200);
+        });        
         // 📍 Endereços (Listar, Salvar e Excluir)
         Route::get('/enderecos', [EnderecoController::class, 'index']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);

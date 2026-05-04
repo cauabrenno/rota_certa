@@ -242,7 +242,7 @@ const atualizarPin = (novoPin) => {
   else localStorage.removeItem('pinCorretoGerado');
 }
 
-// 💾 LEITURA SEGURA DO COFRE INICIAL
+// 💾 LEITURA SEGURA  DO COFRE INICIAL
 const carregarStatusSeguro = () => {
   const salvo = localStorage.getItem('statusPedido');
   return (salvo && salvo !== 'null' && salvo !== 'undefined') ? salvo : null;
