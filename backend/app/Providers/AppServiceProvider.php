@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-// ✨ Importação necessária para a lógica de senha
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,9 +21,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ✨ A lógica do link de recuperação deve ficar EXATAMENTE aqui dentro
-        ResetPassword::createUrlUsing(function (object $user, string $token) {
-            return 'http://localhost:5173/reset-password?token='.$token.'&email='.$user->email;
+        // Personaliza o e-mail de recuperação de senha
+        ResetPassword::toMailUsing(function (object $notifiable, string $token) {
+            
+            // Aqui você pode montar a URL que vai pro Front-end (caso o front tenha uma tela específica)
+            // Se o front já está capturando a URL atual, pode manter a route('password.reset')
+            $url = route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ]);
+
+            return (new MailMessage)
+                ->subject('Recuperação de Senha - RotaCerta') // Título do e-mail
+                ->greeting('Olá, Usuáeio!') // Saudação inicial
+                ->line('Você está recebendo este e-mail porque solicitou a redefinição da sua senha no RotaCerta.')
+                ->action('Criar Nova Senha', $url) // Botão
+                ->line('Se você não pediu para mudar a senha, pode ignorar este e-mail tranquilamente. Sua conta está segura.')
+                ->salutation('Acelere com segurança, Equipe RotaCerta 🛵'); // Despedida
         });
     }
 }
