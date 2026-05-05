@@ -6,13 +6,19 @@ use Illuminate\Http\Request;
 
 class CartaoController extends Controller
 {
-    public function store(\Illuminate\Http\Request $request)
+    public function index()
+    {
+        // Pega todos os cartões onde o user_id é o do cliente logado
+        $cartoes = \App\Models\Cartao::where('user_id', auth()->id())->get();
+        return response()->json($cartoes, 200);
+    }
+
+    public function store(Request $request)
     {
         try {
-            // Cria o cartão e atrela ao usuário logado
             $cartao = \App\Models\Cartao::create([
                 'user_id' => auth()->id(),
-                'numero_cartao' => $request->numero_cartao,
+                'numero_cartao' => $request->numero_cartao, // <-- Nomes certinhos batendo com o banco!
                 'nome_impresso' => $request->nome_impresso,
                 'validade' => $request->validade,
                 'cvv' => $request->cvv
@@ -29,5 +35,13 @@ class CartaoController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function destroy($id)
+    {
+        // Procura o cartão e garante que ele é do usuário logado antes de apagar
+        \App\Models\Cartao::where('id', $id)->where('user_id', auth()->id())->delete();
+        
+        return response()->json(['message' => 'Cartão excluído com sucesso!'], 200);
     }
 }

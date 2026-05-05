@@ -35,18 +35,35 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/perfil', [AuthController::class, 'updatePerfil']);
     Route::put('/perfil/senha', [AuthController::class, 'alterarSenha']);
 
-    // Pedido Show (Liberado para todos os tipos logados, 
-    // pois Cliente e Entregador precisam ver detalhes)
+    // Pedido Show (Liberado para todos os tipos logados)
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
 
     // --- ÁREA DO CLIENTE ---
     Route::middleware(VerificaTipoUsuario::class . ':cliente')->group(function () {
-        Route::get('/meus-pontos', [ClienteController::class, 'meusPontos']);
+        
+        // Clube RotaCerta
+        Route::get('/meus-pontos', function (\Illuminate\Http\Request $request) {
+            return response()->json([
+                'pontos' => $request->user()->pontos ?? 0
+            ], 200);
+        });        
+        // 📍 Endereços (Listar, Salvar e Excluir)
+        Route::get('/enderecos', [EnderecoController::class, 'index']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);
+        Route::delete('/enderecos/{id}', [EnderecoController::class, 'destroy']);
+        
+        // 💳 Cartões (Listar, Salvar e Excluir)
+        Route::get('/cartoes', [CartaoController::class, 'index']);
         Route::post('/cartoes', [CartaoController::class, 'store']);
+        Route::delete('/cartoes/{id}', [CartaoController::class, 'destroy']);
+        
+        // Suporte
         Route::post('/suporte', [TicketSuporteController::class, 'store']);
+        
+        // Pedidos
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
+        Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
     });
 
     // --- ÁREA DO LOJISTA ---
@@ -61,4 +78,5 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/entregador/perfil', [EntregadorController::class, 'meuPerfil']);
         Route::put('/entregador/veiculo', [EntregadorController::class, 'atualizarVeiculo']);
     });
+
 });

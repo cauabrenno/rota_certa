@@ -6,5 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lojista extends Model
 {
-    protected $table = 'lojistas';
+    // Tiramos o "s" do final paa bater exatamente com o seu pgAdmin
+    protected $table = 'lojista'; 
 }

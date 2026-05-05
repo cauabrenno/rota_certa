@@ -13,7 +13,9 @@
     <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
     <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
       🛒
-      <span class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">3</span>
+      <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
+        {{ totalItensCarrinho }}
+      </span>
     </button>
   </div>
 </nav>
@@ -32,7 +34,9 @@
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
           <span class="text-2xl grayscale opacity-80">🛒</span>
-          <span class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">3</span>
+          <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
+            {{ totalItensCarrinho }}
+          </span>
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Cesta</span>
       </button>
@@ -45,10 +49,14 @@
 
     <main class="p-4 md:p-6 lg:p-12 max-w-3xl mx-auto space-y-8 mt-2 relative z-10">
       
-      <section v-if="pedidoAtivo">
-        <h2 class="text-xl font-black italic tracking-tighter uppercase mb-4 pl-2">Acompanhar Pedido</h2>
+      <div v-if="carregando" class="text-center py-10 opacity-50 font-black uppercase tracking-widest">
+        Carregando seus pedidos...
+      </div>
+
+      <section v-if="!carregando && pedidosAtivos.length > 0">
+        <h2 class="text-xl font-black italic tracking-tighter uppercase mb-4 pl-2">Acompanhando</h2>
         
-        <div @click="abrirDetalhes(pedidoAtivo)" class="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-2xl border border-black/5 relative overflow-hidden cursor-pointer hover:shadow-xl transition-all group">
+        <div v-for="pedidoAtivo in pedidosAtivos" :key="pedidoAtivo.id" @click="abrirDetalhes(pedidoAtivo)" class="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-2xl border border-black/5 relative overflow-hidden cursor-pointer hover:shadow-xl transition-all group mb-8">
           
           <div class="flex justify-between items-start mb-6">
             <div>
@@ -72,7 +80,7 @@
             </div>
           </div>
 
-<div class="mb-12 md:mb-8 relative z-10">
+          <div class="mb-12 md:mb-8 relative z-10">
             <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 text-center">Status do Pedido</h4>
             <div class="relative flex justify-between items-center px-1 md:px-4">
               <div class="absolute left-0 top-3 w-full h-1 bg-gray-100 -z-10 rounded-full"></div>
@@ -98,7 +106,7 @@
             </div>
             <div class="absolute bottom-2 left-0 right-0 text-center">
               <span class="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
-                O entregador está a caminho
+                {{ pedidoAtivo.statusIndex >= 2 ? 'O entregador está a caminho' : 'Preparando seu pedido' }}
               </span>
             </div>
           </div>
@@ -111,17 +119,27 @@
 
       <div class="h-px bg-gray-200 w-full my-8"></div>
 
-      <section>
+      <section v-if="!carregando">
         <h2 class="text-xl font-black italic tracking-tighter uppercase mb-4 pl-2">Histórico</h2>
         
+        <div v-if="historico.length === 0" class="text-center py-6 text-gray-400 font-bold text-xs uppercase tracking-widest">
+          Nenhum pedido no histórico ainda.
+        </div>
+
         <div class="space-y-4 relative z-0">
           <div v-for="pedido in historico" :key="pedido.id" @click="abrirDetalhes(pedido)" class="bg-white p-5 lg:p-6 rounded-3xl shadow-sm border border-black/5 hover:shadow-md transition-all group cursor-pointer">
             
             <div class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
               <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ pedido.data }}</p>
-              <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg">
-                <span class="text-green-600 text-[10px]">✓</span>
-                <span class="text-[9px] font-black text-green-700 uppercase tracking-widest">Concluído</span>
+              
+              <!-- Selo Verde ou Vermelho Dinâmico -->
+              <div class="flex items-center gap-1 px-2 py-1 rounded-lg" :class="pedido.statusIndex === 5 ? 'bg-red-50' : 'bg-green-50'">
+                <span v-if="pedido.statusIndex === 5" class="text-red-600 text-[10px]">✕</span>
+                <span v-else class="text-green-600 text-[10px]">✓</span>
+                
+                <span :class="pedido.statusIndex === 5 ? 'text-red-700' : 'text-green-700'" class="text-[9px] font-black uppercase tracking-widest">
+                  {{ pedido.statusIndex === 5 ? 'Cancelado' : 'Concluído' }}
+                </span>
               </div>
             </div>
 
@@ -140,16 +158,13 @@
             <div class="mt-4 pt-4 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-black text-[#1A1A1A]">R$ {{ pedido.total.toFixed(2) }}</span>
-                <span v-if="pedido.economia" class="text-[9px] font-black text-[#2D4483] uppercase tracking-widest bg-[#E2F1F7] px-2 py-1 rounded-md">
-                  Economizou R$ {{ pedido.economia.toFixed(2) }}
-                </span>
               </div>
               
               <div class="flex gap-3 w-full md:w-auto z-10">
                 <button @click.stop="alertAjuda" class="flex-1 md:flex-none py-2.5 px-4 bg-gray-100 text-[#1A1A1A] font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-all">
                   Ajuda
                 </button>
-                <button @click.stop="pedirDeNovo" class="flex-1 md:flex-none py-2.5 px-6 bg-[#C2F2D9] text-[#1A1A1A] font-black text-[10px] uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all shadow-sm">
+                <button v-if="pedido.statusIndex !== 5" @click.stop="pedirDeNovo" class="flex-1 md:flex-none py-2.5 px-6 bg-[#C2F2D9] text-[#1A1A1A] font-black text-[10px] uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all shadow-sm">
                   Pedir de Novo
                 </button>
               </div>
@@ -172,13 +187,13 @@
             <img :src="pedidoSelecionado.logo" class="w-full h-full object-contain" />
           </div>
           <div class="flex-1">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pedido {{ pedidoSelecionado.id }}</p>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ pedidoSelecionado.id }}</p>
             <h2 class="text-2xl font-black italic tracking-tighter uppercase leading-tight text-[#1A1A1A]">{{ pedidoSelecionado.loja }}</h2>
             <p class="text-[10px] text-[#2D4483] font-bold mt-1">{{ pedidoSelecionado.data || 'Hoje, ' + pedidoSelecionado.previsao }}</p>
           </div>
         </div>
 
-        <div v-if="pedidoSelecionado.statusIndex !== undefined" class="mb-6 p-5 md:p-6 bg-gray-50 rounded-3xl border border-black/5 relative z-10">
+        <div v-if="pedidoSelecionado.statusIndex !== undefined && pedidoSelecionado.statusIndex < 4" class="mb-6 p-5 md:p-6 bg-gray-50 rounded-3xl border border-black/5 relative z-10">
           <div class="flex justify-between items-center mb-6">
              <p class="text-[10px] font-black uppercase tracking-widest text-[#2D4483]">Previsão: {{ pedidoSelecionado.previsao }}</p>
              <div class="bg-white px-3 py-1 rounded-lg border border-black/5 shadow-sm flex items-center gap-2">
@@ -201,13 +216,6 @@
               </span>
             </div>
           </div>
-
-          <div class="w-full h-24 bg-gray-200 rounded-2xl relative overflow-hidden border border-black/5 z-0 mt-8 md:mt-0">
-            <div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-cover"></div>
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center animate-bounce">
-              <span class="text-2xl drop-shadow-md">🛵</span>
-            </div>
-          </div>
         </div>
 
         <div class="space-y-4 mb-6">
@@ -228,15 +236,11 @@
             <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Resumo Financeiro</h3>
             <div class="flex justify-between text-xs font-medium text-gray-600 gap-2">
               <span>Subtotal</span>
-              <span class="font-bold">R$ {{ (pedidoSelecionado.total - 7.00 + (pedidoSelecionado.economia || 0)).toFixed(2) }}</span>
+              <span>R$ {{ (pedidoSelecionado.total - (pedidoSelecionado.taxaEntrega || 7.00)).toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-xs font-medium text-gray-600 gap-2">
               <span>Taxa de Entrega</span>
-              <span class="font-bold">R$ 7.00</span>
-            </div>
-            <div v-if="pedidoSelecionado.economia" class="flex justify-between text-xs font-bold text-green-600 gap-2">
-              <span>Descontos / Clube</span>
-              <span>- R$ {{ pedidoSelecionado.economia.toFixed(2) }}</span>
+              <span>R$ {{ (pedidoSelecionado.taxaEntrega || 7.00).toFixed(2) }}</span>
             </div>
             <div class="pt-2 border-t border-gray-200 flex justify-between items-center mt-2.5 gap-2">
               <span class="font-black text-sm uppercase">Total</span>
@@ -249,19 +253,29 @@
               <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Pagamento</h3>
               <p class="font-bold text-xs flex items-center gap-2 leading-tight"><span class="text-base flex-shrink-0">💳</span> {{ pedidoSelecionado.pagamento }}</p>
             </div>
-            <div>
-              <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Entregue em</h3>
-              <p class="font-bold text-xs flex items-center gap-2 leading-tight"><span class="text-base flex-shrink-0">📍</span> {{ pedidoSelecionado.endereco }}</p>
-            </div>
           </div>
 
         </div>
 
+        <!-- BOTÕES DINÂMICOS DO MODAL -->
         <div class="flex flex-col sm:flex-row gap-3 md:gap-4 mt-8 md:mt-0">
           <button @click="fecharDetalhes" class="w-full py-4.5 md:py-5 bg-gray-100 text-[#1A1A1A] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all">
             Fechar
           </button>
-          <button @click="pedirDeNovo" class="w-full py-4.5 md:py-5 bg-[#1A1A1A] text-[#C2F2D9] rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-black transition-all">
+
+          <!-- Botão de Cancelar (Aparece só no status 0 = Aceito) -->
+          <button 
+            v-if="pedidoSelecionado.statusIndex === 0" 
+            @click="cancelarPedido(pedidoSelecionado)" 
+            class="w-full py-4.5 md:py-5 bg-red-50 text-red-600 border border-red-100 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-sm hover:bg-red-100 transition-all">
+            Cancelar Pedido
+          </button>
+
+          <!-- Botão de Pedir de Novo (Aparece se for 4=Entregue) -->
+          <button 
+            v-else-if="pedidoSelecionado.statusIndex === 4" 
+            @click="pedirDeNovo" 
+            class="w-full py-4.5 md:py-5 bg-[#1A1A1A] text-[#C2F2D9] rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-black transition-all">
             Adicionar à Cesta
           </button>
         </div>
@@ -274,21 +288,86 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
-import logoMix from '../assets/logoMix.png'
-import atacadao from '../assets/atacadao.png'
-import assai from '../assets/assai.png'
+import api from '../services/api' 
 
 const router = useRouter()
 
 const etapas = ['Aceito', 'Preparo', 'Saiu', 'Perto', 'Entregue']
 
-// Estado do Modal
+const carregando = ref(true)
+const todosPedidos = ref([])
+
+// === CARRINHO NO NAVBAR ===
+const carrinho = ref(JSON.parse(localStorage.getItem('carrinho') || '[]'))
+const totalItensCarrinho = computed(() => {
+  return carrinho.value.reduce((total, item) => total + item.quantidade, 0)
+})
+
+// === SEPARANDO ATIVOS E HISTÓRICO ===
+const pedidosAtivos = computed(() => {
+  return todosPedidos.value.filter(p => p.statusIndex < 4)
+})
+
+const historico = computed(() => {
+  // Pega os status >= 4 (Entregues ou Cancelados)
+  return todosPedidos.value.filter(p => p.statusIndex >= 4)
+})
+
+const mapearStatusParaIndex = (status) => {
+  const s = (status || '').toLowerCase()
+  if (s.includes('cancelado')) return 5 // Novo Status!
+  if (s.includes('entregue') || s.includes('conclu')) return 4
+  if (s.includes('perto')) return 3
+  if (s.includes('saiu') || s.includes('caminho')) return 2
+  if (s.includes('preparo') || s.includes('preparando')) return 1
+  return 0 
+}
+
+const formatarDataBR = (dataIso) => {
+  if (!dataIso) return ''
+  const d = new Date(dataIso)
+  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const carregarPedidos = async () => {
+  try {
+    const res = await api.get('/meus-pedidos')
+    
+    todosPedidos.value = res.data.pedidos.map(p => ({
+      dbId: p.id, // O ID real do banco para conseguirmos cancelar!
+      id: `#RC-${p.id.toString().padStart(4, '0')}`,
+      loja: 'Mercado Parceiro', 
+      logo: 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png',
+      itensCount: p.produtos ? p.produtos.length : 0,
+      total: parseFloat(p.valor_total),
+      taxaEntrega: parseFloat(p.taxa_entrega),
+      previsao: '45-60 min',
+      codigo: p.codigo_entrega,
+      statusIndex: mapearStatusParaIndex(p.status),
+      pagamento: p.forma_pagamento,
+      data: formatarDataBR(p.created_at),
+      descricaoItens: p.descricao,
+      itens: p.produtos ? p.produtos.map(prod => ({
+        nome: prod.nome,
+        qtd: prod.pivot.quantidade,
+        preco: parseFloat(prod.pivot.preco_unitario)
+      })) : []
+    }))
+  } catch (error) {
+    console.error("Erro ao buscar histórico de pedidos", error)
+  } finally {
+    carregando.value = false
+  }
+}
+
+onMounted(() => {
+  carregarPedidos()
+})
+
 const pedidoSelecionado = ref(null)
 
-// Funções do Modal
 const abrirDetalhes = (pedido) => {
   pedidoSelecionado.value = pedido
 }
@@ -302,66 +381,30 @@ const alertAjuda = () => {
 }
 
 const pedirDeNovo = () => {
-  alert("Itens adicionados ao carrinho!")
-  irParaCarrinho()
+  alert("Em breve! Esta função vai recriar o carrinho com estes itens.")
 }
-
-// Mock do Pedido Ativo
-const pedidoAtivo = ref({
-  id: '#RC-9842',
-  loja: 'Mix Mateus',
-  logo: logoMix,
-  itensCount: 3,
-  total: 45.80,
-  previsao: '18:50 - 19:10',
-  codigo: '7280',
-  statusIndex: 2,
-  pagamento: 'Pix',
-  endereco: 'Rua das Flores, 123 - Centro',
-  itens: [
-    { nome: 'Café Santa Clara 250g', qtd: 2, preco: 11.90 },
-    { nome: 'Açúcar União 1kg', qtd: 1, preco: 4.20 },
-    { nome: 'Leite Integral Parmalat', qtd: 2, preco: 5.40 }
-  ]
-})
-
-// Mock do Histórico
-const historico = ref([
-  {
-    id: '#RC-8721',
-    data: 'Qui, 19/03/2026',
-    loja: 'Atacadão',
-    logo: atacadao,
-    descricaoItens: '1x Arroz Branco 1kg Camil, 2x Feijão Carioca Kicaldo, 1x Óleo de Soja',
-    total: 34.50,
-    economia: 4.20,
-    pagamento: 'Cartão de Crédito final 4321',
-    endereco: 'Rua das Flores, 123 - Centro',
-    itens: [
-      { nome: 'Arroz Branco 1kg Camil', qtd: 1, preco: 5.89 },
-      { nome: 'Feijão Carioca Kicaldo', qtd: 2, preco: 8.90 },
-      { nome: 'Óleo de Soja', qtd: 1, preco: 6.45 }
-    ]
-  },
-  {
-    id: '#RC-7533',
-    data: 'Dom, 15/03/2026',
-    loja: 'Assaí',
-    logo: assai,
-    descricaoItens: '1x Sabão Omo 800g, 2x Amaciante Downy',
-    total: 56.30,
-    economia: 8.90,
-    pagamento: 'Pix',
-    endereco: 'Av. Principal, 450 - Empresarial',
-    itens: [
-      { nome: 'Sabão Omo 800g', qtd: 1, preco: 16.50 },
-      { nome: 'Amaciante Downy', qtd: 2, preco: 19.90 }
-    ]
-  }
-])
 
 const irParaCarrinho = () => {
   router.push('/carrinho')
+}
+
+// === FUNÇÃO DE CANCELAR O PEDIDO ===
+const cancelarPedido = async (pedido) => {
+  if (confirm("Tem certeza que deseja cancelar este pedido?")) {
+    try {
+      // ✨ Mudamos a rota para bater na porta exclusiva do cliente!
+      await api.put(`/pedidos/${pedido.dbId}/cancelar`)
+      
+      alert("Pedido cancelado com sucesso!")
+      fecharDetalhes()
+      carregarPedidos() // Atualiza a tela puxando tudo do banco de novo
+    } catch (error) {
+      console.error("Erro ao cancelar:", error)
+      // Mostra a mensagem exata do back-end se o restaurante já tiver começado
+      const msgErro = error.response?.data?.message || "Erro ao cancelar. Tente novamente."
+      alert(msgErro)
+    }
+  }
 }
 </script>
 
@@ -383,7 +426,6 @@ const irParaCarrinho = () => {
   background-color: #CBD5E1;
   border-radius: 20px;
 }
-/* Garante que o conteúdo do tracking não quebre layout em telas muito pequenas */
 @media (max-width: 380px) {
   span.uppercase {
     font-size: 7px !important;

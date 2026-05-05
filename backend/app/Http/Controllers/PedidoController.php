@@ -54,6 +54,14 @@ class PedidoController extends Controller {
             // 4. Salva os produtos na tabela pivot (A MÁGICA!)
             $pedido->produtos()->attach($itensComprados);
 
+            // ✨ 5. A CEREJA DO BOLO: Atualiza os pontos no Clube RotaCerta! ✨
+            if ($request->has('pontos_ganhos') && $request->pontos_ganhos > 0) {
+                $user = auth()->user();
+                // Soma os pontos recebidos ao saldo atual do usuário
+                $user->pontos = $user->pontos + $request->pontos_ganhos;
+                $user->save();
+            }
+
             return response()->json([
                 'message' => 'Pedido criado com sucesso!',
                 'pedido' => $pedido
@@ -146,6 +154,47 @@ class PedidoController extends Controller {
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erro ao atualizar o pedido.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cancelar($id)
+    {
+        try {
+            // 1. Pega o cliente logado
+            $user = auth()->user();
+
+            // 2. Procura o pedido garantindo que PERTENCE a esse cliente
+            $pedido = \App\Models\Pedido::where('id', $id)
+                                        ->where('user_id', $user->id)
+                                        ->first();
+
+            if (!$pedido) {
+                return response()->json(['message' => 'Pedido não encontrado ou não pertence a você.'], 404);
+            }
+
+            // 3. Regra de Negócio: Impede de cancelar se já estiver em preparo ou além
+            $statusAtual = strtolower($pedido->status);
+            $statusBloqueados = ['preparo', 'preparando', 'saiu', 'caminho', 'perto', 'entregue', 'concluido'];
+            
+            foreach($statusBloqueados as $bloqueado) {
+                if (str_contains($statusAtual, $bloqueado)) {
+                    return response()->json(['message' => 'Não é possível cancelar. O restaurante já começou o preparo!'], 403);
+                }
+            }
+
+            // 4. Se passou em tudo, cancela com segurança
+            $pedido->status = 'Cancelado';
+            $pedido->save();
+
+            return response()->json([
+                'message' => 'Pedido cancelado com sucesso!'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao cancelar o pedido.',
                 'error' => $e->getMessage()
             ], 500);
         }

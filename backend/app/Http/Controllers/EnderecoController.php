@@ -6,12 +6,19 @@ use Illuminate\Http\Request;
 
 class EnderecoController extends Controller
 {
+    public function index()
+    {
+        // Pega todos os endereços onde o user_id é o do cliente logado
+        $enderecos = \App\Models\Endereco::where('user_id', auth()->id())->get();
+        return response()->json($enderecos, 200);
+    }
+
     public function store(Request $request)
     {
         try {
             $endereco = \App\Models\Endereco::create([
                 'user_id' => auth()->id(),
-                'nome_local' => $request->nome_local,
+                'nome_local' => $request->nome_local, // <-- Nomes certinhos batendo com o banco!
                 'cep' => $request->cep,
                 'rua' => $request->rua,
                 'numero' => $request->numero
@@ -28,5 +35,13 @@ class EnderecoController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function destroy($id)
+    {
+        // Procura o endereço e garante que ele é do usuário logado antes de apagar
+        \App\Models\Endereco::where('id', $id)->where('user_id', auth()->id())->delete();
+        
+        return response()->json(['message' => 'Endereço excluído com sucesso!'], 200);
     }
 }

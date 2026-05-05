@@ -1,23 +1,23 @@
-import axios from 'axios'
+import axios from 'axios';
 
 const api = axios.create({
-baseURL: 'http://127.0.0.1:8000/api',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
-})
+  // Confirme se essa é a porta que seu Laravel está rodando
+  baseURL: 'http://127.0.0.1:8000/api', 
+});
 
-// Aqui entra a mágica: O Interceptor
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token') // Pega o crachá no cofre
+// O "Porteiro" do Vue: Antes de QUALQUER requisição sair pro Laravel, ele roda isso:
+api.interceptors.request.use((config) => {
+  // 1. Ele vai no disco do navegador e procura o Token
+  const token = localStorage.getItem('token');
   
+  // 2. Se o token existir, ele grampeia o token no cabeçalho da requisição
   if (token) {
-    // Se tiver crachá, anexa na requisição para o Laravel liberar a porta
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
   
-  return config
-})
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
-export default api
+export default api;
