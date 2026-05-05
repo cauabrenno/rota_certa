@@ -24,20 +24,23 @@ class AppServiceProvider extends ServiceProvider
         // Personaliza o e-mail de recuperação de senha
         ResetPassword::toMailUsing(function (object $notifiable, string $token) {
             
-            // Aqui você pode montar a URL que vai pro Front-end (caso o front tenha uma tela específica)
-            // Se o front já está capturando a URL atual, pode manter a route('password.reset')
             $url = route('password.reset', [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ]);
 
+            // Pegamos o link da imagem usando o asset() igual fizemos antes
+            $linkDaImagem = asset('images/rotaLogo.png');
+
             return (new MailMessage)
-                ->subject('Recuperação de Senha - RotaCerta') // Título do e-mail
-                ->greeting('Olá, Usuáeio!') // Saudação inicial
+                ->subject('Recuperação de Senha - RotaCerta')
+                ->greeting('Olá, Usuário!')
+                // Adicionamos uma "linha" que na verdade é a tag HTML da imagem
+                ->line(new \Illuminate\Support\HtmlString('<div style="text-align: center; margin-bottom: 20px;"><img src="'.$linkDaImagem.'" alt="Logo RotaCerta" style="max-width: 100%; height: auto; width: 250px;"></div>'))
                 ->line('Você está recebendo este e-mail porque solicitou a redefinição da sua senha no RotaCerta.')
-                ->action('Criar Nova Senha', $url) // Botão
+                ->action('Criar Nova Senha', $url)
                 ->line('Se você não pediu para mudar a senha, pode ignorar este e-mail tranquilamente. Sua conta está segura.')
-                ->salutation('Acelere com segurança, Equipe RotaCerta 🛵'); // Despedida
+                ->salutation('Acelere com segurança, Equipe RotaCerta 🛵');
         });
     }
 }
