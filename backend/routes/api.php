@@ -13,6 +13,8 @@ use App\Http\Controllers\TicketSuporteController;
 use App\Http\Controllers\FreteController;
 use App\Http\Middleware\VerificaTipoUsuario;
 use App\Http\Controllers\ResetSenhaController;
+use App\Http\Controllers\EntregadorController;
+use App\Http\Controllers\LojistaController;
 
 // --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -67,11 +69,14 @@ Route::middleware('auth:api')->group(function () {
     // --- ÁREA DO LOJISTA ---
     Route::middleware(VerificaTipoUsuario::class . ':lojista')->group(function () {
         Route::post('/produtos', [ProdutoController::class, 'store']);
+        Route::post('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']);
     });
 
     // --- ÁREA DO ENTREGADOR ---
     Route::middleware(VerificaTipoUsuario::class . ':entregador')->group(function () {
         Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
+        Route::get('/entregador/perfil', [EntregadorController::class, 'meuPerfil']);
+        Route::put('/entregador/veiculo', [EntregadorController::class, 'atualizarVeiculo']);
     });
 
 });
