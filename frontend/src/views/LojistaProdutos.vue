@@ -226,7 +226,7 @@ const handleImagem = (event) => {
 
 const buscarProdutos = async () => {
   try {
-    const res = await api.get('/produtos') // Ajustar para a rota do seu lojista
+    const res = await api.get('/meus-produtos') // Ajustar para a rota do seu lojista
     produtos.value = res.data
   } catch (error) {
     console.error("Erro ao buscar produtos:", error)

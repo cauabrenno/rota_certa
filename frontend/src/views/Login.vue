@@ -107,6 +107,7 @@ const handleLogin = async () => {
   }
 
   try {
+    // 1. Faz o login e pega o Token
     const response = await api.post('/login', {
       email: email.value,
       password: senha.value
@@ -115,8 +116,21 @@ const handleLogin = async () => {
     const token = response.data.token
     
     if (token) {
+      // Salva o token para as próximas requisições
       localStorage.setItem('token', token)
-      router.push('/home'); 
+      
+      // 2. Busca os dados do usuário para descobrir quem ele é
+      const userRes = await api.get('/me')
+      const usuario = userRes.data
+      
+      // 3. Redirecionamento Inteligente baseado no 'tipo'
+      if (usuario.tipo === 'lojista') {
+        router.push('/dashboard-lojista')
+      } else if (usuario.tipo === 'entregador') {
+        router.push('/dashboard-entregador') 
+      } else {
+        router.push('/home') // Se for cliente ou vazio, vai pra home
+      }
     }
 
   } catch (error) {

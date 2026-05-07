@@ -88,9 +88,19 @@
           
         </div>
 
-        <div v-if="isFuncionario" class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-black/5">
-          <BaseInput label="CPF" v-model="form.cpf" placeholder="000.000.000-00" />
-          <BaseInput v-if="tipoFuncionario === 'entregador'" label="CNH" v-model="form.cnh" placeholder="Número da CNH" />
+        <div v-if="isFuncionario" class="space-y-5 pt-4 border-t border-black/5 mt-4">
+          
+          <BaseInput label="CPF (Dono da Conta)" v-model="form.cpf" placeholder="000.000.000-00" />
+
+          <div v-if="tipoFuncionario === 'lojista'" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <BaseInput label="CNPJ" v-model="form.cnpj" placeholder="00.000.000/0000-00" />
+            <BaseInput label="Endereço da Empresa" v-model="form.endereco" placeholder="Rua, Bairro - Cidade/CE" />
+          </div>
+
+          <div v-if="tipoFuncionario === 'entregador'" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <BaseInput label="CNH" v-model="form.cnh" placeholder="Número da CNH" />
+          </div>
+
         </div>
 
         <button type="submit" class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl mt-6 uppercase tracking-widest">
@@ -98,7 +108,7 @@
         </button>
 
         <div class="text-center mt-6">
-          <router-link to="/" class="text-[#1A1A1A] font-black text-sm hover:underline uppercase tracking-tighter">
+          <router-link to="/login" class="text-[#1A1A1A] font-black text-sm hover:underline uppercase tracking-tighter">
             Já tenho conta? Ir para o Login
           </router-link>
         </div>
@@ -122,9 +132,17 @@ const router = useRouter()
 const isFuncionario = computed(() => route.query.perfil === 'funcionario')
 const tipoFuncionario = ref('lojista')
 
-// ✨ Variável 'telefone' adicionada no form inicial
+// Variáveis de Lojista e Entregador adicionadas no form inicial
 const form = ref({
-  nome: '', email: '', telefone: '', senha: '', confirmarSenha: '', cpf: '', cnh: ''
+  nome: '', 
+  email: '', 
+  telefone: '', 
+  senha: '', 
+  confirmarSenha: '', 
+  cpf: '', 
+  cnh: '',
+  cnpj: '',
+  endereco: ''
 })
 
 const handleCadastro = async () => {
@@ -139,12 +157,14 @@ const handleCadastro = async () => {
     const payload = {
       name: form.value.nome,
       email: form.value.email,
-      telefone: form.value.telefone, // ✨ Telefone enviado no Payload
+      telefone: form.value.telefone,
       password: form.value.senha,
       password_confirmation: form.value.confirmarSenha,
-      tipo: tipoUsuario,
+      tipo_usuario: tipoUsuario, // CORRIGIDO PARA BATER COM O LARAVEL
       cpf: form.value.cpf, 
-      cnh: form.value.cnh
+      cnh: form.value.cnh,
+      cnpj: form.value.cnpj,
+      endereco: form.value.endereco
     }
 
     const response = await api.post('/register', payload)

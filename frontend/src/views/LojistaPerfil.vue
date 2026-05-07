@@ -61,7 +61,7 @@
           <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-black/5 flex flex-col items-center text-center">
             <div class="relative group cursor-pointer mb-6">
               <div class="w-40 h-40 rounded-full border-4 border-gray-50 shadow-inner overflow-hidden bg-gray-100 flex items-center justify-center">
-                <img v-if="perfil.logo_url" :src="perfil.logo_url" class="w-full h-full object-cover" />
+                <img v-if="perfil.logo_loja" :src="perfil.logo_loja" class="w-full h-full object-cover" />
                 <span v-else class="text-5xl opacity-20">🏪</span>
               </div>
               
@@ -165,17 +165,17 @@ const router = useRouter()
 
 // DADOS DO PERFIL MOCKADOS (Prontos para API)
 const perfil = ref({
-  nome: 'Queijaria do Sertão',
-  cnpj: '12.345.678/0001-90',
-  telefone: '88999999999',
+  nome: '',
+  cnpj: '',
+  telefone: '',
   aberto: true,
-  logo_url: null,
+  logo_loja: null,
   endereco: {
-    cep: '63010-000',
-    cidade: 'Juazeiro do Norte - CE',
-    rua: 'Av. Padre Cícero',
-    numero: '1234',
-    bairro: 'Salesianos'
+    cep: '',
+    cidade: '',
+    rua: '',
+    numero: '',
+    bairro: ''
   }
 })
 
@@ -186,7 +186,7 @@ const handleLogo = (event) => {
 
   const reader = new FileReader()
   reader.onload = (e) => {
-    perfil.value.logo_url = e.target.result
+    perfil.value.logo_loja = e.target.result
   }
   reader.readAsDataURL(file)
 }
@@ -194,20 +194,31 @@ const handleLogo = (event) => {
 // Futura chamada pro Laravel
 const buscarPerfil = async () => {
   try {
-    // const res = await api.get('/lojista/perfil')
-    // perfil.value = res.data
+    const res = await api.get('/lojista/perfil')
+    
+    // Se a API retornar sucesso, a gente preenche a tela
+    if (res.data) {
+      perfil.value = res.data
+    }
   } catch (error) {
-    console.error("Erro ao buscar perfil:", error)
+    console.error("Erro ao puxar dados do banco:", error)
+    alert("Erro ao carregar o seu perfil. Verifique o console (F12).")
   }
 }
 
 const salvarPerfil = async () => {
   try {
-    // Aqui vai bater no Controller do Laravel para atualizar a tabela 'lojistas'
-    // await api.put('/lojista/perfil', perfil.value)
-    alert("Perfil atualizado com sucesso!")
+    console.log("Dados que estou enviando:", perfil.value); // Veja no console se o objeto está cheio
+    
+    const response = await api.put('/lojista/perfil', perfil.value);
+    
+    if (response.status === 200) {
+      alert("Perfil salvo no banco de dados!");
+      await buscarPerfil(); // Recarrega para ter certeza que veio do banco
+    }
   } catch (error) {
-    alert("Erro ao salvar o perfil.")
+    console.error("Erro detalhado:", error.response?.data);
+    alert("Opa! O banco recusou os dados. Verifique o console.");
   }
 }
 

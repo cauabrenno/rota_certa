@@ -3,47 +3,82 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class LojistaController extends Controller
 {
-    public function atualizarPerfil(Request $request)
+public function meuPerfil()
     {
-        // Validação: garante que o nome é texto e a logo é uma imagem de até 2MB
-        $request->validate([
-            'nome_loja' => 'nullable|string|max:255',
-            'logo_loja' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
-        ]);
-
         $user = auth()->user();
-        $dadosParaAtualizar = [];
+        $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
 
-        if ($request->has('nome_loja')) {
-            $dadosParaAtualizar['nome_loja'] = $request->nome_loja;
+        if (!$lojista) {
+            return response()->json(['message' => 'Lojista não encontrado.'], 404);
         }
 
-        // Se o front-end enviou um arquivo de imagem
-        if ($request->hasFile('logo_loja')) {
-            // Se já tinha um logo antes, deleta o antigo para não lotar o servidor
-            if ($user->logo_loja) {
-                Storage::disk('public')->delete($user->logo_loja);
-            }
-
-            // Salva a nova imagem na pasta 'logos' e pega o caminho
-            $caminhoImagem = $request->file('logo_loja')->store('logos', 'public');
-            $dadosParaAtualizar['logo_loja'] = $caminhoImagem;
+        // Tenta ler o JSON. Se o banco tiver apenas um texto normal (ou vazio), ele cria o objeto zerado.
+        $enderecoObj = json_decode($lojista->endereco);
+        
+        if (!is_object($enderecoObj)) {
+            $enderecoObj = (object) [
+                'cep' => '', 'cidade' => 'Juazeiro do Norte - CE', 'rua' => '', 'numero' => '', 'bairro' => ''
+            ];
         }
-
-        // Atualiza o banco de dados
-        $user->update($dadosParaAtualizar);
 
         return response()->json([
-            'message' => 'Perfil da loja atualizado com sucesso!',
-            'loja' => [
-                'nome_loja' => $user->nome_loja,
-                // Monta a URL completa para o front-end poder exibir a imagem
-                'logo_url' => $user->logo_loja ? asset('storage/' . $user->logo_loja) : null
-            ]
+            'nome'      => $user->name,
+            'logo_loja' => $user->logo_loja, 
+            'cnpj'      => $lojista->cnpj,
+            'telefone'  => $lojista->telefone,
+            'aberto'    => (bool) $lojista->aberto,
+            'endereco'  => $enderecoObj
         ], 200);
     }
+
+public function atualizarPerfil(Request $request)
+{
+    $user = auth()->user();
+    
+    // Logica para achar o lojista pelo user_id
+    $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+
+    if (!$lojista) {
+        return response()->json(['message' => 'Lojista não localizado no banco.'], 404);
+    }
+
+    try {
+        DB::beginTransaction();
+
+        // 1. Atualiza a tabela USERS (Nome e Logo)
+        // Verifique se o nome da coluna no seu pgAdmin é exatamente 'logo_loja'
+        DB::table('users')
+            ->where('id', $user->id)
+            ->update([
+                'name' => $request->nome,
+                'logo_loja' => $request->logo_loja
+            ]);
+
+        // 2. Atualiza a tabela LOJISTA
+        DB::table('lojista')
+            ->where('user_id', $user->id)
+            ->update([
+                'cnpj' => $request->cnpj,
+                'telefone' => $request->telefone,
+                'aberto' => $request->aberto,
+                'endereco' => json_encode($request->endereco), // Empacota o objeto
+                'updated_at' => now()
+            ]);
+
+        DB::commit();
+        return response()->json(['message' => 'Sucesso total!'], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        // Esse retorno vai te mostrar o erro real no console do navegador
+        return response()->json([
+            'message' => 'Erro interno no servidor',
+            'debug' => $e->getMessage()
+        ], 500);
+    }
+}
 }

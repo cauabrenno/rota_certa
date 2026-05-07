@@ -20,7 +20,8 @@ use App\Http\Controllers\LojistaController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/busca', [BuscaController::class, 'index']);
-Route::get('/produtos', [ProdutoController::class, 'index']);
+// ✨ PÚBLICA: Traz todos os produtos do banco para o app do cliente
+Route::get('/produtos', [ProdutoController::class, 'index']); 
 Route::post('/frete/calcular', [FreteController::class, 'calcular']);
 Route::get('/lojistas', function () { return response()->json(Lojista::all()); });
 Route::post('/esqueceu-senha', [ResetSenhaController::class, 'enviarLink']);
@@ -47,6 +48,7 @@ Route::middleware('auth:api')->group(function () {
                 'pontos' => $request->user()->pontos ?? 0
             ], 200);
         });        
+        
         // 📍 Endereços (Listar, Salvar e Excluir)
         Route::get('/enderecos', [EnderecoController::class, 'index']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);
@@ -66,10 +68,17 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
     });
 
-    // --- ÁREA DO LOJISTA ---
+// --- ÁREA DO LOJISTA ---
     Route::middleware(VerificaTipoUsuario::class . ':lojista')->group(function () {
+        // ✨ PRIVADA: Traz SÓ os produtos do lojista logado
+        Route::get('/meus-produtos', [ProdutoController::class, 'meusProdutos']); 
         Route::post('/produtos', [ProdutoController::class, 'store']);
-        Route::post('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']);
+        Route::put('/produtos/{id}', [ProdutoController::class, 'update']);
+        Route::delete('/produtos/{id}', [ProdutoController::class, 'destroy']);
+        
+        // ✨ ROTAS DO PERFIL CORRIGIDAS ✨
+        Route::get('/lojista/perfil', [LojistaController::class, 'meuPerfil']); // Puxa os dados para a tela
+        Route::put('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']); // Salva as edições
     });
 
     // --- ÁREA DO ENTREGADOR ---

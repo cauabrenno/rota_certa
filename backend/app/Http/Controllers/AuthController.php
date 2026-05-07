@@ -8,55 +8,58 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        // 1. Atualizamos a validação para esperar 'tipo_usuario' do Vue
         $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users', 
-            'password' => 'required|string|min:6|confirmed', 
-            'tipo' => 'required|string',
+            'name'         => 'required|string',
+            'email'        => 'required|email|unique:users', 
+            'password'     => 'required|string|min:6|confirmed', 
+            'tipo_usuario' => 'required|string', 
         ]);
 
         DB::beginTransaction();
 
         try {
+            // 2. Na tabela users, a coluna ainda se chama 'tipo'
             $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
+                'name'     => $request->name,
+                'email'    => $request->email,
                 'password' => Hash::make($request->password),
-                'tipo' => $request->tipo,
+                'tipo'     => $request->tipo_usuario, 
             ]);
 
-            if ($request->tipo === 'cliente') {
+            // 3. Cadastramos na tabela específica baseada no tipo
+            if ($request->tipo_usuario === 'cliente') {
                 DB::table('clientes')->insert([
-                    'user_id' => $user->id,
-                    'telefone' => $request->telefone ?? null,
-                    'endereco' => $request->endereco ?? null,
-                    'pontos' => 0,
+                    'user_id'    => $user->id,
+                    'telefone'   => $request->telefone ?? null,
+                    'endereco'   => $request->endereco ?? null,
+                    'pontos'     => 0,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-            } elseif ($request->tipo === 'lojista') {
+            } elseif ($request->tipo_usuario === 'lojista') {
                 DB::table('lojista')->insert([
-                    'user_id' => $user->id,
-                    'cnpj' => $request->cnpj,  
-                    'endereco' => $request->endereco ?? null, 
-                    'telefone' => $request->telefone ?? null,
-                    'nota' => 0, 
+                    'user_id'    => $user->id,
+                    'cnpj'       => $request->cnpj,  
+                    'endereco'   => $request->endereco ?? null, 
+                    'telefone'   => $request->telefone ?? null,
+                    'nota'       => 0, 
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-            } elseif ($request->tipo === 'entregador') {
+            } elseif ($request->tipo_usuario === 'entregador') {
                 DB::table('entregadores')->insert([
-                    'user_id' => $user->id,
-                    'cpf' => $request->cpf,
-                    'cnh' => $request->cnh,
-                    'status' => 'disponivel', 
+                    'user_id'    => $user->id,
+                    'cpf'        => $request->cpf,
+                    'cnh'        => $request->cnh,
+                    'telefone'   => $request->telefone ?? null, // Salvando telefone também
+                    'status'     => 'disponivel', 
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -66,14 +69,14 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Utilizador criado com sucesso!',
-                'user' => $user
+                'user'    => $user
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'message' => 'Erro ao criar conta.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -90,7 +93,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login realizado com sucesso',
-            'token' => $token
+            'token'   => $token
         ]);
     }
 
@@ -100,25 +103,30 @@ class AuthController extends Controller
         $endereco = null;
         $telefone = null;
 
+        // Adicionado suporte para Entregador não quebrar o me()
         if ($user->tipo === 'cliente') {
             $cliente = DB::table('clientes')->where('user_id', $user->id)->first();
             $endereco = $cliente ? $cliente->endereco : null;
-            $telefone = $cliente ? $cliente->telefone : null; // Puxa o telefone corretamente
+            $telefone = $cliente ? $cliente->telefone : null;
             
         } elseif ($user->tipo === 'lojista') {
             $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
             $endereco = $lojista ? $lojista->endereco : null;
-            $telefone = $lojista ? $lojista->telefone : null; // Puxa o telefone corretamente
+            $telefone = $lojista ? $lojista->telefone : null;
+            
+        } elseif ($user->tipo === 'entregador') {
+            $entregador = DB::table('entregadores')->where('user_id', $user->id)->first();
+            $telefone = $entregador ? $entregador->telefone : null;
         }
 
         return response()->json([
-            'id' => $user->id,
-            'nome' => $user->name,
-            'email' => $user->email,
-            'tipo' => $user->tipo,
-            'telefone' => $telefone, // Envia para o Vue!
+            'id'             => $user->id,
+            'nome'           => $user->name,
+            'email'          => $user->email,
+            'tipo'           => $user->tipo,
+            'telefone'       => $telefone, 
             'endereco_atual' => $endereco,
-            'created_at' => $user->created_at // Envia a data para o "Cliente desde XXXX"
+            'created_at'     => $user->created_at 
         ], 200);
     }
 
@@ -129,14 +137,14 @@ class AuthController extends Controller
 
             // Atualiza na tabela USERS
             if ($request->has('nome')) {
-                $user->name = $request->nome; // Match: Vue manda 'nome', BD salva 'name'
+                $user->name = $request->nome; 
             }
             if ($request->has('email')) {
                 $user->email = $request->email;
             }
             $user->save();
 
-            // Atualiza o Telefone na tabela certa (Clientes ou Lojista)
+            // Atualiza o Telefone na tabela certa garantindo integridade
             if ($request->has('telefone')) {
                 if ($user->tipo === 'cliente') {
                     DB::table('clientes')
@@ -146,18 +154,22 @@ class AuthController extends Controller
                     DB::table('lojista')
                         ->where('user_id', $user->id)
                         ->update(['telefone' => $request->telefone]);
+                } elseif ($user->tipo === 'entregador') {
+                    DB::table('entregadores')
+                        ->where('user_id', $user->id)
+                        ->update(['telefone' => $request->telefone]);
                 }
             }
 
             return response()->json([
                 'message' => 'Perfil atualizado com sucesso!',
-                'user' => $user
+                'user'    => $user
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erro ao atualizar o perfil.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -173,7 +185,6 @@ class AuthController extends Controller
                 ], 400);
             }
 
-            // O Vue manda "nova_senha_confirmation"
             if ($request->nova_senha !== $request->nova_senha_confirmation) {
                 return response()->json([
                     'message' => 'A nova senha e a confirmação não combinam.'
@@ -190,7 +201,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erro ao atualizar a senha.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
