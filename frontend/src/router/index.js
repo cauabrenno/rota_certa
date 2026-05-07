@@ -44,6 +44,11 @@ const routes = [
     meta: { requiresAuth: true } 
   },
   { 
+    path: '/lojista-perfil', 
+    component: () => import('../views/LojistaPerfil.vue'),
+    meta: { requiresAuth: true } 
+  },
+  { 
     path: '/meus-pedidos', 
     component: () => import('../views/MeusPedidos.vue'),
     meta: { requiresAuth: true } 

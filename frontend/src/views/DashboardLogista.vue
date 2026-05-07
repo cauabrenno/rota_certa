@@ -2,22 +2,48 @@
   <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] text-[#1A1A1A] font-sans pb-12">
     
     <!-- NAVBAR DO LOJISTA -->
-    <nav class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-8 mb-8">
+<nav class="w-full bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-8 mb-8">
+      
       <div class="flex items-center gap-3">
         <img :src="iRota" alt="Rota Certa" class="w-10 h-10 object-contain drop-shadow-sm">
         <div>
           <h1 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Painel do Lojista</h1>
-          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Gestão de Pedidos</p>
+          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+            {{ $route.path === '/dashboard-lojista' ? 'Gestão de Pedidos' : ($route.path === '/lojista-produtos' ? 'Gestão de Produtos' : 'Configurações da Loja') }}
+          </p>
         </div>
       </div>
       
       <div class="flex gap-6 items-center">
-        <router-link to="/dashboard-lojista" class="text-sm font-black uppercase tracking-widest text-[#2D4483]">Dashboard</router-link>
-        <router-link to="/lojista-produtos" class="text-sm font-black uppercase tracking-widest text-gray-400 hover:text-[#1A1A1A] transition-colors">Meus Produtos</router-link>
+        <router-link 
+          to="/dashboard-lojista" 
+          class="text-sm font-black uppercase tracking-widest transition-colors"
+          :class="$route.path === '/dashboard-lojista' ? 'text-[#2D4483]' : 'text-gray-400 hover:text-[#1A1A1A]'"
+        >
+          Dashboard
+        </router-link>
+
+        <router-link 
+          to="/lojista-produtos" 
+          class="text-sm font-black uppercase tracking-widest transition-colors"
+          :class="$route.path === '/lojista-produtos' ? 'text-[#2D4483]' : 'text-gray-400 hover:text-[#1A1A1A]'"
+        >
+          Meus Produtos
+        </router-link>
+
+        <router-link 
+          to="/lojista-perfil" 
+          class="text-sm font-black uppercase tracking-widest transition-colors"
+          :class="$route.path === '/lojista-perfil' ? 'text-[#2D4483]' : 'text-gray-400 hover:text-[#1A1A1A]'"
+        >
+          Meu Perfil
+        </router-link>
+
         <button @click="fazerLogout" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all">
           Sair
         </button>
       </div>
+
     </nav>
 
     <main class="max-w-[1400px] mx-auto px-8 space-y-8">
