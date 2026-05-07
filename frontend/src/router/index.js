@@ -25,14 +25,27 @@ const routes = [
     component: HomeCliente,
     meta: { requiresAuth: true } 
   },
+  // ✨ ROTA DO LOJISTA
   { 
     path: '/dashboard-lojista', 
-    component: () => import('../views/LojistaDashboard.vue'),
+    component: () => import('../views/DashboardLogista.vue'),
     meta: { requiresAuth: true } 
   },
+  // ✨ ROTA DE PRODUTOS DO LOJISTA (A ROTA QUE FALTAVA!)
+  { 
+    path: '/lojista-produtos', 
+    component: () => import('../views/LojistaProdutos.vue'),
+    meta: { requiresAuth: true } 
+  },
+  // ✨ ROTA DO ENTREGADOR
   { 
     path: '/painel-entregador', 
     component: () => import('../views/EntregadorPainel.vue'),
+    meta: { requiresAuth: true } 
+  },
+  { 
+    path: '/lojista-perfil', 
+    component: () => import('../views/LojistaPerfil.vue'),
     meta: { requiresAuth: true } 
   },
   { 
