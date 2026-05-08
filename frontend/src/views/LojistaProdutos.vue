@@ -91,9 +91,19 @@
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Marca</label>
                   <input v-model="produto.marca" type="text" placeholder="Ex: Deleite do Araripe" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
                 </div>
+                
                 <div>
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Categoria</label>
-                  <input v-model="produto.categoria" type="text" placeholder="Ex: Laticínios" required class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <select 
+                    v-model="produto.categoria" 
+                    required
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm text-[#1A1A1A] cursor-pointer appearance-none"
+                  >
+                    <option value="" disabled>Selecione uma categoria </option>
+                    <option v-for="categoria in categoriasDaHome" :key="categoria" :value="categoria">
+                      {{ categoria }}
+                    </option>
+                  </select>
                 </div>
               </div>
 
@@ -205,6 +215,17 @@ const produto = ref({
   preco_antigo: '',
   imagem_url: null
 })
+
+// Adicione essa lista junto com as suas outras variáveis
+const categoriasDaHome = [
+  'Queijos',
+  'Laticínios',
+  'Bebidas',
+  'Doces e Geleias',
+  'Padaria',
+  'Frios e Embutidos',
+  'Outros'
+]
 
 const produtos = ref([])
 const editando = ref(false)

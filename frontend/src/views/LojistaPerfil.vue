@@ -126,7 +126,12 @@
                 </div>
                 <div class="col-span-2">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Cidade - Estado</label>
-                  <input v-model="perfil.endereco.cidade" type="text" placeholder="Juazeiro do Norte - CE" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm text-gray-500" disabled />
+                  <input 
+                    v-model="perfil.endereco.cidade" 
+                    type="text" 
+                    placeholder="Ex: Crato - CE" 
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm text-[#1A1A1A] focus:border-[#1A1A1A] transition-all" 
+                  />
                 </div>
               </div>
 
