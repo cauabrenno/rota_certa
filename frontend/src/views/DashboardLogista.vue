@@ -127,7 +127,7 @@
                       Aceitar
                     </button>
                     <button v-else-if="pedido.status === 'Preparo'" @click.stop="atualizarStatus(pedido, 'Saiu p/ Entrega')" class="bg-[#2D4483] text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-900 transition-colors shadow-md">
-                      Despachar
+                      Chamar Entregador
                     </button>
                     <span v-else class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483]">Ver Detalhes ➔</span>
                   </td>
@@ -197,8 +197,8 @@
             <p class="text-[10px] font-black uppercase tracking-widest text-[#2D4483] mb-1">Local de Entrega</p>
             <p class="font-bold text-sm uppercase text-[#1A1A1A]">{{ pedidoSelecionado.cliente }}</p>
             <p class="text-xs text-gray-600 mt-1 leading-relaxed">{{ pedidoSelecionado.endereco.rua }}, {{ pedidoSelecionado.endereco.numero }}</p>
-            <p class="text-xs text-gray-600 font-bold">Bairro: {{ pedidoSelecionado.endereco.bairro }}</p>
-            <p class="text-[10px] text-gray-400 mt-1">CEP: {{ pedidoSelecionado.endereco.cep }} • {{ pedidoSelecionado.endereco.cidade }}</p>
+            <p class="text-xs text-gray-600 font-bold">Bairro: {{ pedidoSelecionado.endereco.bairro || 'Não Informado' }}</p>
+            <p class="text-[10px] text-gray-400 mt-1">CEP: {{ pedidoSelecionado.endereco.cep || 'Não Informado' }} • {{ pedidoSelecionado.endereco.cidade }}</p>
           </div>
         </div>
 
@@ -250,71 +250,134 @@
 <script setup>
 import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import api from '../services/api' // Não esqueça de importar a API!
 
 const router = useRouter()
+const route = useRoute()
 
 // Variáveis de Controle
 const filtroAtivo = ref('todos')
 const pedidoSelecionado = ref(null)
 
-// === DADOS MOCKADOS (Com detalhes completos e endereço com Bairro) ===
+// Os pedidos reais vão entrar aqui
+const pedidos = ref([])
 
-const resumo = ref({ pendentes: 3, emPreparo: 5, emEntrega: 2, finalizados: 18, faturamento: 845.50 })
+// Resumo calculado em tempo real
+const resumo = ref({ pendentes: 0, emPreparo: 0, emEntrega: 0, finalizados: 0, faturamento: 0 })
 
 const notificacoes = ref([
-  { icone: '🚨', titulo: 'Novo pedido recebido (#1042)', tempo: 'Agora mesmo' },
-  { icone: '✅', titulo: 'Pedido #1030 entregue', tempo: 'Há 15 min' },
-  { icone: '⚠️', titulo: 'Entregador Carlos aguardando', tempo: 'Há 20 min' }
-])
-
-const pedidos = ref([
-  { 
-    id: '1042', cliente: 'Cauã Brenno', hora: '14:30',
-    endereco: { rua: 'Av. Padre Cícero', numero: '1234', bairro: 'Salesianos', cep: '63010-000', cidade: 'Juazeiro do Norte - CE' },
-    lista_itens: [ { nome: 'Queijo Coalho Tradicional Deleite', qtd: 1, preco: 30.90 }, { nome: 'Manteiga da Terra (Pote)', qtd: 2, preco: 7.50 } ],
-    descricao_curta: '1x Queijo Coalho, 2x Manteiga da Terra', itensCount: 3, status: 'Pendente', pagamento: 'Pix', total: 45.90 
-  },
-  { 
-    id: '1041', cliente: 'Maria Silva', hora: '14:25',
-    endereco: { rua: 'Rua São Pedro', numero: '88', bairro: 'Centro', cep: '63010-150', cidade: 'Juazeiro do Norte - CE' },
-    lista_itens: [ { nome: 'Iogurte Natural 1L', qtd: 1, preco: 22.50 } ],
-    descricao_curta: '1x Iogurte Natural 1L', itensCount: 1, status: 'Pendente', pagamento: 'Cartão de Crédito', total: 22.50 
-  },
-  { 
-    id: '1040', cliente: 'João Pedro', hora: '14:10',
-    endereco: { rua: 'Rua do Cruzeiro', numero: '500', bairro: 'Socorro', cep: '63010-200', cidade: 'Juazeiro do Norte - CE' },
-    lista_itens: [ { nome: 'Pão de Queijo Congelado', qtd: 2, preco: 25.00 }, { nome: 'Doce de Leite Artesanal', qtd: 3, preco: 20.66 } ],
-    descricao_curta: '2x Pão de Queijo, 3x Doce de Leite', itensCount: 5, status: 'Preparo', pagamento: 'Pix', total: 112.00 
-  },
-  { 
-    id: '1039', cliente: 'Ana Clara', hora: '13:50',
-    endereco: { rua: 'Av. Castelo Branco', numero: '910', bairro: 'Pirajá', cep: '63030-000', cidade: 'Juazeiro do Norte - CE' },
-    lista_itens: [ { nome: 'Queijo Mussarela Fatiado', qtd: 2, preco: 17.00 } ],
-    descricao_curta: '2x Queijo Mussarela Fatiado', itensCount: 2, status: 'Saiu p/ Entrega', pagamento: 'Pix', total: 34.00 
-  }
+  { icone: '🔌', titulo: 'Painel Conectado ao Banco', tempo: 'Agora' },
 ])
 
 // === LÓGICA DE INTERFACE ===
 
 const pedidosFiltrados = computed(() => {
   if (filtroAtivo.value === 'pendente') {
-    return pedidos.value.filter(p => p.status === 'Pendente')
+    return pedidos.value.filter(p => p.status.toLowerCase() === 'pendente' || p.status.toLowerCase() === 'pendentes')
   }
   return pedidos.value
 })
 
 const obterCorStatus = (status) => {
-  switch (status) {
-    case 'Pendente': return 'bg-red-50 text-red-600 border border-red-100'
-    case 'Preparo': return 'bg-yellow-50 text-yellow-600 border border-yellow-100'
-    case 'Saiu p/ Entrega': return 'bg-blue-50 text-blue-600 border border-blue-100'
-    case 'Entregue': return 'bg-green-50 text-green-600 border border-green-100'
-    default: return 'bg-gray-100 text-gray-600'
-  }
+  const s = status ? String(status).toLowerCase() : ''
+  if (s.includes('pendente')) return 'bg-red-50 text-red-600 border border-red-100'
+  if (s.includes('preparo') || s.includes('preparando')) return 'bg-yellow-50 text-yellow-600 border border-yellow-100'
+  if (s.includes('saiu') || s.includes('aguardando')) return 'bg-blue-50 text-blue-600 border border-blue-100'
+  if (s.includes('entregue') || s.includes('concluido')) return 'bg-green-50 text-green-600 border border-green-100'
+  if (s.includes('cancelado')) return 'bg-gray-100 text-gray-500 border border-gray-300'
+  return 'bg-gray-100 text-gray-600'
 }
 
-// === FUNÇÕES DO MODAL ===
+// === INTEGRAÇÃO COM A API (A Mágica!) ===
+
+// Tradutor para garantir que o HTML mostre os botões
+const formatarStatusParaHTML = (statusBanco) => {
+  if (!statusBanco) return 'Pendente';
+  const s = String(statusBanco).toLowerCase();
+  
+  if (s.includes('pendente')) return 'Pendente';
+  if (s.includes('preparo')) return 'Preparo';
+  if (s.includes('saiu') || s.includes('aguardando')) return 'Saiu p/ Entrega';
+  if (s.includes('entregue') || s.includes('concluido')) return 'Entregue';
+  
+  // Se não for nenhum dos acima, capitaliza a primeira letra
+  return statusBanco.charAt(0).toUpperCase() + statusBanco.slice(1);
+}
+
+const buscarPedidos = async () => {
+  try {
+    const res = await api.get('/lojista/pedidos')
+    
+    pedidos.value = res.data.map(p => {
+      
+      // ✨ DESEMPACOTANDO O JSON COM SEGURANÇA
+      let enderecoLido = { rua: 'Não informado', numero: '', bairro: '', cep: '' }
+      
+      if (p.endereco_entrega) {
+        try {
+          const parsed = JSON.parse(p.endereco_entrega)
+          if (parsed && typeof parsed === 'object') {
+            // Se conseguiu ler o JSON, mescla os dados
+            enderecoLido = { ...enderecoLido, ...parsed }
+          } else {
+            // Se por acaso vier só uma string normal
+            enderecoLido.rua = p.endereco_entrega 
+          }
+        } catch (e) {
+          // Se for um pedido antigo que falhar no JSON.parse
+          enderecoLido.rua = p.endereco_entrega 
+        }
+      }
+
+      return {
+        ...p,
+        id: p.id,
+        cliente: p.nome_cliente || 'Cliente #' + p.user_id, 
+        hora: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        
+        // Passamos o objeto perfeito que acabamos de montar ali em cima!
+        endereco: enderecoLido,
+        
+        lista_itens: p.produtos ? p.produtos.map(prod => ({
+          nome: prod.nome,
+          qtd: prod.pivot.quantidade,
+          preco: parseFloat(prod.pivot.preco_unitario)
+        })) : [],
+        descricao_curta: p.descricao,
+        itensCount: p.produtos ? p.produtos.reduce((acc, curr) => acc + curr.pivot.quantidade, 0) : 0,
+        status: formatarStatusParaHTML(p.status), 
+        pagamento: p.forma_pagamento || 'Não informado',
+        total: parseFloat(p.valor_total)
+      }
+    })
+
+    let pendentes = 0, emPreparo = 0, emEntrega = 0, finalizados = 0, faturamento = 0
+    pedidos.value.forEach(p => {
+      const s = p.status.toLowerCase()
+      if (s.includes('pendente')) pendentes++
+      else if (s.includes('preparo')) emPreparo++
+      else if (s.includes('saiu') || s.includes('aguardando')) emEntrega++
+      else if (s.includes('entregue') || s.includes('concluido')) {
+        finalizados++
+        faturamento += p.total
+      }
+    })
+    resumo.value = { pendentes, emPreparo, emEntrega, finalizados, faturamento }
+
+  } catch (error) {
+    console.error("Erro ao buscar pedidos:", error)
+  }
+}
+// Quando a tela carregar, busca os pedidos e liga o "radar" a cada 30 segundos
+onMounted(() => {
+  buscarPedidos()
+  setInterval(() => {
+    buscarPedidos()
+  }, 30000)
+})
+
+// === FUNÇÕES DO MODAL E AÇÕES ===
 
 const abrirModalPedido = (pedido) => {
   pedidoSelecionado.value = pedido
@@ -324,17 +387,19 @@ const fecharModal = () => {
   pedidoSelecionado.value = null
 }
 
-const atualizarStatus = (pedido, novoStatus) => {
+const atualizarStatus = async (pedido, novoStatus) => {
   if(confirm(`Mudar o status do pedido #${pedido.id} para "${novoStatus}"?`)) {
-    pedido.status = novoStatus
-    
-    // Atualiza KPIs da dashboard
-    if (novoStatus === 'Preparo') {
-      resumo.value.pendentes--
-      resumo.value.emPreparo++
-    } else if (novoStatus === 'Saiu p/ Entrega') {
-      resumo.value.emPreparo--
-      resumo.value.emEntrega++
+    try {
+      await api.put(`/lojista/pedidos/${pedido.id}/status`, {
+        status: novoStatus
+      })
+      
+      alert('Status atualizado com sucesso!')
+      fecharModal()
+      buscarPedidos() // Chama a API para trazer os dados novos na mesma hora
+    } catch (error) {
+      console.error("Erro ao atualizar o status no banco:", error)
+      alert("Erro ao tentar atualizar o pedido.")
     }
   }
 }

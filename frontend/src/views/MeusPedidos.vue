@@ -338,8 +338,11 @@ const carregarPedidos = async () => {
     todosPedidos.value = res.data.pedidos.map(p => ({
       dbId: p.id, // O ID real do banco para conseguirmos cancelar!
       id: `#RC-${p.id.toString().padStart(4, '0')}`,
-      loja: 'Mercado Parceiro', 
-      logo: 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png',
+      
+      // ✨ AQUI ESTÁ A MÁGICA: Pegando o Nome e a Logo do Back-end!
+      loja: p.loja?.nome || 'Loja Parceira', 
+      logo: p.loja?.logo || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png', // Mantém o ícone padrão se o lojista não tiver cadastrado a foto ainda
+      
       itensCount: p.produtos ? p.produtos.length : 0,
       total: parseFloat(p.valor_total),
       taxaEntrega: parseFloat(p.taxa_entrega),

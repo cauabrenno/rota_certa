@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pedido;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PedidoController extends Controller {
 
@@ -43,21 +44,20 @@ class PedidoController extends Controller {
             $pedido = \App\Models\Pedido::create([
                 'user_id' => auth()->id(),
                 'lojista_id' => $request->lojista_id,
-                'valor_total' => $valorTotal, // <-- Agora o valor total é calculado por nós!
+                'valor_total' => $valorTotal, 
                 'taxa_entrega' => $request->taxa_entrega,
                 'endereco_entrega' => $request->endereco_entrega,
-                'descricao' => implode(', ', $descricaoArray), // Junta os nomes com vírgula
+                'descricao' => implode(', ', $descricaoArray), 
                 'forma_pagamento' => $request->forma_pagamento,
                 'codigo_entrega' => $codigoAleatorio
             ]);
 
-            // 4. Salva os produtos na tabela pivot (A MÁGICA!)
+            // 4. Salva os produtos na tabela pivot
             $pedido->produtos()->attach($itensComprados);
 
-            // ✨ 5. A CEREJA DO BOLO: Atualiza os pontos no Clube RotaCerta! ✨
+            // ✨ 5. Atualiza os pontos no Clube RotaCerta! ✨
             if ($request->has('pontos_ganhos') && $request->pontos_ganhos > 0) {
                 $user = auth()->user();
-                // Soma os pontos recebidos ao saldo atual do usuário
                 $user->pontos = $user->pontos + $request->pontos_ganhos;
                 $user->save();
             }
@@ -78,18 +78,31 @@ class PedidoController extends Controller {
     public function meusPedidos()
     {
         try {
-            // 1. Descobre quem é o cliente logado através do Token
             $user = auth()->user();
 
-            // 2. Vai no banco, pega só os pedidos dele e ordena do mais novo pro mais velho
             $pedidos = \App\Models\Pedido::where('user_id', $user->id)
                                          ->with('produtos')
                                          ->orderBy('created_at', 'desc')
                                          ->get();
 
-            // 3. Devolve a lista para o frontend desenhar a tela
+            // ✨ ATUALIZADO: Buscar a logo e o nome do Lojista em cada pedido
+            $pedidosComLoja = $pedidos->map(function ($pedido) {
+                $lojista = DB::table('lojista')
+                    ->join('users', 'lojista.user_id', '=', 'users.id')
+                    ->where('lojista.id', $pedido->lojista_id)
+                    ->select('users.name as nome_loja', 'users.logo_loja')
+                    ->first();
+
+                $p = $pedido->toArray();
+                $p['loja'] = [
+                    'nome' => $lojista ? $lojista->nome_loja : 'Loja Parceira',
+                    'logo' => $lojista ? $lojista->logo_loja : null,
+                ];
+                return $p;
+            });
+
             return response()->json([
-                'pedidos' => $pedidos
+                'pedidos' => $pedidosComLoja
             ], 200);
 
         } catch (\Exception $e) {
@@ -103,24 +116,33 @@ class PedidoController extends Controller {
     public function show($id)
     {
         try {
-            // 1. Pega o usuário logado
             $user = auth()->user();
 
-            // 2. Busca o pedido específico, mas garante que pertence a este usuário
             $pedido = \App\Models\Pedido::where('id', $id)
                                         ->where('user_id', $user->id)
                                         ->with('produtos')
                                         ->first();
 
-            // Se o pedido não existir ou for de outra pessoa, bloqueia
             if (!$pedido) {
                 return response()->json([
                     'message' => 'Pedido não encontrado ou não autorizado.'
                 ], 404);
             }
 
-            // 3. Devolve os dados do pedido (incluindo o status e o código de entrega)
-            return response()->json($pedido, 200);
+            // ✨ ATUALIZADO: Buscar a logo e o nome para a tela de detalhes (Show)
+            $lojista = DB::table('lojista')
+                ->join('users', 'lojista.user_id', '=', 'users.id')
+                ->where('lojista.id', $pedido->lojista_id)
+                ->select('users.name as nome_loja', 'users.logo_loja')
+                ->first();
+
+            $p = $pedido->toArray();
+            $p['loja'] = [
+                'nome' => $lojista ? $lojista->nome_loja : 'Loja Parceira',
+                'logo' => $lojista ? $lojista->logo_loja : null,
+            ];
+
+            return response()->json($p, 200);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -130,19 +152,14 @@ class PedidoController extends Controller {
         }
     }
 
-    // A NOSSA NOVA FUNÇÃO ENTRA AQUI 
     public function atualizarStatus(Request $request, $id)
     {
-        // 1. Valida se o front-end mandou o status
         $request->validate([
             'status' => 'required|string', 
         ]);
 
         try {
-            // 2. Procura o pedido no banco de dados pelo ID
             $pedido = \App\Models\Pedido::findOrFail($id);
-
-            // 3. Atualiza apenas o status e salva
             $pedido->status = $request->status;
             $pedido->save();
 
@@ -162,10 +179,8 @@ class PedidoController extends Controller {
     public function cancelar($id)
     {
         try {
-            // 1. Pega o cliente logado
             $user = auth()->user();
 
-            // 2. Procura o pedido garantindo que PERTENCE a esse cliente
             $pedido = \App\Models\Pedido::where('id', $id)
                                         ->where('user_id', $user->id)
                                         ->first();
@@ -174,7 +189,6 @@ class PedidoController extends Controller {
                 return response()->json(['message' => 'Pedido não encontrado ou não pertence a você.'], 404);
             }
 
-            // 3. Regra de Negócio: Impede de cancelar se já estiver em preparo ou além
             $statusAtual = strtolower($pedido->status);
             $statusBloqueados = ['preparo', 'preparando', 'saiu', 'caminho', 'perto', 'entregue', 'concluido'];
             
@@ -184,7 +198,6 @@ class PedidoController extends Controller {
                 }
             }
 
-            // 4. Se passou em tudo, cancela com segurança
             $pedido->status = 'Cancelado';
             $pedido->save();
 
@@ -195,6 +208,83 @@ class PedidoController extends Controller {
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erro ao cancelar o pedido.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ==========================================
+    // --- ÁREA EXCLUSIVA DO PAINEL DO LOJISTA ---
+    // ==========================================
+
+public function pedidosDoLojista()
+    {
+        try {
+            $user = auth()->user();
+            
+            $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+
+            if (!$lojista) {
+                return response()->json(['message' => 'Lojista não encontrado.'], 404);
+            }
+
+            $pedidos = \App\Models\Pedido::where('lojista_id', $lojista->id)
+                                         ->with('produtos')
+                                         ->orderBy('created_at', 'desc')
+                                         ->get();
+
+            // ✨ MÁGICA NOVA: Puxa o nome do cliente para cada pedido
+            $pedidosComCliente = $pedidos->map(function ($pedido) {
+                $cliente = DB::table('users')->where('id', $pedido->user_id)->first();
+                
+                $p = $pedido->toArray();
+                $p['nome_cliente'] = $cliente ? $cliente->name : 'Cliente #' . $pedido->user_id;
+                return $p;
+            });
+
+            return response()->json($pedidosComCliente, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao buscar os pedidos da loja.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function atualizarStatusLojista(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string', 
+        ]);
+
+        try {
+            $user = auth()->user();
+            $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+
+            if (!$lojista) {
+                return response()->json(['message' => 'Acesso negado. Lojista não encontrado.'], 404);
+            }
+
+            $pedido = \App\Models\Pedido::where('id', $id)
+                                        ->where('lojista_id', $lojista->id)
+                                        ->first();
+
+            if (!$pedido) {
+                return response()->json(['message' => 'Pedido não encontrado ou não pertence à sua loja.'], 404);
+            }
+
+            $pedido->status = $request->status;
+            $pedido->save();
+
+            return response()->json([
+                'message' => 'Status do pedido atualizado com sucesso!',
+                'pedido' => $pedido
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro interno ao atualizar o pedido.',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -70,15 +70,19 @@ Route::middleware('auth:api')->group(function () {
 
 // --- ÁREA DO LOJISTA ---
     Route::middleware(VerificaTipoUsuario::class . ':lojista')->group(function () {
-        // ✨ PRIVADA: Traz SÓ os produtos do lojista logado
+        // PRIVADA: Traz SÓ os produtos do lojista logado
         Route::get('/meus-produtos', [ProdutoController::class, 'meusProdutos']); 
         Route::post('/produtos', [ProdutoController::class, 'store']);
         Route::put('/produtos/{id}', [ProdutoController::class, 'update']);
         Route::delete('/produtos/{id}', [ProdutoController::class, 'destroy']);
         
-        // ✨ ROTAS DO PERFIL CORRIGIDAS ✨
+        // ROTAS DO PERFIL CORRIGIDAS ✨
         Route::get('/lojista/perfil', [LojistaController::class, 'meuPerfil']); // Puxa os dados para a tela
         Route::put('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']); // Salva as edições
+
+        // ROTAS DE PEDIDOS DO LOJISTA ✨
+        Route::get('/lojista/pedidos', [PedidoController::class, 'pedidosDoLojista']);
+        Route::put('/lojista/pedidos/{id}/status', [PedidoController::class, 'atualizarStatusLojista']);
     });
 
     // --- ÁREA DO ENTREGADOR ---

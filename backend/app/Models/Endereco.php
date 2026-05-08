@@ -14,6 +14,7 @@ class Endereco extends Model
         'nome_local',
         'cep',
         'rua',
-        'numero'
+        'bairro',
+        'numero',
     ];
 }

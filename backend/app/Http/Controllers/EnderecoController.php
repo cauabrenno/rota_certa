@@ -9,6 +9,7 @@ class EnderecoController extends Controller
     public function index()
     {
         // Pega todos os endereços onde o user_id é o do cliente logado
+        // O Eloquent já vai trazer a coluna 'bairro' automaticamente no get()
         $enderecos = \App\Models\Endereco::where('user_id', auth()->id())->get();
         return response()->json($enderecos, 200);
     }
@@ -18,10 +19,11 @@ class EnderecoController extends Controller
         try {
             $endereco = \App\Models\Endereco::create([
                 'user_id' => auth()->id(),
-                'nome_local' => $request->nome_local, // <-- Nomes certinhos batendo com o banco!
+                'nome_local' => $request->nome_local, 
                 'cep' => $request->cep,
                 'rua' => $request->rua,
-                'numero' => $request->numero
+                'numero' => $request->numero,
+                'bairro' => $request->bairro // ✨ Coluna nova adicionada aqui!
             ]);
 
             return response()->json([

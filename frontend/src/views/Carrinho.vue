@@ -218,6 +218,10 @@
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
             <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
+            <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
             <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
@@ -329,15 +333,15 @@ const selecionarEndereco = (end) => {
   fecharModal()
 }
 
+// === SALVAR ENDEREÇO ===
 const salvarEndereco = async () => {
   try {
     const payload = {
-      titulo: novoEndereco.value.titulo,
+      nome_local: novoEndereco.value.titulo, 
       cep: novoEndereco.value.cep,
       numero: novoEndereco.value.numero,
       rua: novoEndereco.value.rua,
-      bairro: 'Bairro Padrão', 
-      cidade: 'Cidade Nova - UF'
+      bairro: novoEndereco.value.bairro // ✨ Agora o bairro vai pro banco!
     }
 
     const response = await api.post('/enderecos', payload)
@@ -345,25 +349,24 @@ const salvarEndereco = async () => {
 
     const endFormatado = {
       ...endBanco,
-      titulo: endBanco.nome_local, 
-      bairro: endBanco.bairro || 'Bairro Padrão',
-      cidade: endBanco.cidade || 'Cidade Nova - UF'
+      titulo: endBanco.nome_local 
     }
 
     enderecosSalvos.value.push(endFormatado)
-    enderecoEntrega.value = endFormatado // Já seleciona ele pra entrega!
+    enderecoEntrega.value = endFormatado 
     
     mostrandoForm.value = false
     fecharModal()
-    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '' }
+    // Limpando o form, agora incluindo o bairro
+    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '' }
     
   } catch (error) {
     console.error("Erro ao salvar endereço:", error)
-    alert("Não foi possível salvar o endereço. Tente novamente.")
+    alert("Não foi possível salvar o endereço.")
   }
 }
 
-// === FINALIZAR PEDIDO (O Momento da Verdade) ===
+// === FINALIZAR PEDIDO ===
 const finalizarCompra = async () => {
   if (!enderecoEntrega.value) {
     return alert("⚠️ Por favor, selecione ou adicione um local de entrega!")
@@ -376,9 +379,16 @@ const finalizarCompra = async () => {
   carregandoPedido.value = true
 
   try {
-    // Montando o pacote EXATAMENTE com as colunas que o seu banco pede
+    // ✨ A MÁGICA VOLTOU: Empacotando TUDO num JSON pro Lojista ler bonitinho
+    const enderecoCompleto = JSON.stringify({
+      rua: enderecoEntrega.value.rua,
+      numero: enderecoEntrega.value.numero,
+      bairro: enderecoEntrega.value.bairro,
+      cep: enderecoEntrega.value.cep
+    })
+
     const payload = {
-      endereco_entrega: enderecoEntrega.value.id, 
+      endereco_entrega: enderecoCompleto, // Mandando o JSON empacotado
       forma_pagamento: metodoPago.value,
       valor_total: parseFloat(totalFinal.value),
       taxa_entrega: parseFloat(frete.value),
@@ -394,24 +404,16 @@ const finalizarCompra = async () => {
 
     await api.post('/pedidos', payload)
 
-    //A CORREÇÃO DO 1º PROBLEMA AQUI:
-    // Nós "congelamos" o valor dos pontos ganhos em uma variável estática
-    // ANTES de mandar o Vue esvaziar o carrinho!
     const pontosConquistados = pontosGanhos.value;
-
     itensNoCarrinho.value = []
     localStorage.removeItem('carrinho')
     
-    // Agora o alert puxa a variável congelada, mostrando os pontos exatos!
-    alert(`🎉 Pedido realizado com sucesso! Você ganhou ${pontosConquistados} pontos no Clube RotaCerta!`)
+    alert(`🎉 Pedido realizado! Você ganhou ${pontosConquistados} pontos!`)
     router.push('/meus-pedidos')
 
   } catch (error) {
-    console.error("Erro ao finalizar compra:", error.response?.data || error)
-    
-    // Agora o Vue vai te mostrar na tela exatamente a mensagem de erro do Laravel se falhar de novo!
-    const mensagemErro = error.response?.data?.message || "Erro desconhecido";
-    alert("Erro no Back-end: " + mensagemErro)
+    console.error("Erro ao finalizar compra:", error)
+    alert("Erro ao finalizar o pedido.")
   } finally {
     carregandoPedido.value = false
   }
