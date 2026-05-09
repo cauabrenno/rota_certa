@@ -127,7 +127,7 @@ const handleLogin = async () => {
       if (usuario.tipo === 'lojista') {
         router.push('/dashboard-lojista')
       } else if (usuario.tipo === 'entregador') {
-        router.push('/dashboard-entregador') 
+        router.push('/painel-entregador') 
       } else {
         router.push('/home') // Se for cliente ou vazio, vai pra home
       }

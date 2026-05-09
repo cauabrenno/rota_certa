@@ -127,7 +127,7 @@
                       Aceitar
                     </button>
                     <button v-else-if="pedido.status === 'Preparo'" @click.stop="atualizarStatus(pedido, 'Saiu p/ Entrega')" class="bg-[#2D4483] text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-900 transition-colors shadow-md">
-                      Chamar Entregador
+                      Despachar
                     </button>
                     <span v-else class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483]">Ver Detalhes ➔</span>
                   </td>

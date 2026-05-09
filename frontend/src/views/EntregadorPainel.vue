@@ -9,7 +9,7 @@
     >
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h2 class="text-xl font-black text-[#1A1A1A] italic tracking-tighter">Olá, Cauã</h2>
+          <h2 class="text-xl font-black text-[#1A1A1A] italic tracking-tighter">Olá, {{ dadosPerfil?.nome ? dadosPerfil.nome.split(' ')[0] : 'Entregador' }}</h2>
           <p class="text-sm text-gray-500 font-medium">Ganhos de hoje: <span class="text-green-600 font-bold">R$ 0,00</span></p>
         </div>
         <button @click="isProfileOpen = true" class="w-12 h-12 bg-gray-200 rounded-full border-2 border-[#1A1A1A] flex items-center justify-center overflow-hidden hover:scale-105 active:scale-95 transition-transform">
@@ -30,12 +30,12 @@
       </button>
     </div>
 
-    <transition enter-active-class="transition-all ease-out duration-500" enter-from-class="transform translate-y-full opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition-all ease-in duration-300" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-full opacity-0">
-      <div v-if="statusPedido === 'pendente'" class="absolute bottom-4 left-4 right-4 bg-white rounded-3xl shadow-2xl p-6 z-20 border border-gray-100">
+ <transition enter-active-class="transition-all ease-out duration-500" enter-from-class="transform translate-y-full opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition-all ease-in duration-300" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-full opacity-0">
+      <div v-if="statusPedido === 'pendente' && corridaAtual" class="absolute bottom-4 left-4 right-4 bg-white rounded-3xl shadow-2xl p-6 z-20 border border-gray-100">
         <div class="flex justify-between items-start mb-6">
           <div class="bg-yellow-100 text-yellow-800 text-xs font-black uppercase px-3 py-1.5 rounded-lg animate-pulse border border-yellow-200">Nova Chamada</div>
           <div class="text-right">
-            <p class="text-3xl font-black text-green-500 tracking-tighter">R$ 14,50</p>
+            <p class="text-3xl font-black text-green-500 tracking-tighter">R$ {{ Number(corridaAtual.taxa_entrega).toFixed(2) }}</p>
             <p class="text-xs font-bold text-gray-400 uppercase">Ganhos da entrega</p>
           </div>
         </div>
@@ -43,16 +43,14 @@
           <div class="absolute left-[11px] top-6 bottom-6 w-0.5 bg-gray-200"></div>
           <div class="flex gap-4 items-start relative z-10">
             <div class="w-6 h-6 rounded-full bg-[#1A1A1A] border-[3px] border-white shadow flex-shrink-0 mt-1"></div>
-            <div>
-              <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Coleta</p>
-              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">Laticínios Deleite do Araripe</p>
+            <div class="ml-1"> <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Coleta</p>
+              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">{{ corridaAtual.loja }}</p>
             </div>
           </div>
           <div class="flex gap-4 items-start relative z-10">
             <div class="w-6 h-6 rounded-full bg-green-500 border-[3px] border-white shadow flex-shrink-0 mt-1"></div>
-            <div>
-              <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Entrega</p>
-              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">Rua São Pedro, Centro</p>
+            <div class="ml-1"> <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Entrega</p>
+              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">{{ corridaAtual.endereco }}</p>
             </div>
           </div>
         </div>
@@ -145,72 +143,101 @@
       </div>
     </transition>
 
-    <transition enter-active-class="transition-all ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-all ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="isProfileOpen" class="absolute inset-0 z-[60] flex flex-col justify-end">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="isProfileOpen = false"></div>
-        <div class="relative w-full bg-white rounded-t-[3rem] p-8 pb-10 shadow-2xl flex flex-col gap-6" @click.stop>
-          <div class="flex justify-between items-center border-b border-black/5 pb-4">
-            <h2 class="text-2xl font-black text-[#1A1A1A] italic tracking-tighter">Meu Perfil</h2>
-            <button @click="isProfileOpen = false" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+<transition 
+      enter-active-class="transition-all ease-out duration-500" 
+      enter-from-class="opacity-0 translate-y-full" 
+      enter-to-class="opacity-100 translate-y-0" 
+      leave-active-class="transition-all ease-in duration-400" 
+      leave-from-class="opacity-100 translate-y-0" 
+      leave-to-class="opacity-0 translate-y-full"
+    >
+      <div v-if="isProfileOpen" class="absolute inset-0 z-[100] flex flex-col justify-end bg-[#1A1A1A]/60 backdrop-blur-sm">
+        
+        <div class="absolute inset-0 z-0" @click="isProfileOpen = false"></div>
+
+        <div class="relative w-full bg-white rounded-t-[3.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.2)] flex flex-col z-10 overflow-hidden">
+          
+          <div class="w-full flex justify-center py-4">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full"></div>
+          </div>
+
+          <div class="px-8 pb-10 flex flex-col gap-6">
+            
+            <div class="flex justify-between items-center">
+              <div>
+                <h2 class="text-3xl font-black text-[#1A1A1A] italic tracking-tighter uppercase leading-none">Perfil</h2>
+                <div class="flex items-center gap-2 mt-1">
+                  <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Entregador Verificado</p>
+                </div>
+              </div>
+              <button @click="isProfileOpen = false" class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1A1A1A] hover:bg-gray-200 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+
+            <div class="relative overflow-hidden bg-[#1A1A1A] rounded-[2.5rem] p-6 text-white shadow-xl">
+              <div class="flex items-center gap-5 relative z-10">
+                <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-yellow-400 to-orange-500 p-1 rotate-3 shadow-lg">
+                  <div class="w-full h-full bg-[#1A1A1A] rounded-[1.2rem] flex items-center justify-center text-3xl font-black italic -rotate-3">
+                    {{ dadosPerfil?.nome ? dadosPerfil.nome.charAt(0) : 'E' }}
+                  </div>
+                </div>
+                <div>
+                  <p class="text-2xl font-black italic tracking-tighter">{{ dadosPerfil?.nome || 'Entregador' }}</p>
+                  <div class="flex items-center gap-3 mt-1">
+                    <span class="flex items-center gap-1 text-yellow-400 font-bold text-sm">⭐ {{ dadosPerfil?.avaliacao || '5.0' }}</span>
+                    <span class="h-1 w-1 rounded-full bg-white/20"></span>
+                    <span class="text-white/50 text-xs font-bold uppercase tracking-widest">{{ dadosPerfil?.total_entregas || 0 }} Corridas</span>
+                  </div>
+                </div>
+              </div>
+              <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-gray-50 border border-black/5 rounded-[2rem] p-5">
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Saldo Total</p>
+                <p class="text-2xl font-black text-[#1A1A1A] tracking-tighter">R$ {{ Number(dadosPerfil?.saldo_semana || 0).toFixed(2) }}</p>
+              </div>
+              <div class="bg-green-50 border border-green-100 rounded-[2rem] p-5">
+                <p class="text-[9px] font-black text-green-600/60 uppercase tracking-widest mb-1">Status</p>
+                <p class="text-xl font-black text-green-600 uppercase italic tracking-tighter">Ativo</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Equipamento</p>
+              <div class="bg-gray-50 rounded-[2.5rem] p-2 border border-black/5 flex items-center gap-2">
+                <div class="flex-1 px-4">
+                  <label class="text-[8px] font-black text-gray-400 uppercase block">Modelo</label>
+                  <input type="text" v-model="nomeMoto" class="bg-transparent w-full font-bold text-sm outline-none text-[#1A1A1A]">
+                </div>
+                <div class="h-10 w-[1px] bg-gray-200"></div>
+                <div class="w-1/3 px-4">
+                  <label class="text-[8px] font-black text-gray-400 uppercase block">Placa</label>
+                  <input type="text" v-model="placaMoto" class="bg-transparent w-full font-black text-sm outline-none text-[#1A1A1A] uppercase tracking-widest">
+                </div>
+              </div>
+              
+              <button 
+                @click="salvarDadosVeiculoNoBanco" 
+                class="w-full py-5 bg-[#1A1A1A] text-white font-black rounded-[2rem] hover:shadow-2xl active:scale-[0.98] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lg"
+              >
+                <svg v-if="carregandoVeiculo" class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                {{ carregandoVeiculo ? 'Atualizando...' : 'Salvar Alterações' }}
+              </button>
+            </div>
+
+            <button @click="realizarLogout" class="flex items-center justify-center gap-2 text-red-400 font-black uppercase text-[10px] tracking-widest hover:text-red-600 transition-colors py-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              Encerrar Sessão
             </button>
+            
           </div>
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 bg-[#1A1A1A] rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">C</div>
-            <div>
-              <p class="font-bold text-lg text-[#1A1A1A] leading-tight">Cauã</p>
-              <div class="flex items-center gap-1 mt-1 text-sm font-bold text-yellow-500">
-                ⭐ 4.9 <span class="text-gray-400 font-medium text-xs ml-1">(124 entregas)</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-[#1A1A1A] rounded-2xl p-5 shadow-lg text-white space-y-4">
-            <div class="flex justify-between items-center border-b border-white/10 pb-3">
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-xs font-bold uppercase tracking-widest text-gray-300">Saldo da Semana</span>
-              </div>
-              <button class="text-xs font-bold text-green-400 hover:text-green-300 uppercase tracking-wider transition-colors">Ver Histórico</button>
-            </div>
-            <div>
-              <p class="text-3xl font-black tracking-tighter">R$ 342,50</p>
-              <p class="text-xs font-medium text-gray-400 mt-1">Último repasse: Há 2 dias</p>
-            </div>
-          </div>
-<div class="bg-gray-50 rounded-2xl p-5 border border-black/5 space-y-4">
-  <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Dados do Veículo</p>
-  
-  <div class="space-y-3">
-    <div>
-      <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Modelo da Moto</label>
-      <input 
-        type="text" 
-        v-model="nomeMoto" 
-        @input="salvarDadosVeiculo"
-        placeholder="Ex: Honda Biz 125"
-        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-[#1A1A1A] focus:border-[#1A1A1A] outline-none transition-all"
-      >
-    </div>
-    
-    <div>
-      <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Placa</label>
-      <input 
-        type="text" 
-        v-model="placaMoto" 
-        @input="salvarDadosVeiculo"
-        placeholder="ABC-0000"
-        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-black text-[#1A1A1A] uppercase tracking-widest focus:border-[#1A1A1A] outline-none transition-all"
-      >
-    </div>
-  </div>
-</div>
-          <button @click="realizarLogout" class="w-full py-4 bg-red-50 text-red-500 font-black rounded-2xl hover:bg-red-100 transition-all uppercase tracking-widest shadow-sm mt-2">
-            Sair do Sistema
-          </button>
         </div>
       </div>
     </transition>
-
   </div>
 </template>
 
@@ -221,10 +248,22 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import mapsLogo from '../assets/mapsLogo.png'
 import wazeLogo from '../assets/wazeLogo.png'
+import api from '../services/api' // ✨ Importando a API real!
 
 const router = useRouter()
 
-// 💾 FUNÇÕES DE SALVAMENTO BLINDADO (SÍNCRONO)
+// ✨ DADOS DO PERFIL (Vindos do Banco)
+const dadosPerfil = ref({
+  nome: 'Carregando...',
+  avaliacao: '0.0',
+  total_entregas: 0,
+  saldo_semana: 0,
+  ultimo_repasse: 'Buscando...'
+})
+
+const carregandoVeiculo = ref(false)
+
+// 💾 FUNÇÕES DE SALVAMENTO BLINDADO
 const atualizarStatus = (novoStatus) => {
   statusPedido.value = novoStatus;
   if (novoStatus) localStorage.setItem('statusPedido', novoStatus);
@@ -242,25 +281,23 @@ const atualizarPin = (novoPin) => {
   else localStorage.removeItem('pinCorretoGerado');
 }
 
-// 💾 LEITURA SEGURA  DO COFRE INICIAL
 const carregarStatusSeguro = () => {
   const salvo = localStorage.getItem('statusPedido');
   return (salvo && salvo !== 'null' && salvo !== 'undefined') ? salvo : null;
 }
 
-// 💾 Dados do Veículo (Persistidos)
-const nomeMoto = ref(localStorage.getItem('nomeMoto') || 'Honda CG 160')
-const placaMoto = ref(localStorage.getItem('placaMoto') || 'ABC-1234')
-
-// Função para salvar sempre que editar
-const salvarDadosVeiculo = () => {
-  localStorage.setItem('nomeMoto', nomeMoto.value)
-  localStorage.setItem('placaMoto', placaMoto.value)
-}
+// 💾 Variáveis de Estado
+const nomeMoto = ref(localStorage.getItem('nomeMoto') || '')
+const placaMoto = ref(localStorage.getItem('placaMoto') || '')
 
 const isOnline = ref(localStorage.getItem('isOnline') === 'true')
 const statusPedido = ref(carregarStatusSeguro())
 const pinCorretoGerado = ref(localStorage.getItem('pinCorretoGerado') || '')
+
+// ✨ VARIÁVEIS PARA A CORRIDA REAL
+const corridaAtual = ref(JSON.parse(localStorage.getItem('corridaAtual') || 'null'))
+const corridasIgnoradas = ref([]) 
+let intervaloBusca = null
 
 const showPinModal = ref(false)
 const isProfileOpen = ref(false) 
@@ -275,11 +312,85 @@ const navDestinoLng = ref(0)
 let map = null 
 let marker = null 
 
+// Helper para pegar o Header de Autenticação em todas as requisições
+const getAuth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+
+// ✨ BUSCAR DADOS INICIAIS (PERFIL, VEÍCULO E CORRIDA ATIVA)
+const buscarDadosIniciaisEntregador = async () => {
+  try {
+    const res = await api.get('/entregador/perfil', getAuth())
+    dadosPerfil.value = res.data
+    
+    // 1. Carrega dados do veículo
+    if (res.data.veiculo) {
+      nomeMoto.value = res.data.veiculo.modelo || nomeMoto.value
+      placaMoto.value = res.data.veiculo.placa || placaMoto.value
+      localStorage.setItem('nomeMoto', nomeMoto.value)
+      localStorage.setItem('placaMoto', placaMoto.value)
+    }
+
+    // 2. ✨ A MÁGICA: Verifica se o Klaus já tem uma corrida vinculada
+    // O seu back-end precisa retornar 'pedido_ativo' no JSON do perfil
+    if (res.data.pedido_ativo) {
+      corridaAtual.value = res.data.pedido_ativo;
+      
+      // Sincroniza o status do front com o status do banco
+      const statusBanco = res.data.pedido_ativo.status;
+      
+      if (statusBanco === 'saiu') {
+        statusPedido.value = 'coletado';
+      } else if (statusBanco === 'perto') {
+        statusPedido.value = 'em_rota';
+      } else {
+        statusPedido.value = 'aceito'; // Para status 'preparo' ou 'preparando'
+      }
+
+      console.log("Corrida ativa recuperada:", statusPedido.value);
+    }
+
+  } catch (error) {
+    console.log("Sessão expirada ou erro ao buscar perfil.");
+  }
+}
+
+// ✨ SALVAR DADOS DO VEÍCULO
+const salvarDadosVeiculoNoBanco = async () => {
+  if (!nomeMoto.value || !placaMoto.value) {
+    return alert("⚠️ Preencha o modelo e a placa corretamente.")
+  }
+
+  carregandoVeiculo.value = true
+  try {
+    const payload = {
+      modelo_veiculo: nomeMoto.value,
+      placa_veiculo: placaMoto.value
+    }
+
+    await api.put('/entregador/veiculo', payload, getAuth())
+
+    localStorage.setItem('nomeMoto', nomeMoto.value)
+    localStorage.setItem('placaMoto', placaMoto.value)
+
+    alert("✅ Veículo atualizado no sistema!")
+  } catch (error) {
+    console.error("Erro ao atualizar veículo:", error)
+    alert("❌ Erro de Autenticação. Faça login novamente.")
+  } finally {
+    carregandoVeiculo.value = false
+  }
+}
+
+const salvarCorrida = (corrida) => {
+  corridaAtual.value = corrida;
+  if (corrida) localStorage.setItem('corridaAtual', JSON.stringify(corrida));
+  else localStorage.removeItem('corridaAtual');
+}
+
 const dadosDaFaseAtual = computed(() => {
   switch(statusPedido.value) {
     case 'aceito': return {
       titulo: 'Indo Coletar', pingColor: 'bg-orange-500', barColor: 'bg-orange-500', iconColor: 'text-orange-500',
-      labelInfo: 'Coletar em', infoPrincipal: 'Laticínios Deleite', infoSecundaria: 'Falar com: Atendimento',
+      labelInfo: 'Coletar em', infoPrincipal: corridaAtual.value?.loja || 'Loja', infoSecundaria: 'Alerte quando chegar',
       textoBotao: 'Deslize se Coletou'
     }
     case 'coletado': return {
@@ -289,101 +400,143 @@ const dadosDaFaseAtual = computed(() => {
     }
     case 'em_rota': return {
       titulo: 'Em Rota de Entrega', pingColor: 'bg-green-500', barColor: 'bg-green-500', iconColor: 'text-green-500',
-      labelInfo: 'Entregar em', infoPrincipal: 'Rua São Pedro, Centro', infoSecundaria: 'Cliente: João Silva',
+      labelInfo: 'Entregar em', infoPrincipal: corridaAtual.value?.endereco || 'Endereço do Cliente', infoSecundaria: 'Peça o PIN',
       textoBotao: 'Deslize se Chegou' 
     }
     default: return {}
   }
 })
 
-const iniciarSimuladorSeLivre = () => {
-  if (isOnline.value && statusPedido.value === null) {
-    setTimeout(() => { 
-      if (isOnline.value && statusPedido.value === null) {
-        atualizarStatus('pendente');
-        atualizarPin(Math.floor(1000 + Math.random() * 9000).toString());
+// ✨ BUSCA INVISÍVEL DE CORRIDAS (POLLING)
+const iniciarPolling = () => {
+  pararPolling();
+  intervaloBusca = setInterval(async () => {
+    if (isOnline.value && statusPedido.value === null) {
+      try {
+        const response = await api.get('/entregador/buscar-corrida', getAuth());
+        const novaCorrida = response.data;
+        
+        if (novaCorrida && !corridasIgnoradas.value.includes(novaCorrida.id)) {
+          salvarCorrida(novaCorrida);
+          atualizarStatus('pendente');
+          atualizarPin(novaCorrida.codigo);
+          pararPolling(); 
+        }
+      } catch (error) {
+        // Ignora se for 404 (sem corridas)
       }
-    }, 3000) 
-  }
+    }
+  }, 10000); 
+}
+
+const pararPolling = () => {
+  if (intervaloBusca) clearInterval(intervaloBusca);
 }
 
 const toggleStatus = () => { 
   atualizarOnline(!isOnline.value);
   if (isOnline.value) {
-    iniciarSimuladorSeLivre()
+    iniciarPolling()
   } else {
     atualizarStatus(null);
-    swipeProgress.value = 0
+    swipeProgress.value = 0;
+    pararPolling()
   }
 }
 
+// ... Navegação Maps ...
 const prepararNavegacao = (lat, lng) => {
-  navDestinoLat.value = lat;
-  navDestinoLng.value = lng;
-  showNavModal.value = true;
+  navDestinoLat.value = lat; navDestinoLng.value = lng; showNavModal.value = true;
 }
-
 const abrirGoogleMaps = () => {
   window.open(`https://www.google.com/maps/dir/?api=1&destination=${navDestinoLat.value},${navDestinoLng.value}&travelmode=driving`, '_blank');
   showNavModal.value = false;
 }
-
 const abrirWaze = () => {
   window.open(`https://waze.com/ul?ll=${navDestinoLat.value},${navDestinoLng.value}&navigate=yes`, '_blank');
   showNavModal.value = false;
 }
 
-const checkSwipeAccept = () => {
+// 1️⃣ FUNÇÃO PARA O CARD AMARELO (Aceitar Corrida)
+const checkSwipeAccept = async () => {
   if (swipeProgress.value > 90) { 
     swipeProgress.value = 100
-    
-    // 💾 Salva OBRIGATORIAMENTE ANTES de abrir qualquer outra coisa
-    atualizarStatus('aceito'); 
-    swipeProgress.value = 0;
-    
-    setTimeout(() => {
-      prepararNavegacao(-7.2050, -39.3100);
-    }, 300);
-    
+    try {
+      // Importante: Passando o ID da corrida e o Token de autenticação
+      await api.put(`/entregador/aceitar-corrida/${corridaAtual.value.id}`, {}, getAuth());
+      
+      atualizarStatus('aceito'); 
+      swipeProgress.value = 0;
+      
+      // Abre o modal de navegação após aceitar
+      setTimeout(() => prepararNavegacao(-7.2050, -39.3100), 300);
+    } catch (error) {
+      alert("Ops, parece que outro entregador pegou essa corrida primeiro!");
+      recusarPedido();
+    }
   } else {
     swipeProgress.value = 0
   }
 }
 
-const checkSwipeFases = () => {
+// 2️⃣ FUNÇÃO PARA O CARD PRETO (Fases: Coletado -> Rota -> Finalizar)
+const checkSwipeFases = async () => {
   if (swipeFinishProgress.value > 90) {
     swipeFinishProgress.value = 100
-    
-    setTimeout(() => {
+    try {
       if (statusPedido.value === 'aceito') {
+        // Mudando para coletado (no banco vira 'saiu')
+        await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'saiu' }, getAuth());
         atualizarStatus('coletado');
-      } 
-      else if (statusPedido.value === 'coletado') {
+
+      } else if (statusPedido.value === 'coletado') {
+        // Iniciando viagem
         atualizarStatus('em_rota');
         prepararNavegacao(-7.2100, -39.3150);
-      } 
-      else if (statusPedido.value === 'em_rota') {
+
+      } else if (statusPedido.value === 'em_rota') {
+        // Chegou no destino (no banco vira 'perto')
+        await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'perto' }, getAuth());
         showPinModal.value = true;
       }
-      
-      swipeFinishProgress.value = 0;
-    }, 300)
+    } catch (error) {
+      alert("Erro ao atualizar status. Tente novamente.");
+    }
+    setTimeout(() => { swipeFinishProgress.value = 0; }, 300)
   } else {
     swipeFinishProgress.value = 0
   }
 }
 
-const confirmarEntrega = () => {
-  if (codigoCliente.value === pinCorretoGerado.value) {
-    alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
-    showPinModal.value = false
-    atualizarStatus(null);
-    atualizarPin('');
-    codigoCliente.value = ''
-    iniciarSimuladorSeLivre() 
+// ✨ CONFIRMAR ENTREGA COM PIN
+const confirmarEntrega = async () => {
+  if (codigoCliente.value === String(pinCorretoGerado.value)) {
+    try {
+      await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'entregue' }, getAuth());
+      
+      alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
+      showPinModal.value = false
+      atualizarStatus(null);
+      atualizarPin('');
+      codigoCliente.value = '';
+      salvarCorrida(null); 
+      
+      iniciarPolling();
+
+    } catch (error) {
+      alert("Erro ao finalizar a corrida no servidor.");
+    }
   } else {
     alert("⚠️ Código incorreto! O código desta entrega é: " + pinCorretoGerado.value)
   }
+}
+
+const recusarPedido = () => {
+  if (corridaAtual.value) corridasIgnoradas.value.push(corridaAtual.value.id); 
+  atualizarStatus(null);
+  salvarCorrida(null);
+  swipeProgress.value = 0;
+  iniciarPolling(); 
 }
 
 const fecharModalPin = () => {
@@ -391,57 +544,67 @@ const fecharModalPin = () => {
   codigoCliente.value = ''
 }
 
-const recusarPedido = () => {
-  atualizarStatus(null);
-  swipeProgress.value = 0
-  iniciarSimuladorSeLivre()
-}
-
 const realizarLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('isOnline');
   localStorage.removeItem('statusPedido');
   localStorage.removeItem('pinCorretoGerado');
+  localStorage.removeItem('corridaAtual');
+  pararPolling();
   router.push('/');
 }
 
-onMounted(() => {
-  iniciarSimuladorSeLivre();
+onMounted(async () => {
+  // 1. Puxa os dados do Klaus (Nome, Saldo, etc)
+  buscarDadosIniciaisEntregador(); 
 
-  map = L.map('map', { zoomControl: false }).setView([-7.2016, -39.3182], 15)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map)
-  
-  const motoIcon = L.divIcon({
-    className: 'bg-transparent',
-    html: `<div class="bg-[#1A1A1A] w-12 h-12 rounded-full border-[3px] border-white shadow-xl flex items-center justify-center text-2xl animate-bounce">🏍️</div>`,
-    iconSize: [48, 48], iconAnchor: [24, 48]
-  })
-  
-  marker = L.marker([-7.2016, -39.3182], { icon: motoIcon }).addTo(map)
-
-  if ("geolocation" in navigator) {
-    navigator.geolocation.watchPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        marker.setLatLng([lat, lng]);
-        map.setView([lat, lng]); 
-      },
-      (error) => {
-        console.error("Erro ao capturar GPS:", error.message);
-      },
-      { 
-        enableHighAccuracy: true,
-        maximumAge: 0, 
-        timeout: 5000 
-      }
-    );
-  } else {
-    console.log("Seu navegador não suporta GPS.");
+  // 2. Inicia a antena de corridas se estiver online
+  if (isOnline.value && statusPedido.value === null) {
+    iniciarPolling();
   }
-})
-</script>
 
+  // 3. ✨ A MÁGICA: Espera o DOM carregar para o Leaflet não quebrar
+  setTimeout(() => {
+    const mapContainer = document.getElementById('map');
+    
+    if (mapContainer) {
+      // Inicializa o mapa
+      map = L.map('map', { zoomControl: false }).setView([-7.2016, -39.3182], 15);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        maxZoom: 19, 
+        attribution: '© OpenStreetMap' 
+      }).addTo(map);
+      
+      const motoIcon = L.divIcon({
+        className: 'bg-transparent',
+        html: `<div class="bg-[#1A1A1A] w-12 h-12 rounded-full border-[3px] border-white shadow-xl flex items-center justify-center text-2xl animate-bounce">🏍️</div>`,
+        iconSize: [48, 48], 
+        iconAnchor: [24, 48]
+      });
+      
+      marker = L.marker([-7.2016, -39.3182], { icon: motoIcon }).addTo(map);
+
+      // GPS em tempo real
+      if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            if (marker) marker.setLatLng([lat, lng]);
+            if (map) map.setView([lat, lng]); 
+          },
+          (error) => { console.error("Erro ao capturar GPS:", error.message); },
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        );
+      }
+    } else {
+      console.error("ERRO: Container 'map' não encontrado no DOM.");
+    }
+  }, 300); // 300ms é o tempo perfeito para o Vue estabilizar
+});
+
+</script>
 <style>
 .leaflet-control-attribution { display: none !important; }
 input[type="range"] { -webkit-appearance: none; background: transparent; }

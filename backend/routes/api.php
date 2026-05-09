@@ -70,7 +70,7 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
     });
 
-// --- ÁREA DO LOJISTA ---
+    // --- ÁREA DO LOJISTA ---
     Route::middleware(VerificaTipoUsuario::class . ':lojista')->group(function () {
         // PRIVADA: Traz SÓ os produtos do lojista logado
         Route::get('/meus-produtos', [ProdutoController::class, 'meusProdutos']); 
@@ -79,8 +79,11 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/produtos/{id}', [ProdutoController::class, 'destroy']);
         
         // ROTAS DO PERFIL CORRIGIDAS ✨
-        Route::get('/lojista/perfil', [LojistaController::class, 'meuPerfil']); // Puxa os dados para a tela
-        Route::put('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']); // Salva as edições
+        Route::get('/lojista/perfil', [LojistaController::class, 'meuPerfil']); 
+        Route::post('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']); // ✨ POST para as fotos funcionarem!
+
+        // ✨ ROTA DA LOJA ABERTA/FECHADA (Restaurada)
+        Route::put('/lojista/status', [LojistaController::class, 'toggleAberto']);
 
         // ROTAS DE PEDIDOS DO LOJISTA ✨
         Route::get('/lojista/pedidos', [PedidoController::class, 'pedidosDoLojista']);
@@ -92,6 +95,10 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
         Route::get('/entregador/perfil', [EntregadorController::class, 'meuPerfil']);
         Route::put('/entregador/veiculo', [EntregadorController::class, 'atualizarVeiculo']);
+        
+        // ✨ NOVAS ROTAS DE CORRIDA DO ENTREGADOR
+        Route::get('/entregador/buscar-corrida', [EntregadorController::class, 'buscarPedidoDisponivel']);
+        Route::put('/entregador/aceitar-corrida/{id}', [EntregadorController::class, 'aceitarPedido']);
     });
 
 });
