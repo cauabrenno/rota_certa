@@ -126,6 +126,7 @@
         </div>
       </section>
 
+      <h3 class="text-xl font-black uppercase italic tracking-tighter mb-4 pl-2 mt-4">🛒 Mercados e Atacados</h3>
       <div class="flex gap-6 overflow-x-auto custom-scrollbar pb-4">
         
         <div v-if="lojas.length === 0" class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
@@ -137,21 +138,25 @@
           :key="loja.id" 
           @click="irParaLoja(loja)"
           class="flex flex-col items-center gap-2 relative transition-all"
-          :class="loja.aberto ? 'cursor-pointer hover:scale-105' : 'grayscale opacity-60 cursor-not-allowed'"
+          :class="loja.aberto ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed opacity-80'"
         >
-          <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-black/5 relative p-1 overflow-hidden">
-            <img :src="loja.logo_loja || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'" class="w-full h-full object-cover rounded-full" />
-            
-            <div v-if="!loja.aberto" class="absolute bottom-1 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Fechado
-            </div>
+          <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border relative p-1 overflow-hidden" :class="loja.aberto ? 'border-black/5' : 'border-gray-200 grayscale'">
+            <img :src="loja.logo" class="w-full h-full object-cover rounded-full" />
           </div>
-          <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center w-24 truncate">{{ loja.nome_loja }}</span>
+          
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] font-black uppercase tracking-widest text-center w-24 truncate" :class="loja.aberto ? 'text-gray-500' : 'text-gray-400 line-through'">
+              {{ loja.nome }}
+            </span>
+            <span v-if="!loja.aberto" class="text-[8px] font-black text-red-500 uppercase tracking-widest mt-0.5">
+              Fechado
+            </span>
+          </div>
         </div>
 
       </div>
 
-      <section v-for="secao in catalogo" :key="secao.titulo">
+<section v-for="secao in catalogo" :key="secao.titulo">
         <h3 class="text-2xl font-black uppercase italic tracking-tighter mb-6">{{ secao.titulo }}</h3>
         
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
@@ -169,8 +174,8 @@
                 <p class="text-[#1A1A1A] font-black text-lg lg:text-xl">R$ {{ prod.preco.toFixed(2) }}</p>
               </div>
               
-              <div class="absolute bottom-4 right-4 w-8 h-8 bg-white rounded-full shadow-md z-10 flex items-center justify-center p-1 border border-black/5 overflow-hidden">
-                <img :src="prod.lojaLogo" class="w-full h-auto object-contain" :title="prod.lojaNome" />
+              <div class="absolute bottom-4 right-4 w-8 h-8 bg-white rounded-full shadow-md z-10 flex items-center justify-center border border-black/5 overflow-hidden">
+                <img :src="prod.lojaLogo" class="w-full h-full object-cover rounded-full" :title="prod.lojaNome" />
               </div>
             </div>
             <button @click.stop="adicionarRapido(prod)" class="absolute top-3 right-3 w-10 h-10 bg-[#1A1A1A] text-white rounded-full shadow-xl hover:scale-110 active:scale-90 transition-all z-10 flex items-center justify-center">
@@ -332,11 +337,6 @@ const termoBusca = ref('')
 const categoriaAtiva = ref('⭐ Todas') 
 const categorias = ['⭐ Todas', '🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria', '🧀 Laticínios']
 
-// ✨ ADICIONE ESTA CONSTANTE (ou importe de um config)
-// Para localhost com php artisan serve:
-const storageUrl = 'http://localhost:8000/storage/';
-// Para produção, seria algo como 'https://sua-api.com/storage/'
-
 // === CATÁLOGO INTELIGENTE ===
 const catalogo = computed(() => {
   let filtrados = produtosOriginais.value
@@ -411,10 +411,25 @@ const salvarEndereco = async () => {
   }
 }
 
+// ✨ FUNÇÃO BLINDADA PARA LER IMAGENS (AGORA COM SUPORTE A BASE64)
+const getImageUrl = (caminho, fallback) => {
+  if (!caminho || caminho === 'null' || caminho === 'undefined') return fallback;
+  
+  const pathString = String(caminho);
+
+  // 🛑 O SEGREDO ESTÁ AQUI: Se for link externo OU código Base64, devolve intacto!
+  if (pathString.startsWith('http') || pathString.startsWith('data:image')) {
+    return pathString; 
+  }
+
+  // Apenas se for um caminho de pasta (ex: lojas/foto.png), ele monta a URL do storage
+  let cleanPath = pathString.replace(/^\/+/, '').replace(/^public\//, '').replace(/^storage\//, '');
+  return `http://localhost:8000/storage/${cleanPath}`;
+};
+
 // === CARREGAMENTO INICIAL (API) ===
 const carregarDadosDaHome = async () => {
   try {
-    // Batendo na rota de lojas reais que criamos
     const [resLojas, resProdutos, resPontos, resEnderecos] = await Promise.all([
       api.get('/lojas-parceiras'), 
       api.get('/produtos'),
@@ -422,28 +437,21 @@ const carregarDadosDaHome = async () => {
       api.get('/enderecos')
     ])
 
-    // ✨ ATUALIZADO: Monta a URL completa da logo real
+    // 1. Mapeando as Lojas usando o getImageUrl
     lojas.value = resLojas.data.map(loja => {
-      
-      let logoCompleta = 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'; // Fallback do Instagram removido e substituído por placeholder dinâmico
-
-      if (loja.logo_loja) {
-        // Preprende a URL do storage ao caminho relativo salvo no banco
-        logoCompleta = `${storageUrl}${loja.logo_loja}`;
-      }
-
       return {
         id: loja.id,
         nome: loja.nome_loja || 'Mercado Parceiro',
-        logo: logoCompleta, // URL final e acessível
-        aberto: loja.aberto // Flag fundamental para o layout e bloqueio!
+        logo: getImageUrl(loja.logo_loja, 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'), 
+        aberto: loja.aberto == 1 || loja.aberto === true || loja.aberto === "1" 
       }
     })
     
-    // Salva os produtos e vincula a inteligência da Loja
+    // 2. Mapeando Produtos e recuperando as fotos com o getImageUrl
     produtosOriginais.value = resProdutos.data.map(prod => {
-      // Procura qual é a loja desse produto
       const lojaDoProduto = lojas.value.find(l => l.id === prod.lojista_id)
+      
+      const logoDaLoja = lojaDoProduto ? lojaDoProduto.logo : 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png'
       const taAberto = lojaDoProduto ? lojaDoProduto.aberto : true
 
       return {
@@ -453,11 +461,12 @@ const carregarDadosDaHome = async () => {
         categoria: prod.categoria || '', 
         preco: Number(prod.preco) || 0,
         precoAntigo: null,
-        foto: prod.imagem_url || 'https://via.placeholder.com/150',
+        // Usamos a função de blindagem aqui também!
+        foto: getImageUrl(prod.imagem_url, 'https://via.placeholder.com/150'),
         lojaNome: lojaDoProduto ? lojaDoProduto.nome : 'RotaCerta',
         lojista_id: prod.lojista_id,
-        lojaLogo: lojaDoProduto ? lojaDoProduto.logo : 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png',
-        lojaAberta: taAberto // O produto agora sabe se a loja dele está aberta!
+        lojaLogo: logoDaLoja,
+        lojaAberta: taAberto 
       }
     })
 
@@ -479,7 +488,6 @@ const carregarDadosDaHome = async () => {
     console.error("Deu ruim ao buscar os dados do Back-end:", error)
   }
 }
-
 onMounted(() => {
   carregarDadosDaHome()
 })
