@@ -228,8 +228,7 @@
       </div>
     </div>
 
-    <!-- MODAL DE ENDEREÇOS -->
-    <div v-if="modalAtivo === 'enderecos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
+<div v-if="modalAtivo === 'enderecos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
@@ -249,20 +248,23 @@
             <div class="flex-1">
               <p class="font-black text-xs uppercase">{{ end.nome_local }}</p>
               <p class="text-[11px] text-gray-500 mt-1">{{ end.rua }}, {{ end.numero }}</p>
-              <p class="text-[11px] text-gray-500">CEP: {{ end.cep }}</p>
+              <p class="text-[11px] text-gray-500">{{ end.bairro }} - {{ end.cidade }} | CEP: {{ end.cep }}</p>
             </div>
-            <button @click="excluirEndereco(end.id)" class="text-red-500 text-[10px] font-black uppercase opacity-0 group-hover:opacity-100 transition-all">Excluir</button>
+            <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
+              <button @click="editarEndereco(end)" class="text-[#2D4483] text-[10px] font-black uppercase">Editar</button>
+              <button @click="excluirEndereco(end.id)" class="text-red-500 text-[10px] font-black uppercase">Excluir</button>
+            </div>
           </div>
 
-          <button @click="mostrandoForm = true" class="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-xs hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all">
+          <button @click="abrirFormNovo" class="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-xs hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-all">
             + Adicionar Novo Endereço
           </button>
         </div>
 
         <form v-if="mostrandoForm" @submit.prevent="salvarEndereco" class="space-y-4">
           <div>
-            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome do Local (Ex: Casa, Trabalho)</label>
-            <input v-model="novoEndereco.nome_local" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome do Local</label>
+            <input v-model="novoEndereco.nome_local" type="text" placeholder="Ex: Casa, Trabalho" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -279,12 +281,24 @@
             <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
           <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
+              <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            </div>
+            <div>
+              <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Cidade</label>
+              <input v-model="novoEndereco.cidade" type="text" placeholder="Ex: Crato - CE" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
-            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
+            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">
+              {{ enderecoEditandoId ? 'Atualizar' : 'Salvar' }}
+            </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>   
 
     <!-- MODAL DE PAGAMENTOS -->
     <div v-if="modalAtivo === 'pagamentos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
@@ -519,7 +533,11 @@ const mostrandoForm = ref(false)
 // Variáveis dos Formulários
 const formPerfil = ref({ nome: '', email: '', telefone: '' })
 const formSenha = ref({ atual: '', nova: '', confirmar: '' })
-const novoEndereco = ref({ nome_local: '', cep: '', numero: '', rua: '' })
+
+// ✨ ADICIONADO BAIRRO E CIDADE + CONTROLE DE EDIÇÃO
+const novoEndereco = ref({ nome_local: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' })
+const enderecoEditandoId = ref(null)
+
 const novoCartao = ref({ numero_cartao: '', nome_impresso: '', validade: '', cvv: '' })
 const formSuporte = ref({ assunto: '', mensagem: '' })
 const notificacoesConfig = ref({ pedidos: true, promocoes: false })
@@ -536,7 +554,10 @@ const abrirModal = (tipo) => {
   if (tipo === 'editarPerfil') formPerfil.value = { ...usuario.value }
 }
 
-const fecharModal = () => { modalAtivo.value = null }
+const fecharModal = () => { 
+  modalAtivo.value = null 
+  mostrandoForm.value = false
+}
 
 // === FUNÇÕES DE PERFIL E SENHA ===
 const salvarPerfil = async () => {
@@ -573,14 +594,39 @@ const salvarSenha = async () => {
   }
 }
 
-// === SALVAR E EXCLUIR ENDEREÇOS/CARTÕES NO BANCO DE DADOS ===
+// === SALVAR, EDITAR E EXCLUIR ENDEREÇOS ===
+
+// Abre o form zerado para criar um NOVO
+const abrirFormNovo = () => {
+  enderecoEditandoId.value = null
+  novoEndereco.value = { nome_local: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
+  mostrandoForm.value = true
+}
+
+// Abre o form preenchido para EDITAR
+const editarEndereco = (end) => {
+  enderecoEditandoId.value = end.id
+  novoEndereco.value = { ...end }
+  mostrandoForm.value = true
+}
+
 const salvarEndereco = async () => {
   try {
-    await api.post('/enderecos', novoEndereco.value)
-    novoEndereco.value = { nome_local: '', cep: '', numero: '', rua: '' }
+    // Se tiver ID, a gente atualiza (PUT). Se não, a gente cria (POST).
+    if (enderecoEditandoId.value) {
+      await api.put(`/enderecos/${enderecoEditandoId.value}`, novoEndereco.value)
+    } else {
+      await api.post('/enderecos', novoEndereco.value)
+    }
+    
+    // Reseta o formulário
+    novoEndereco.value = { nome_local: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
+    enderecoEditandoId.value = null
     mostrandoForm.value = false
+    
     carregarTudo() 
   } catch (error) {
+    console.error("Erro ao salvar endereço:", error)
     alert("Erro ao salvar endereço.")
   }
 }
@@ -592,6 +638,7 @@ const excluirEndereco = async (id) => {
   }
 }
 
+// === SALVAR E EXCLUIR CARTÕES NO BANCO DE DADOS ===
 const salvarCartao = async () => {
   try {
     await api.post('/cartoes', novoCartao.value)

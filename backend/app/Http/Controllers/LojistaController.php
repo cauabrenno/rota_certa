@@ -81,4 +81,14 @@ public function atualizarPerfil(Request $request)
         ], 500);
     }
 }
+
+public function listarLojas()
+    {
+        $lojas = \Illuminate\Support\Facades\DB::table('lojista')
+            ->join('users', 'lojista.user_id', '=', 'users.id')
+            ->select('lojista.id', 'users.name as nome_loja', 'users.logo_loja', 'lojista.aberto')
+            ->get();
+
+        return response()->json($lojas, 200);
+    }
 }

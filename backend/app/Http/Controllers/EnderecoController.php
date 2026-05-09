@@ -46,4 +46,28 @@ class EnderecoController extends Controller
         
         return response()->json(['message' => 'Endereço excluído com sucesso!'], 200);
     }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $endereco = \App\Models\Endereco::where('id', $id)->where('user_id', auth()->id())->first();
+            
+            if (!$endereco) {
+                return response()->json(['message' => 'Endereço não encontrado.'], 404);
+            }
+
+            $endereco->update([
+                'nome_local' => $request->nome_local,
+                'cep' => $request->cep,
+                'rua' => $request->rua,
+                'numero' => $request->numero,
+                'bairro' => $request->bairro,
+                'cidade' => $request->cidade
+            ]);
+
+            return response()->json(['message' => 'Endereço atualizado!', 'endereco' => $endereco], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erro ao atualizar.', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

@@ -24,6 +24,7 @@ Route::get('/busca', [BuscaController::class, 'index']);
 Route::get('/produtos', [ProdutoController::class, 'index']); 
 Route::post('/frete/calcular', [FreteController::class, 'calcular']);
 Route::get('/lojistas', function () { return response()->json(Lojista::all()); });
+Route::get('/lojas-parceiras', [LojistaController::class, 'listarLojas']);
 Route::post('/esqueceu-senha', [ResetSenhaController::class, 'enviarLink']);
 Route::post('/resetar-senha', [ResetSenhaController::class, 'resetar'])->name('password.reset');
 
@@ -53,6 +54,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/enderecos', [EnderecoController::class, 'index']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);
         Route::delete('/enderecos/{id}', [EnderecoController::class, 'destroy']);
+        Route::put('/enderecos/{id}', [EnderecoController::class, 'update']);
         
         // 💳 Cartões (Listar, Salvar e Excluir)
         Route::get('/cartoes', [CartaoController::class, 'index']);
