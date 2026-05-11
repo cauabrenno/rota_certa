@@ -20,6 +20,7 @@ class EntregadorController extends Controller
 
         // ✨ BUSCA BLINDADA: Agora ignora status de conclusão para evitar o loop no F5
         $pedidoAtivo = DB::table('pedidos')
+            ->select('pedidos.*') // Adicionado Select All para não omitir colunas (lat/lng)
             ->where(function($query) use ($entregador, $user) {
                 if ($entregador) {
                     $query->where('pedidos.entregador_id', $entregador->id);
@@ -92,6 +93,8 @@ class EntregadorController extends Controller
                 'pedidos.taxa_entrega',
                 'pedidos.codigo_entrega',
                 'pedidos.endereco_entrega',
+                'pedidos.lat_entrega', // ✨ FALTAVA ISSO: Pega o GPS Real
+                'pedidos.lng_entrega', // ✨ FALTAVA ISSO: Pega o GPS Real
                 'users.name as nome_loja',
                 'lojista.endereco as loja_endereco'
             )
@@ -115,7 +118,9 @@ class EntregadorController extends Controller
             'taxa_entrega' => $pedido->taxa_entrega,
             'codigo' => $pedido->codigo_entrega,
             'endereco' => $enderecoTexto,
-            'endereco_entrega' => $pedido->endereco_entrega
+            'endereco_entrega' => $pedido->endereco_entrega,
+            'lat_entrega' => $pedido->lat_entrega, // ✨ Envia o GPS pro front
+            'lng_entrega' => $pedido->lng_entrega  // ✨ Envia o GPS pro front
         ], 200);
     }
 

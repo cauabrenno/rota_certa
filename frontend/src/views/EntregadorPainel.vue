@@ -317,57 +317,100 @@ const getAuth = () => ({ headers: { Authorization: `Bearer ${localStorage.getIte
 
 // ... Navegação Maps ...
 const prepararNavegacao = (lat, lng) => {
-  navDestinoLat.value = lat; 
-  navDestinoLng.value = lng; 
-  showNavModal.value = true;
+  navDestinoLat.value = lat; navDestinoLng.value = lng; showNavModal.value = true;
 }
 
-// ✨ URL CORRIGIDA PARA O GOOGLE MAPS OFICIAL
+// ✨ NAVEGAÇÃO BLINDADA (Google Maps e Waze)
 const abrirGoogleMaps = () => {
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${navDestinoLat.value},${navDestinoLng.value}&travelmode=driving`, '_blank');
+  let query = "";
+  
+  // Se tivermos as coordenadas salvas no banco (padrão ouro)
+  if (navDestinoLat.value && navDestinoLng.value) {
+    query = `${navDestinoLat.value},${navDestinoLng.value}`;
+  } else {
+    // Se não tiver (como no caso da Loja/Coleta), usamos o endereço em texto
+    const endereco = corridaAtual.value?.loja_endereco || corridaAtual.value?.endereco;
+    query = encodeURIComponent(formatarEndereco(endereco));
+  }
+
+  const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  window.open(url, '_blank');
   showNavModal.value = false;
 }
 
 const abrirWaze = () => {
-  window.open(`https://waze.com/ul?ll=${navDestinoLat.value},${navDestinoLng.value}&navigate=yes`, '_blank');
+  let ll = "";
+  if (navDestinoLat.value && navDestinoLng.value) {
+    ll = `${navDestinoLat.value},${navDestinoLng.value}`;
+  } else {
+    const endereco = corridaAtual.value?.loja_endereco || corridaAtual.value?.endereco;
+    ll = encodeURIComponent(formatarEndereco(endereco));
+  }
+
+  const url = `https://waze.com/ul?q=${ll}&navigate=yes`;
+  window.open(url, '_blank');
   showNavModal.value = false;
 }
 
-// ✨ TRADUTOR DE ENDEREÇO PARA COORDENADAS (AGORA COM FALLBACK PARA TRINDADE)
+// ✨ TRADUTOR DE ENDEREÇO BLINDADO EM CASCATA
 const buscarCoordenadasDoEndereco = async (enderecoBanco) => {
   if (!enderecoBanco) {
-    prepararNavegacao(-7.8865, -40.0818); // Centro de Trindade - PE
+    prepararNavegacao(-7.2016, -39.3182); // Juazeiro Padrão
     return;
   }
 
   try {
-    let enderecoBusca = "";
+    let tentativas = [];
 
+    // Se for o endereço do cliente (JSON)
     if (enderecoBanco.startsWith('{')) {
       const endObj = JSON.parse(enderecoBanco);
-      enderecoBusca = `${endObj.rua}, ${endObj.bairro || ''}, ${endObj.cidade || 'Trindade'}, Pernambuco, Brasil`;
+      const rua = endObj.rua || '';
+      const num = endObj.numero || '';
+      const bairro = endObj.bairro || '';
+      const cidade = endObj.cidade || '';
+      
+      if(cidade) {
+        tentativas.push(`${rua}, ${num}, ${bairro}, ${cidade}, Brasil`);
+        tentativas.push(`${rua}, ${bairro}, ${cidade}, Brasil`);
+        tentativas.push(`${rua}, ${cidade}, Brasil`);
+        tentativas.push(`${cidade}, Brasil`); // Se tudo der errado, joga pro centro da cidade!
+      } else {
+        tentativas.push(`${rua}, ${num}, ${bairro}, Brasil`);
+        tentativas.push(`${rua}, ${bairro}, Brasil`);
+      }
     } else {
-      enderecoBusca = `${enderecoBanco}, Trindade, Pernambuco, Brasil`; // Fallback pra Trindade
+      // Se for o texto da coleta (Loja)
+      tentativas.push(`${enderecoBanco}, Juazeiro do Norte, Ceará, Brasil`);
+      tentativas.push(`${enderecoBanco}, Brasil`);
+      tentativas.push(`Juazeiro do Norte, Ceará, Brasil`); // Fallback se a loja não for mapeada
     }
 
-    console.log("🔍 Buscando coordenadas para a loja:", enderecoBusca);
+    for (let query of tentativas) {
+      let qLimpa = query.replace(/,\s*,/g, ', ').replace(/\s+/g, ' ').trim();
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qLimpa)}`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoBusca)}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data && data.length > 0) {
-      const lat = parseFloat(data[0].lat);
-      const lng = parseFloat(data[0].lon);
-      prepararNavegacao(lat, lng);
-    } else {
-      prepararNavegacao(-7.8865, -40.0818); 
+        if (data && data.length > 0) {
+          console.log("📍 Satélite achou a rota por:", qLimpa);
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          prepararNavegacao(lat, lng);
+          return; // Achou? Tira o Entregador daqui e abre o Modal de Rota!
+        }
+      } catch (error) {}
     }
+
+    // Se REALMENTE esgotar todas as tentativas, cai no centro de Juazeiro para não quebrar a tela
+    console.warn("Satélite não mapeou esse local. Rota central ativada.");
+    prepararNavegacao(-7.2016, -39.3182);
+
   } catch (error) {
-    prepararNavegacao(-7.8865, -40.0818); 
+    prepararNavegacao(-7.2016, -39.3182);
   }
 };
-
 
 // ✨ BUSCAR DADOS INICIAIS (PERFIL, VEÍCULO E CORRIDA ATIVA)
 const buscarDadosIniciaisEntregador = async () => {
@@ -403,7 +446,7 @@ const buscarDadosIniciaisEntregador = async () => {
         } else {
           const enderecoCliente = corridaAtual.value.endereco_entrega || corridaAtual.value.endereco;
           if(enderecoCliente) buscarCoordenadasDoEndereco(enderecoCliente);
-          else prepararNavegacao(-7.8865, -40.0818);
+          else prepararNavegacao(-7.7652, -40.2684);
         }
 
       } else if (statusBanco === 'perto') {
@@ -413,7 +456,7 @@ const buscarDadosIniciaisEntregador = async () => {
         
         // ✨ Indo coletar (Tenta traçar pra loja)
         if(corridaAtual.value.loja_endereco) buscarCoordenadasDoEndereco(corridaAtual.value.loja_endereco);
-        else setTimeout(() => prepararNavegacao(-7.8865, -40.0818), 500);
+        else setTimeout(() => prepararNavegacao(-7.7652, -40.2684), 500);
       }
     }
 
@@ -542,7 +585,7 @@ const checkSwipeAccept = async () => {
       if(corridaAtual.value.loja_endereco) {
         buscarCoordenadasDoEndereco(corridaAtual.value.loja_endereco);
       } else {
-        setTimeout(() => prepararNavegacao(-7.8865, -40.0818), 300);
+        setTimeout(() => prepararNavegacao(-7.7652, -40.2684), 300); // ✨ TRINDADE
       }
 
     } catch (error) {
@@ -554,32 +597,31 @@ const checkSwipeAccept = async () => {
   }
 }
 
-// 2️⃣ FUNÇÃO PARA O CARD PRETO (Fases: Coletado -> Rota -> Finalizar)
 const checkSwipeFases = async () => {
   if (swipeFinishProgress.value > 90) {
     swipeFinishProgress.value = 100
     try {
       if (statusPedido.value === 'aceito') {
-        
+        // --- FASE: INDO COLETAR NA LOJA ---
         await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'saiu' }, getAuth());
         atualizarStatus('coletado');
+        
+        // Resetamos as coordenadas para a função abrirGoogleMaps usar o endereço da LOJA
+        navDestinoLat.value = null;
+        navDestinoLng.value = null;
 
       } else if (statusPedido.value === 'coletado') {
-        
+        // --- FASE: INICIAR ROTA PARA O CLIENTE ---
         atualizarStatus('em_rota');
 
-        // ✨ PREPARANDO ROTA PARA O CLIENTE COM GPS EXATO DO BANCO DE DADOS
+        // ✨ PEGA O GPS DO CLIENTE QUE SALVOU NO BANCO (ID 46 no seu print)
         if (corridaAtual.value.lat_entrega && corridaAtual.value.lng_entrega) {
-          console.log("📍 Rota traçada com o GPS exato salvo no banco!");
-          prepararNavegacao(corridaAtual.value.lat_entrega, corridaAtual.value.lng_entrega);
+          navDestinoLat.value = corridaAtual.value.lat_entrega;
+          navDestinoLng.value = corridaAtual.value.lng_entrega;
+          showNavModal.value = true; // Abre o modal para escolher Maps ou Waze
         } else {
-          // Fallback para pedidos antigos que não têm o GPS salvo no banco ainda
-          const enderecoCliente = corridaAtual.value.endereco_entrega || corridaAtual.value.endereco;
-          if (enderecoCliente) {
-            buscarCoordenadasDoEndereco(enderecoCliente);
-          } else {
-            prepararNavegacao(-7.8865, -40.0818);
-          }
+          // Se for um pedido antigo sem GPS, tenta achar pelo texto
+          buscarCoordenadasDoEndereco(corridaAtual.value.endereco_entrega || corridaAtual.value.endereco);
         }
 
       } else if (statusPedido.value === 'em_rota') {
@@ -587,7 +629,7 @@ const checkSwipeFases = async () => {
         showPinModal.value = true;
       }
     } catch (error) {
-      alert("Erro ao atualizar status. Tente novamente.");
+      alert("Erro ao atualizar status.");
     }
     setTimeout(() => { swipeFinishProgress.value = 0; }, 300)
   } else {
@@ -609,8 +651,7 @@ const confirmarEntrega = async () => {
       codigoCliente.value = '';
       salvarCorrida(null); 
       
-      // ✨ ATUALIZAÇÃO DO SALDO:
-      // Puxa os dados atualizados do banco (saldo e total de entregas) imediatamente para a tela!
+      // ✨ ATUALIZAÇÃO DO SALDO DE FORMA DINÂMICA
       await buscarDadosIniciaisEntregador(); 
       
       iniciarPolling();
@@ -657,7 +698,8 @@ onMounted(async () => {
     const mapContainer = document.getElementById('map');
     
     if (mapContainer) {
-      map = L.map('map', { zoomControl: false }).setView([-7.8865, -40.0818], 15);
+      // ✨ MAPA INICIAL EM JUAZEIRO DO NORTE (Apenas como ponto de partida)
+      map = L.map('map', { zoomControl: false }).setView([-7.2016, -39.3182], 15);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
         maxZoom: 19, 
@@ -671,15 +713,19 @@ onMounted(async () => {
         iconAnchor: [24, 48]
       });
       
-      marker = L.marker([-7.8865, -40.0818], { icon: motoIcon }).addTo(map);
+      // ✨ MARCADOR INICIAL EM JUAZEIRO DO NORTE
+      marker = L.marker([-7.2016, -39.3182], { icon: motoIcon }).addTo(map);
 
+      // ✨ A MÁGICA GLOBAL: Lê a antena GPS do dispositivo.
       if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition(
           (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            console.log("📍 GPS Real do Aparelho encontrado:", lat, lng);
+            
             if (marker) marker.setLatLng([lat, lng]);
-            if (map) map.setView([lat, lng]); 
+            if (map) map.setView([lat, lng]); // Move a câmera pro seu local exato
           },
           (error) => { console.error("Erro ao capturar GPS:", error.message); },
           { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -689,9 +735,10 @@ onMounted(async () => {
       console.error("ERRO: Container 'map' não encontrado no DOM.");
     }
   }, 300); 
-});
+}); // 
 
 </script>
+
 <style>
 .leaflet-control-attribution { display: none !important; }
 input[type="range"] { -webkit-appearance: none; background: transparent; }
