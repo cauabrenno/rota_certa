@@ -10,7 +10,7 @@
       <div class="flex justify-between items-center mb-6">
         <div>
           <h2 class="text-xl font-black text-[#1A1A1A] italic tracking-tighter">Olá, {{ dadosPerfil?.nome ? dadosPerfil.nome.split(' ')[0] : 'Entregador' }}</h2>
-          <p class="text-sm text-gray-500 font-medium">Ganhos de hoje: <span class="text-green-600 font-bold">R$ 0,00</span></p>
+          <p class="text-sm text-gray-500 font-medium">Ganhos de hoje: <span class="text-green-600 font-bold">R$ {{ Number(dadosPerfil?.saldo_semana || 0).toFixed(2) }}</span></p>
         </div>
         <button @click="isProfileOpen = true" class="w-12 h-12 bg-gray-200 rounded-full border-2 border-[#1A1A1A] flex items-center justify-center overflow-hidden hover:scale-105 active:scale-95 transition-transform">
            <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
@@ -44,13 +44,13 @@
           <div class="flex gap-4 items-start relative z-10">
             <div class="w-6 h-6 rounded-full bg-[#1A1A1A] border-[3px] border-white shadow flex-shrink-0 mt-1"></div>
             <div class="ml-1"> <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Coleta</p>
-              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">{{ corridaAtual.loja }}</p>
+              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">{{ corridaAtual.loja || 'Loja Parceira' }}</p>
             </div>
           </div>
           <div class="flex gap-4 items-start relative z-10">
             <div class="w-6 h-6 rounded-full bg-green-500 border-[3px] border-white shadow flex-shrink-0 mt-1"></div>
             <div class="ml-1"> <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Entrega</p>
-              <p class="font-bold text-[#1A1A1A] leading-tight text-lg">{{ corridaAtual.endereco }}</p>
+              <p class="font-bold text-[#1A1A1A] leading-tight text-lg truncate w-48">{{ formatarEndereco(corridaAtual.endereco_entrega || corridaAtual.endereco) }}</p>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@
           <button @click="recusarPedido" class="text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors">Recusar Chamada</button>
         </div>
       </div>
-    </transition>
+  </transition>
 
     <transition enter-active-class="transition-all ease-out duration-500" enter-from-class="transform translate-y-full opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition-all ease-in duration-300" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-full opacity-0">
       <div v-if="['aceito', 'coletado', 'em_rota'].includes(statusPedido)" class="absolute bottom-4 left-4 right-4 bg-[#1A1A1A] text-white rounded-3xl shadow-2xl p-6 z-20">
@@ -83,7 +83,7 @@
         </div>
         <div class="mb-8">
           <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ dadosDaFaseAtual.labelInfo }}</p>
-          <p class="font-bold text-2xl leading-tight">{{ dadosDaFaseAtual.infoPrincipal }}</p>
+          <p class="font-bold text-2xl leading-tight truncate w-full">{{ dadosDaFaseAtual.infoPrincipal }}</p>
           <p class="text-sm text-gray-400 mt-1">{{ dadosDaFaseAtual.infoSecundaria }}</p>
         </div>
         <div class="relative w-full h-[4.5rem] bg-white/10 rounded-2xl overflow-hidden shadow-inner">
@@ -248,7 +248,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import mapsLogo from '../assets/mapsLogo.png'
 import wazeLogo from '../assets/wazeLogo.png'
-import api from '../services/api' // ✨ Importando a API real!
+import api from '../services/api' 
 
 const router = useRouter()
 
@@ -315,6 +315,60 @@ let marker = null
 // Helper para pegar o Header de Autenticação em todas as requisições
 const getAuth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
 
+// ... Navegação Maps ...
+const prepararNavegacao = (lat, lng) => {
+  navDestinoLat.value = lat; 
+  navDestinoLng.value = lng; 
+  showNavModal.value = true;
+}
+
+// ✨ URL CORRIGIDA PARA O GOOGLE MAPS OFICIAL
+const abrirGoogleMaps = () => {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${navDestinoLat.value},${navDestinoLng.value}&travelmode=driving`, '_blank');
+  showNavModal.value = false;
+}
+
+const abrirWaze = () => {
+  window.open(`https://waze.com/ul?ll=${navDestinoLat.value},${navDestinoLng.value}&navigate=yes`, '_blank');
+  showNavModal.value = false;
+}
+
+// ✨ TRADUTOR DE ENDEREÇO PARA COORDENADAS (AGORA COM FALLBACK PARA TRINDADE)
+const buscarCoordenadasDoEndereco = async (enderecoBanco) => {
+  if (!enderecoBanco) {
+    prepararNavegacao(-7.8865, -40.0818); // Centro de Trindade - PE
+    return;
+  }
+
+  try {
+    let enderecoBusca = "";
+
+    if (enderecoBanco.startsWith('{')) {
+      const endObj = JSON.parse(enderecoBanco);
+      enderecoBusca = `${endObj.rua}, ${endObj.bairro || ''}, ${endObj.cidade || 'Trindade'}, Pernambuco, Brasil`;
+    } else {
+      enderecoBusca = `${enderecoBanco}, Trindade, Pernambuco, Brasil`; // Fallback pra Trindade
+    }
+
+    console.log("🔍 Buscando coordenadas para a loja:", enderecoBusca);
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoBusca)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      prepararNavegacao(lat, lng);
+    } else {
+      prepararNavegacao(-7.8865, -40.0818); 
+    }
+  } catch (error) {
+    prepararNavegacao(-7.8865, -40.0818); 
+  }
+};
+
+
 // ✨ BUSCAR DADOS INICIAIS (PERFIL, VEÍCULO E CORRIDA ATIVA)
 const buscarDadosIniciaisEntregador = async () => {
   try {
@@ -330,22 +384,37 @@ const buscarDadosIniciaisEntregador = async () => {
     }
 
     // 2. ✨ A MÁGICA: Verifica se o Klaus já tem uma corrida vinculada
-    // O seu back-end precisa retornar 'pedido_ativo' no JSON do perfil
     if (res.data.pedido_ativo) {
       corridaAtual.value = res.data.pedido_ativo;
       
-      // Sincroniza o status do front com o status do banco
+      // ✨ CORREÇÃO DO BUG DO PIN: Salva o PIN de volta na memória após o F5
+      if (res.data.pedido_ativo.codigo_entrega) {
+        atualizarPin(res.data.pedido_ativo.codigo_entrega);
+      }
+      
       const statusBanco = res.data.pedido_ativo.status;
       
       if (statusBanco === 'saiu') {
         statusPedido.value = 'coletado';
+        
+        // ✨ Usa as coordenadas reais que vieram do banco de dados (se houver)
+        if (corridaAtual.value.lat_entrega && corridaAtual.value.lng_entrega) {
+          prepararNavegacao(corridaAtual.value.lat_entrega, corridaAtual.value.lng_entrega);
+        } else {
+          const enderecoCliente = corridaAtual.value.endereco_entrega || corridaAtual.value.endereco;
+          if(enderecoCliente) buscarCoordenadasDoEndereco(enderecoCliente);
+          else prepararNavegacao(-7.8865, -40.0818);
+        }
+
       } else if (statusBanco === 'perto') {
         statusPedido.value = 'em_rota';
       } else {
-        statusPedido.value = 'aceito'; // Para status 'preparo' ou 'preparando'
+        statusPedido.value = 'aceito';
+        
+        // ✨ Indo coletar (Tenta traçar pra loja)
+        if(corridaAtual.value.loja_endereco) buscarCoordenadasDoEndereco(corridaAtual.value.loja_endereco);
+        else setTimeout(() => prepararNavegacao(-7.8865, -40.0818), 500);
       }
-
-      console.log("Corrida ativa recuperada:", statusPedido.value);
     }
 
   } catch (error) {
@@ -386,6 +455,18 @@ const salvarCorrida = (corrida) => {
   else localStorage.removeItem('corridaAtual');
 }
 
+// ✨ TRADUTOR DE ENDEREÇO (Para tirar o JSON da tela)
+const formatarEndereco = (enderecoBanco) => {
+  if (!enderecoBanco) return 'Endereço do Cliente';
+  try {
+    if (enderecoBanco.startsWith('{')) {
+      const obj = JSON.parse(enderecoBanco);
+      return `${obj.rua}, ${obj.numero} - ${obj.bairro || ''}`;
+    }
+  } catch (e) {}
+  return enderecoBanco;
+}
+
 const dadosDaFaseAtual = computed(() => {
   switch(statusPedido.value) {
     case 'aceito': return {
@@ -400,7 +481,10 @@ const dadosDaFaseAtual = computed(() => {
     }
     case 'em_rota': return {
       titulo: 'Em Rota de Entrega', pingColor: 'bg-green-500', barColor: 'bg-green-500', iconColor: 'text-green-500',
-      labelInfo: 'Entregar em', infoPrincipal: corridaAtual.value?.endereco || 'Endereço do Cliente', infoSecundaria: 'Peça o PIN',
+      labelInfo: 'Entregar em', 
+      // ✨ Usa o formatador aqui para ficar bonito:
+      infoPrincipal: formatarEndereco(corridaAtual.value?.endereco_entrega || corridaAtual.value?.endereco), 
+      infoSecundaria: 'Peça o PIN',
       textoBotao: 'Deslize se Chegou' 
     }
     default: return {}
@@ -444,32 +528,23 @@ const toggleStatus = () => {
   }
 }
 
-// ... Navegação Maps ...
-const prepararNavegacao = (lat, lng) => {
-  navDestinoLat.value = lat; navDestinoLng.value = lng; showNavModal.value = true;
-}
-const abrirGoogleMaps = () => {
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${navDestinoLat.value},${navDestinoLng.value}&travelmode=driving`, '_blank');
-  showNavModal.value = false;
-}
-const abrirWaze = () => {
-  window.open(`https://waze.com/ul?ll=${navDestinoLat.value},${navDestinoLng.value}&navigate=yes`, '_blank');
-  showNavModal.value = false;
-}
-
 // 1️⃣ FUNÇÃO PARA O CARD AMARELO (Aceitar Corrida)
 const checkSwipeAccept = async () => {
   if (swipeProgress.value > 90) { 
     swipeProgress.value = 100
     try {
-      // Importante: Passando o ID da corrida e o Token de autenticação
       await api.put(`/entregador/aceitar-corrida/${corridaAtual.value.id}`, {}, getAuth());
       
       atualizarStatus('aceito'); 
       swipeProgress.value = 0;
       
-      // Abre o modal de navegação após aceitar
-      setTimeout(() => prepararNavegacao(-7.2050, -39.3100), 300);
+      // ✨ Ao aceitar, tenta puxar as coordenadas reais da loja 
+      if(corridaAtual.value.loja_endereco) {
+        buscarCoordenadasDoEndereco(corridaAtual.value.loja_endereco);
+      } else {
+        setTimeout(() => prepararNavegacao(-7.8865, -40.0818), 300);
+      }
+
     } catch (error) {
       alert("Ops, parece que outro entregador pegou essa corrida primeiro!");
       recusarPedido();
@@ -485,17 +560,29 @@ const checkSwipeFases = async () => {
     swipeFinishProgress.value = 100
     try {
       if (statusPedido.value === 'aceito') {
-        // Mudando para coletado (no banco vira 'saiu')
+        
         await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'saiu' }, getAuth());
         atualizarStatus('coletado');
 
       } else if (statusPedido.value === 'coletado') {
-        // Iniciando viagem
+        
         atualizarStatus('em_rota');
-        prepararNavegacao(-7.2100, -39.3150);
+
+        // ✨ PREPARANDO ROTA PARA O CLIENTE COM GPS EXATO DO BANCO DE DADOS
+        if (corridaAtual.value.lat_entrega && corridaAtual.value.lng_entrega) {
+          console.log("📍 Rota traçada com o GPS exato salvo no banco!");
+          prepararNavegacao(corridaAtual.value.lat_entrega, corridaAtual.value.lng_entrega);
+        } else {
+          // Fallback para pedidos antigos que não têm o GPS salvo no banco ainda
+          const enderecoCliente = corridaAtual.value.endereco_entrega || corridaAtual.value.endereco;
+          if (enderecoCliente) {
+            buscarCoordenadasDoEndereco(enderecoCliente);
+          } else {
+            prepararNavegacao(-7.8865, -40.0818);
+          }
+        }
 
       } else if (statusPedido.value === 'em_rota') {
-        // Chegou no destino (no banco vira 'perto')
         await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'perto' }, getAuth());
         showPinModal.value = true;
       }
@@ -515,11 +602,16 @@ const confirmarEntrega = async () => {
       await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'entregue' }, getAuth());
       
       alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
+      
       showPinModal.value = false
       atualizarStatus(null);
       atualizarPin('');
       codigoCliente.value = '';
       salvarCorrida(null); 
+      
+      // ✨ ATUALIZAÇÃO DO SALDO:
+      // Puxa os dados atualizados do banco (saldo e total de entregas) imediatamente para a tela!
+      await buscarDadosIniciaisEntregador(); 
       
       iniciarPolling();
 
@@ -555,21 +647,17 @@ const realizarLogout = () => {
 }
 
 onMounted(async () => {
-  // 1. Puxa os dados do Klaus (Nome, Saldo, etc)
   buscarDadosIniciaisEntregador(); 
 
-  // 2. Inicia a antena de corridas se estiver online
   if (isOnline.value && statusPedido.value === null) {
     iniciarPolling();
   }
 
-  // 3. ✨ A MÁGICA: Espera o DOM carregar para o Leaflet não quebrar
   setTimeout(() => {
     const mapContainer = document.getElementById('map');
     
     if (mapContainer) {
-      // Inicializa o mapa
-      map = L.map('map', { zoomControl: false }).setView([-7.2016, -39.3182], 15);
+      map = L.map('map', { zoomControl: false }).setView([-7.8865, -40.0818], 15);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
         maxZoom: 19, 
@@ -583,9 +671,8 @@ onMounted(async () => {
         iconAnchor: [24, 48]
       });
       
-      marker = L.marker([-7.2016, -39.3182], { icon: motoIcon }).addTo(map);
+      marker = L.marker([-7.8865, -40.0818], { icon: motoIcon }).addTo(map);
 
-      // GPS em tempo real
       if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition(
           (position) => {
@@ -601,7 +688,7 @@ onMounted(async () => {
     } else {
       console.error("ERRO: Container 'map' não encontrado no DOM.");
     }
-  }, 300); // 300ms é o tempo perfeito para o Vue estabilizar
+  }, 300); 
 });
 
 </script>

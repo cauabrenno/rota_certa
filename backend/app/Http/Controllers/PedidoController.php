@@ -47,6 +47,8 @@ class PedidoController extends Controller {
                 'valor_total' => $valorTotal, 
                 'taxa_entrega' => $request->taxa_entrega,
                 'endereco_entrega' => $request->endereco_entrega,
+                'lat_entrega' => $request->lat_entrega, // ✨ AQUI: Salvando Latitude
+                'lng_entrega' => $request->lng_entrega, // ✨ AQUI: Salvando Longitude
                 'descricao' => implode(', ', $descricaoArray), 
                 'forma_pagamento' => $request->forma_pagamento,
                 'codigo_entrega' => $codigoAleatorio
@@ -160,8 +162,24 @@ class PedidoController extends Controller {
 
         try {
             $pedido = \App\Models\Pedido::findOrFail($id);
+            $statusAntigo = $pedido->status; // Salva o status anterior para comparar
+            
             $pedido->status = $request->status;
             $pedido->save();
+
+            // ✨ LÓGICA DA CARTEIRA: Se a corrida foi finalizada agora, paga o entregador!
+            if (strtolower($request->status) === 'entregue' && strtolower($statusAntigo) !== 'entregue') {
+                if ($pedido->entregador_id) {
+                    DB::table('entregadores')
+                        ->where('id', $pedido->entregador_id)
+                        ->increment('saldo', $pedido->taxa_entrega);
+                    
+                    // Incrementa o contador de entregas realizadas
+                    DB::table('entregadores')
+                        ->where('id', $pedido->entregador_id)
+                        ->increment('total_entregas', 1);
+                }
+            }
 
             return response()->json([
                 'message' => 'Status do pedido atualizado com sucesso!',
@@ -217,7 +235,7 @@ class PedidoController extends Controller {
     // --- ÁREA EXCLUSIVA DO PAINEL DO LOJISTA ---
     // ==========================================
 
-public function pedidosDoLojista()
+    public function pedidosDoLojista()
     {
         try {
             $user = auth()->user();

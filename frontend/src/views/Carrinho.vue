@@ -379,21 +379,76 @@ const finalizarCompra = async () => {
   carregandoPedido.value = true
 
   try {
-    // ✨ A MÁGICA VOLTOU: Empacotando TUDO num JSON pro Lojista ler bonitinho
+    let lat = null;
+    let lng = null;
+    let cidadeReal = '';
+    let estadoReal = '';
+    
+    // 1. ✨ INTEGRAÇÃO VIACEP: Descobre a cidade exata baseada no CEP do cliente!
+    const cepLimpo = enderecoEntrega.value.cep.replace(/\D/g, '');
+    try {
+      if (cepLimpo.length === 8) {
+        const viaCepRes = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+        const viaCepData = await viaCepRes.json();
+        if (!viaCepData.erro) {
+          cidadeReal = viaCepData.localidade; // Pega a cidade real (ex: Trindade, Juazeiro...)
+          estadoReal = viaCepData.uf; // Pega o Estado (PE, CE...)
+        }
+      }
+    } catch (e) { console.warn("Aviso: ViaCEP falhou, usando dados locais."); }
+
+    // 2. ✨ SATÉLITE BLINDADO: Manda a rua e a cidade exata pro Nominatim
+    const rua = enderecoEntrega.value.rua;
+    const numero = enderecoEntrega.value.numero;
+    
+    // Só adiciona a cidade na busca se o ViaCEP achou, para não confundir o satélite
+    const enderecoBusca = cidadeReal 
+      ? `${rua}, ${numero}, ${cidadeReal}, ${estadoReal}, Brasil`
+      : `${rua}, ${numero}, Brasil`;
+      
+    console.log("🔍 Buscando no satélite:", enderecoBusca);
+    
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(enderecoBusca)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        lat = data[0].lat;
+        lng = data[0].lon;
+        console.log("📍 GPS cravado com sucesso!", lat, lng);
+      } else {
+        // Se o satélite não achar o NÚMERO da casa, tenta achar pelo menos a RUA
+        const buscaSemNumero = cidadeReal ? `${rua}, ${cidadeReal}, Brasil` : `${rua}, Brasil`;
+        const resSemNum = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(buscaSemNumero)}`);
+        const dataSemNum = await resSemNum.json();
+        if (dataSemNum && dataSemNum.length > 0) {
+          lat = dataSemNum[0].lat;
+          lng = dataSemNum[0].lon;
+        }
+      }
+    } catch (e) {
+      console.warn("Erro ao buscar coordenadas no mapa livre.");
+    }
+
+    // 3. Monta o pacote final pra mandar pro Laravel
     const enderecoCompleto = JSON.stringify({
-      rua: enderecoEntrega.value.rua,
-      numero: enderecoEntrega.value.numero,
+      rua: rua,
+      numero: numero,
       bairro: enderecoEntrega.value.bairro,
-      cep: enderecoEntrega.value.cep
+      cep: enderecoEntrega.value.cep,
+      cidade: cidadeReal // Salvamos a cidade no recibo!
     })
 
     const payload = {
-      endereco_entrega: enderecoCompleto, // Mandando o JSON empacotado
+      endereco_entrega: enderecoCompleto, 
       forma_pagamento: metodoPago.value,
       valor_total: parseFloat(totalFinal.value),
       taxa_entrega: parseFloat(frete.value),
       pontos_ganhos: pontosGanhos.value,
       lojista_id: itensNoCarrinho.value[0]?.lojista_id || 1, 
+      lat_entrega: lat, // O GPS EXATO vai pro banco aqui!
+      lng_entrega: lng, // O GPS EXATO vai pro banco aqui!
       itens: itensNoCarrinho.value.map(item => ({
         id: item.id,                 
         produto_id: item.id,         

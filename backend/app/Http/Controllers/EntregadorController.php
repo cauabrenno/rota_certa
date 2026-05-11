@@ -7,15 +7,38 @@ use Illuminate\Support\Facades\DB;
 
 class EntregadorController extends Controller
 {
-    // === 1. DADOS DO PERFIL (100% REAIS) ===
+    // === 1. DADOS DO PERFIL (COM FILTRO DE LOOP CORRIGIDO) ===
     public function meuPerfil()
     {
         $user = auth()->user();
         
-        // Busca os dados específicos na tabela de entregadores
+        // Busca os dados do entregador na tabela específica
         $entregador = DB::table('entregadores')
             ->where('entregadores.user_id', $user->id)
+            ->orderBy('entregadores.id', 'desc')
             ->first();
+
+        // ✨ BUSCA BLINDADA: Agora ignora status de conclusão para evitar o loop no F5
+        $pedidoAtivo = DB::table('pedidos')
+            ->where(function($query) use ($entregador, $user) {
+                if ($entregador) {
+                    $query->where('pedidos.entregador_id', $entregador->id);
+                }
+                $query->orWhere('pedidos.entregador_id', $user->id);
+            })
+            // ✨ Adicionado 'entregue' e 'Entregue' para o card não voltar após finalizar
+            ->whereNotIn('pedidos.status', ['finalizado', 'cancelado', 'entregue', 'Entregue'])
+            ->first();
+
+        // Formata os dados da loja para a navegação do Vue
+        if ($pedidoAtivo) {
+            $loja = DB::table('lojista')->where('lojista.id', $pedidoAtivo->lojista_id)->first();
+            if ($loja) {
+                $donoLoja = DB::table('users')->where('users.id', $loja->user_id)->first();
+                $pedidoAtivo->loja = $donoLoja->name ?? 'Loja Parceira';
+                $pedidoAtivo->loja_endereco = $loja->endereco ?? null;
+            }
+        }
 
         return response()->json([
             'nome' => $user->name,
@@ -26,7 +49,10 @@ class EntregadorController extends Controller
             'veiculo' => [
                 'modelo' => $user->modelo_veiculo,
                 'placa' => $user->placa_veiculo
-            ]
+            ],
+            'pedido_ativo' => $pedidoAtivo,
+            'debug_id_entregador' => $entregador->id ?? null,
+            'debug_id_user' => $user->id
         ], 200);
     }
 
@@ -55,11 +81,9 @@ class EntregadorController extends Controller
         ], 200);
     }
 
-    // === 2. LÓGICA DE CORRIDAS (ANTENA AMPLIADA) ===
-    
+    // === 2. LÓGICA DE BUSCA DE NOVAS CORRIDAS ===
     public function buscarPedidoDisponivel()
     {
-        // Agora busca pedidos em qualquer status de processamento da loja
         $pedido = DB::table('pedidos')
             ->join('lojista', 'pedidos.lojista_id', '=', 'lojista.id')
             ->join('users', 'lojista.user_id', '=', 'users.id')
@@ -68,10 +92,10 @@ class EntregadorController extends Controller
                 'pedidos.taxa_entrega',
                 'pedidos.codigo_entrega',
                 'pedidos.endereco_entrega',
-                'users.name as nome_loja'
+                'users.name as nome_loja',
+                'lojista.endereco as loja_endereco'
             )
-            // ✨ Aceita múltiplos status para garantir que a chamada apareça
-            ->whereIn('pedidos.status', ['aceito', 'preparo', 'preparando'])
+            ->whereIn('pedidos.status', ['aceito', 'preparo', 'preparando', 'Aceito', 'Preparo', 'Preparando'])
             ->whereNull('pedidos.entregador_id')
             ->first();
 
@@ -87,42 +111,41 @@ class EntregadorController extends Controller
         return response()->json([
             'id' => $pedido->id,
             'loja' => $pedido->nome_loja,
+            'loja_endereco' => $pedido->loja_endereco,
             'taxa_entrega' => $pedido->taxa_entrega,
             'codigo' => $pedido->codigo_entrega,
-            'endereco' => $enderecoTexto
+            'endereco' => $enderecoTexto,
+            'endereco_entrega' => $pedido->endereco_entrega
         ], 200);
     }
 
-public function aceitarPedido($id)
-{
-    try {
-        $user = auth()->user();
+    public function aceitarPedido($id)
+    {
+        try {
+            $user = auth()->user();
+            $entregador = DB::table('entregadores')->where('entregadores.user_id', $user->id)->first();
 
-        // 1. Verificamos se o pedido existe e está disponível
-        $pedido = DB::table('pedidos')->where('id', $id)->first();
+            if (!$entregador) {
+                return response()->json(['message' => 'Perfil de entregador não encontrado.'], 403);
+            }
 
-        if (!$pedido) {
-            return response()->json(['message' => 'Pedido não encontrado.'], 404);
+            $pedido = DB::table('pedidos')->where('pedidos.id', $id)->first();
+
+            if (!$pedido || $pedido->entregador_id !== null) {
+                return response()->json(['message' => 'Pedido indisponível.'], 400);
+            }
+
+            DB::table('pedidos')
+                ->where('pedidos.id', $id)
+                ->update([
+                    'entregador_id' => $entregador->id,
+                    'status' => 'saiu'
+                ]);
+
+            return response()->json(['message' => 'Corrida aceita com sucesso!'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        if ($pedido->entregador_id !== null) {
-            return response()->json(['message' => 'Este pedido já foi aceito por outro entregador.'], 400);
-        }
-
-        // 2. Fazemos o update ignorando timestamps se der erro
-        DB::table('pedidos')
-            ->where('id', $id)
-            ->update([
-                'entregador_id' => $user->id,
-                'status' => 'saiu'
-                // Removi o 'updated_at' para evitar erro caso a coluna não exista
-            ]);
-
-        return response()->json(['message' => 'Corrida aceita com sucesso!'], 200);
-
-    } catch (\Exception $e) {
-        // Isso aqui vai te mostrar o erro REAL no console do navegador agora
-        return response()->json(['error' => $e->getMessage()], 500);
     }
-}
 }
