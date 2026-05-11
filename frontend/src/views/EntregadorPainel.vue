@@ -134,9 +134,7 @@
           <p class="text-sm text-gray-500 font-medium mb-8">Peça o código de 4 dígitos ao cliente.</p>
           
           <input type="text" maxlength="4" v-model="codigoCliente" placeholder="0000" class="w-full text-center text-5xl font-black tracking-[0.5em] text-[#1A1A1A] bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all mb-4 placeholder-gray-300">
-          
-          <p class="text-xs text-red-500 font-bold mb-4">🤫 Dica de dev: O PIN gerado é {{ pinCorretoGerado }}</p>
-
+        
           <button @click="confirmarEntrega" class="w-full py-4 bg-[#1A1A1A] text-white font-black rounded-2xl hover:bg-black transition-all uppercase tracking-widest shadow-xl">Confirmar e Finalizar</button>
           <button @click="fecharModalPin" class="mt-4 text-xs font-bold text-gray-400 hover:text-[#1A1A1A] uppercase tracking-widest">Cancelar</button>
         </div>
@@ -339,15 +337,12 @@ const abrirGoogleMaps = () => {
 }
 
 const abrirWaze = () => {
-  let ll = "";
-  if (navDestinoLat.value && navDestinoLng.value) {
-    ll = `${navDestinoLat.value},${navDestinoLng.value}`;
-  } else {
-    const endereco = corridaAtual.value?.loja_endereco || corridaAtual.value?.endereco;
-    ll = encodeURIComponent(formatarEndereco(endereco));
-  }
-
-  const url = `https://waze.com/ul?q=${ll}&navigate=yes`;
+  const lat = navDestinoLat.value;
+  const lng = navDestinoLng.value;
+  
+  // O link mágico que abre no PC sem dar tela azul:
+  const url = `https://www.waze.com/live-map/directions?to=ll.${lat},${lng}`;
+  
   window.open(url, '_blank');
   showNavModal.value = false;
 }
