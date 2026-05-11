@@ -215,7 +215,7 @@ const salvarPerfil = async () => {
   try {
     console.log("Dados que estou enviando:", perfil.value); // Veja no console se o objeto está cheio
     
-    const response = await api.put('/lojista/perfil', perfil.value);
+    const response = await api.post('/lojista/perfil', perfil.value);
     
     if (response.status === 200) {
       alert("Perfil salvo no banco de dados!");
