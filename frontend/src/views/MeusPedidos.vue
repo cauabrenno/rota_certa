@@ -64,8 +64,8 @@
               <h3 class="text-2xl font-black uppercase leading-tight">{{ pedidoAtivo.loja }}</h3>
               <p class="text-xs text-gray-500 font-medium mt-1">{{ pedidoAtivo.itensCount }} itens • R$ {{ pedidoAtivo.total.toFixed(2) }}</p>
             </div>
-            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 group-hover:scale-110 transition-transform">
-              <img :src="pedidoAtivo.logo" class="w-8 h-8 object-contain" />
+            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 group-hover:scale-110 transition-transform overflow-hidden">
+              <img :src="pedidoAtivo.logo" class="w-full h-full object-cover rounded-full" />
             </div>
           </div>
 
@@ -144,8 +144,8 @@
             </div>
 
             <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 p-1 group-hover:scale-105 transition-transform">
-                <img :src="pedido.logo" class="w-full h-full object-contain" />
+              <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 group-hover:scale-105 transition-transform overflow-hidden">
+                <img :src="pedido.logo" class="w-full h-full object-cover rounded-full" />
               </div>
               <div class="flex-1">
                 <h4 class="font-black text-sm uppercase">{{ pedido.loja }}</h4>
@@ -183,8 +183,8 @@
         <button @click="fecharDetalhes" class="absolute top-4 right-4 lg:top-6 lg:right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">✕</button>
         
         <div class="flex items-center gap-4 border-b border-gray-100 pb-5 md:pb-6 mb-5 md:mb-6">
-          <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 p-2">
-            <img :src="pedidoSelecionado.logo" class="w-full h-full object-contain" />
+          <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 overflow-hidden">
+            <img :src="pedidoSelecionado.logo" class="w-full h-full object-cover rounded-full" />
           </div>
           <div class="flex-1">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ pedidoSelecionado.id }}</p>
@@ -338,8 +338,11 @@ const carregarPedidos = async () => {
     todosPedidos.value = res.data.pedidos.map(p => ({
       dbId: p.id, // O ID real do banco para conseguirmos cancelar!
       id: `#RC-${p.id.toString().padStart(4, '0')}`,
-      loja: 'Mercado Parceiro', 
-      logo: 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png',
+      
+      // ✨ AQUI ESTÁ A MÁGICA: Pegando o Nome e a Logo do Back-end!
+      loja: p.loja?.nome || 'Loja Parceira', 
+      logo: p.loja?.logo || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png', // Mantém o ícone padrão se o lojista não tiver cadastrado a foto ainda
+      
       itensCount: p.produtos ? p.produtos.length : 0,
       total: parseFloat(p.valor_total),
       taxaEntrega: parseFloat(p.taxa_entrega),

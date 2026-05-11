@@ -49,7 +49,6 @@
 
     <main class="p-4 lg:p-10 max-w-4xl mx-auto space-y-6">
       
-      <!-- Seção do Carrinho Vazio -->
       <section v-if="itensNoCarrinho.length === 0" class="bg-white rounded-3xl p-10 text-center shadow-xl border border-black/5 flex flex-col items-center gap-4">
         <span class="text-6xl opacity-40 grayscale">🛒</span>
         <h2 class="text-xl font-black uppercase italic tracking-tighter">Sua cesta está vazia!</h2>
@@ -59,7 +58,6 @@
         </router-link>
       </section>
 
-      <!-- Seção de Itens -->
       <section v-else class="bg-white rounded-3xl p-5 md:p-8 shadow-xl border border-black/5">
         <h3 class="text-xs font-black uppercase tracking-widest opacity-40 mb-5 italic">Itens Selecionados</h3>
         
@@ -95,7 +93,6 @@
         </transition-group>
       </section>
 
-      <!-- Local de Entrega -->
       <section v-if="itensNoCarrinho.length > 0" class="bg-white rounded-3xl p-5 md:p-8 shadow-xl border border-black/5 space-y-4">
         <div class="flex justify-between items-center text-xs font-black uppercase tracking-widest opacity-40 italic">
           <h3>Local de Entrega</h3>
@@ -114,7 +111,6 @@
         </div>
       </section>
 
-      <!-- Forma de Pagamento -->
       <section v-if="itensNoCarrinho.length > 0" class="bg-white rounded-3xl p-5 md:p-8 shadow-xl border border-black/5 space-y-5">
         <h3 class="text-xs font-black uppercase tracking-widest opacity-40 italic">Forma de Pagamento</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -123,14 +119,12 @@
             :class="metodoPago === metodo.id ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-gray-50 text-[#1A1A1A] opacity-60'"
             class="p-5 rounded-2xl border border-black/5 flex flex-col items-center gap-2 transition-all duration-200"
           >
-            <!-- Alterado temporariamente a imagem do PIX para Emoji para não quebrar sem a imagem -->
-              <img v-if="metodo.id === 'pix'" :src="imgPix" class="w-8 h-8 object-contain" :class="metodoPago === 'pix' ? 'invert' : 'grayscale opacity-50'" />            <span v-else class="text-2xl">{{ metodo.icon }}</span>
+            <img v-if="metodo.id === 'pix'" :src="imgPix" class="w-8 h-8 object-contain" :class="metodoPago === 'pix' ? 'invert' : 'grayscale opacity-50'" />            <span v-else class="text-2xl">{{ metodo.icon }}</span>
             <span class="font-black text-[9px] uppercase tracking-widest">{{ metodo.nome }}</span>
           </button>
         </div>
       </section>
 
-      <!-- Resumo Final -->
       <section v-if="itensNoCarrinho.length > 0" class="bg-[#1A1A1A] text-white rounded-[2rem] p-8 shadow-2xl space-y-5 relative overflow-hidden">
         <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#C2F2D9] rounded-full opacity-5"></div>
 
@@ -165,7 +159,6 @@
 
     </main>
 
-    <!-- Modal de Endereços -->
     <div v-if="modalAtivo === 'enderecos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -217,6 +210,10 @@
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
             <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
+            <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
@@ -329,15 +326,15 @@ const selecionarEndereco = (end) => {
   fecharModal()
 }
 
+// === SALVAR ENDEREÇO ===
 const salvarEndereco = async () => {
   try {
     const payload = {
-      titulo: novoEndereco.value.titulo,
+      nome_local: novoEndereco.value.titulo, 
       cep: novoEndereco.value.cep,
       numero: novoEndereco.value.numero,
       rua: novoEndereco.value.rua,
-      bairro: 'Bairro Padrão', 
-      cidade: 'Cidade Nova - UF'
+      bairro: novoEndereco.value.bairro // ✨ Agora o bairro vai pro banco!
     }
 
     const response = await api.post('/enderecos', payload)
@@ -345,25 +342,24 @@ const salvarEndereco = async () => {
 
     const endFormatado = {
       ...endBanco,
-      titulo: endBanco.nome_local, 
-      bairro: endBanco.bairro || 'Bairro Padrão',
-      cidade: endBanco.cidade || 'Cidade Nova - UF'
+      titulo: endBanco.nome_local 
     }
 
     enderecosSalvos.value.push(endFormatado)
-    enderecoEntrega.value = endFormatado // Já seleciona ele pra entrega!
+    enderecoEntrega.value = endFormatado 
     
     mostrandoForm.value = false
     fecharModal()
-    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '' }
+    // Limpando o form, agora incluindo o bairro
+    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '' }
     
   } catch (error) {
     console.error("Erro ao salvar endereço:", error)
-    alert("Não foi possível salvar o endereço. Tente novamente.")
+    alert("Não foi possível salvar o endereço.")
   }
 }
 
-// === FINALIZAR PEDIDO (O Momento da Verdade) ===
+// === FINALIZAR PEDIDO (COM SATÉLITE EM CASCATA) ===
 const finalizarCompra = async () => {
   if (!enderecoEntrega.value) {
     return alert("⚠️ Por favor, selecione ou adicione um local de entrega!")
@@ -376,14 +372,76 @@ const finalizarCompra = async () => {
   carregandoPedido.value = true
 
   try {
-    // Montando o pacote EXATAMENTE com as colunas que o seu banco pede
+    let lat = null;
+    let lng = null;
+    let cidadeReal = enderecoEntrega.value.cidade || '';
+    let estadoReal = enderecoEntrega.value.estado || 'Ceará'; // Padrão
+    
+    // 1. ✨ INTEGRAÇÃO VIACEP
+    const cepCru = enderecoEntrega.value.cep || '';
+    const cepLimpo = cepCru.replace(/\D/g, '');
+    if (cepLimpo.length === 8) {
+        try {
+            const viaCepRes = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+            const viaCepData = await viaCepRes.json();
+            if (!viaCepData.erro) {
+                cidadeReal = viaCepData.localidade; 
+                estadoReal = viaCepData.uf; 
+            }
+        } catch (e) { console.warn("ViaCEP indisponível no momento."); }
+    }
+
+    // 2. ✨ SATÉLITE BLINDADO (TENTATIVAS EM CASCATA)
+    const rua = enderecoEntrega.value.rua || '';
+    const numero = enderecoEntrega.value.numero || '';
+    const bairro = enderecoEntrega.value.bairro || '';
+    
+    // Lista de tentativas do mais exato para o mais genérico
+    const tentativas = [];
+    if(cidadeReal) {
+        tentativas.push(`${rua}, ${numero}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`);
+        tentativas.push(`${rua}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`);
+        tentativas.push(`${rua}, ${cidadeReal}, ${estadoReal}, Brasil`);
+        tentativas.push(`${cidadeReal}, ${estadoReal}, Brasil`); // Fallback infalível pra cidade!
+    } else {
+        tentativas.push(`${rua}, ${numero}, ${bairro}, Brasil`);
+        tentativas.push(`${rua}, ${bairro}, Brasil`);
+    }
+
+    console.log("🔍 Iniciando busca de satélite...");
+    
+    for (let query of tentativas) {
+        // Limpa vírgulas duplas e espaços
+        let qLimpa = query.replace(/,\s*,/g, ', ').replace(/\s+/g, ' ').trim();
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qLimpa)}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                lat = parseFloat(data[0].lat);
+                lng = parseFloat(data[0].lon);
+                console.log("📍 Coordenada encontrada com a busca:", qLimpa);
+                break; // Achou a coordenada? Para o loop na hora!
+            }
+        } catch(e) {}
+    }
+
+    const enderecoCompleto = JSON.stringify({
+      rua: rua,
+      numero: numero,
+      bairro: bairro,
+      cep: enderecoEntrega.value.cep,
+      cidade: cidadeReal 
+    })
+
     const payload = {
-      endereco_entrega: enderecoEntrega.value.id, 
+      endereco_entrega: enderecoCompleto, 
       forma_pagamento: metodoPago.value,
       valor_total: parseFloat(totalFinal.value),
       taxa_entrega: parseFloat(frete.value),
       pontos_ganhos: pontosGanhos.value,
       lojista_id: itensNoCarrinho.value[0]?.lojista_id || 1, 
+      lat_entrega: lat, 
+      lng_entrega: lng, 
       itens: itensNoCarrinho.value.map(item => ({
         id: item.id,                 
         produto_id: item.id,         
@@ -394,24 +452,16 @@ const finalizarCompra = async () => {
 
     await api.post('/pedidos', payload)
 
-    //A CORREÇÃO DO 1º PROBLEMA AQUI:
-    // Nós "congelamos" o valor dos pontos ganhos em uma variável estática
-    // ANTES de mandar o Vue esvaziar o carrinho!
     const pontosConquistados = pontosGanhos.value;
-
     itensNoCarrinho.value = []
     localStorage.removeItem('carrinho')
     
-    // Agora o alert puxa a variável congelada, mostrando os pontos exatos!
-    alert(`🎉 Pedido realizado com sucesso! Você ganhou ${pontosConquistados} pontos no Clube RotaCerta!`)
+    alert(`🎉 Pedido realizado! Você ganhou ${pontosConquistados} pontos!`)
     router.push('/meus-pedidos')
 
   } catch (error) {
-    console.error("Erro ao finalizar compra:", error.response?.data || error)
-    
-    // Agora o Vue vai te mostrar na tela exatamente a mensagem de erro do Laravel se falhar de novo!
-    const mensagemErro = error.response?.data?.message || "Erro desconhecido";
-    alert("Erro no Back-end: " + mensagemErro)
+    console.error("Erro ao finalizar compra:", error)
+    alert("Erro ao finalizar o pedido.")
   } finally {
     carregandoPedido.value = false
   }

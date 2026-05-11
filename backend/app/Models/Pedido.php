@@ -13,6 +13,8 @@ class Pedido extends Model
         'valor_total',
         'taxa_entrega',
         'endereco_entrega',
+        'lat_entrega', // ✨ Latitude liberada para salvar
+        'lng_entrega', // ✨ Longitude liberada para salvar
         'descricao',
         'status',
         'codigo_entrega',
