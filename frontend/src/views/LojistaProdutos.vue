@@ -221,7 +221,7 @@ import {
   Croissant 
 } from 'lucide-vue-next'
 
-const router = useRouter()
+const roteador = useRouter()
 const carregando = ref(true)
 
 // Mapeado EXATAMENTE com as colunas do seu banco de dados
@@ -325,7 +325,8 @@ const removerProduto = async (id) => {
 const fazerLogout = () => {
   if(confirm("Deseja sair do painel do lojista?")) {
     localStorage.removeItem('token')
-    router.push('/')
+    localStorage.removeItem('tipoUsuario')
+    roteador.push('/')
   }
 }
 </script>

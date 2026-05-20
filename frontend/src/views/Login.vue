@@ -23,13 +23,13 @@
           <p class="text-[#1A1A1A]/60 font-medium italic text-sm lg:text-base">Acesse sua conta no RotaCerta</p>
         </div>
         
-        <form @submit.prevent="handleLogin" class="space-y-4">
+        <form @submit.prevent="executarLogin" class="space-y-4">
           
           <div>
             <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Seu E-mail</label>
             <input 
               type="email" 
-              v-model="email" 
+              v-model="emailDoUsuario" 
               placeholder="email@exemplo.com" 
               class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-3 pl-4 pr-4 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
             >
@@ -39,18 +39,18 @@
             <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Sua Senha</label>
             <div class="relative w-full">
               <input 
-                :type="mostrarSenha ? 'text' : 'password'" 
-                v-model="senha" 
+                :type="mostrarSenhaDoUsuario ? 'text' : 'password'" 
+                v-model="senhaDoUsuario" 
                 placeholder="••••••••" 
                 class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-3 pl-4 pr-12 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
               >
               
               <button 
                 type="button" 
-                @click="mostrarSenha = !mostrarSenha" 
+                @click="mostrarSenhaDoUsuario = !mostrarSenhaDoUsuario" 
                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#1A1A1A] transition-colors"
               >
-                <svg v-if="mostrarSenha" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg v-if="mostrarSenhaDoUsuario" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
@@ -65,6 +65,19 @@
                 Esqueceu a senha?
               </router-link>
             </div>
+          </div>
+
+          <!-- Termos de Política e Privacidade -->
+          <div class="flex items-start gap-3 my-4">
+            <input 
+              type="checkbox" 
+              id="checkboxAceitouOsTermosDePrivacidade" 
+              v-model="aceitouOsTermosDePrivacidade"
+              class="w-5 h-5 rounded border-gray-300 text-[#1A1A1A] focus:ring-[#1A1A1A] mt-0.5 cursor-pointer"
+            >
+            <label for="checkboxAceitouOsTermosDePrivacidade" class="text-xs text-[#1A1A1A]/70 leading-normal cursor-pointer select-none">
+              Li e concordo com os <span class="font-bold text-[#1A1A1A]">Termos de Política e Privacidade</span> do RotaCerta, compreendendo que meus dados de localização em tempo real serão utilizados unicamente para a roteirização e otimização das entregas.
+            </label>
           </div>
 
           <button type="submit" class="w-full py-4 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black transition-all shadow-xl uppercase tracking-widest mt-2">
@@ -94,49 +107,53 @@ import api from '../services/api'
 
 import rotaLogo from '../assets/rotaLogo.png'
 
-const mostrarSenha = ref(false)
+const mostrarSenhaDoUsuario = ref(false)
+const aceitouOsTermosDePrivacidade = ref(false)
 
-const router = useRouter()
-const email = ref('')
-const senha = ref('')
+const roteador = useRouter()
+const emailDoUsuario = ref('')
+const senhaDoUsuario = ref('')
 
-const handleLogin = async () => {
-  if (!email.value || !senha.value) {
+const executarLogin = async () => {
+  if (!emailDoUsuario.value || !senhaDoUsuario.value) {
     alert("Por favor, preencha tudo!");
     return;
   }
 
+  if (!aceitouOsTermosDePrivacidade.value) {
+    alert("Você precisa aceitar os Termos de Política e Privacidade para entrar no sistema!");
+    return;
+  }
+
   try {
-    // 1. Faz o login e pega o Token
-    const response = await api.post('/login', {
-      email: email.value,
-      password: senha.value
+    const respostaDoLogin = await api.post('/login', {
+      email: emailDoUsuario.value,
+      password: senhaDoUsuario.value
     })
 
-    const token = response.data.token
+    const tokenDeAutenticacao = respostaDoLogin.data.token
     
-    if (token) {
-      // Salva o token para as próximas requisições
-      localStorage.setItem('token', token)
+    if (tokenDeAutenticacao) {
+      localStorage.setItem('token', tokenDeAutenticacao)
       
-      // 2. Busca os dados do usuário para descobrir quem ele é
-      const userRes = await api.get('/me')
-      const usuario = userRes.data
+      const respostaDoUsuario = await api.get('/me')
+      const dadosDoUsuario = respostaDoUsuario.data
       
-      // 3. Redirecionamento Inteligente baseado no 'tipo'
-      if (usuario.tipo === 'lojista') {
-        router.push('/dashboard-lojista')
-      } else if (usuario.tipo === 'entregador') {
-        router.push('/painel-entregador') 
+      localStorage.setItem('tipoUsuario', dadosDoUsuario.tipo)
+      
+      if (dadosDoUsuario.tipo === 'lojista') {
+        roteador.push('/dashboard-lojista')
+      } else if (dadosDoUsuario.tipo === 'entregador') {
+        roteador.push('/painel-entregador') 
       } else {
-        router.push('/home') // Se for cliente ou vazio, vai pra home
+        roteador.push('/home')
       }
     }
 
-  } catch (error) {
-    console.error("Erro do servidor:", error)
+  } catch (erroOcorrido) {
+    console.error("Erro do servidor:", erroOcorrido)
     
-    if (error.response && error.response.status === 401) {
+    if (erroOcorrido.response && erroOcorrido.response.status === 401) {
       alert("E-mail ou senha incorretos.");
     } else {
       alert("Erro ao conectar. O 'php artisan serve' está rodando no outro terminal?");

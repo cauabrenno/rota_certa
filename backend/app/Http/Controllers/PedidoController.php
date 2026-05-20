@@ -208,7 +208,7 @@ class PedidoController extends Controller {
             }
 
             $statusAtual = strtolower($pedido->status);
-            $statusBloqueados = ['preparo', 'preparando', 'saiu', 'caminho', 'perto', 'entregue', 'concluido'];
+            $statusBloqueados = ['preparo', 'preparando', 'despachado', 'saiu', 'caminho', 'perto', 'entregue', 'concluido'];
             
             foreach($statusBloqueados as $bloqueado) {
                 if (str_contains($statusAtual, $bloqueado)) {

@@ -18,15 +18,15 @@
       </div>
 
       <button 
-        @click="toggleStatus"
-        :class="isOnline ? 'bg-green-500 shadow-green-500/30' : 'bg-[#1A1A1A] shadow-black/30'"
+        @click="alternarStatusDeDisponibilidade"
+        :class="statusDeDisponibilidadeDoEntregador === 'online' ? 'bg-green-500 shadow-green-500/30' : 'bg-[#1A1A1A] shadow-black/30'"
         class="w-full py-4 rounded-2xl font-black text-white uppercase tracking-widest text-lg transition-all duration-300 shadow-xl flex items-center justify-center gap-3"
       >
         <span class="relative flex h-3 w-3">
-          <span v-if="isOnline" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span v-if="statusDeDisponibilidadeDoEntregador === 'online'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
           <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
         </span>
-        {{ isOnline ? 'Você está Online' : 'Ficar Online' }}
+        {{ statusDeDisponibilidadeDoEntregador === 'online' ? 'Você está Online' : 'Ficar Online' }}
       </button>
     </div>
 
@@ -198,9 +198,11 @@
                 <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Saldo Total</p>
                 <p class="text-2xl font-black text-[#1A1A1A] tracking-tighter">R$ {{ Number(dadosPerfil?.saldo_semana || 0).toFixed(2) }}</p>
               </div>
-              <div class="bg-green-50 border border-green-100 rounded-[2rem] p-5">
-                <p class="text-[9px] font-black text-green-600/60 uppercase tracking-widest mb-1">Status</p>
-                <p class="text-xl font-black text-green-600 uppercase italic tracking-tighter">Ativo</p>
+              <div :class="statusDeDisponibilidadeDoEntregador === 'online' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'" class="rounded-[2rem] p-5 transition-all">
+                <p :class="statusDeDisponibilidadeDoEntregador === 'online' ? 'text-green-600/60' : 'text-red-600/60'" class="text-[9px] font-black uppercase tracking-widest mb-1">Status</p>
+                <p :class="statusDeDisponibilidadeDoEntregador === 'online' ? 'text-green-600' : 'text-red-600'" class="text-xl font-black uppercase italic tracking-tighter">
+                  {{ statusDeDisponibilidadeDoEntregador === 'online' ? 'Online' : 'Offline' }}
+                </p>
               </div>
             </div>
 
@@ -240,7 +242,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -259,7 +261,7 @@ import {
   User 
 } from 'lucide-vue-next'
 
-const router = useRouter()
+const roteador = useRouter()
 
 // ✨ DADOS DO PERFIL (Vindos do Banco)
 const dadosPerfil = ref({
@@ -280,7 +282,8 @@ const atualizarStatus = (novoStatus) => {
 }
 
 const atualizarOnline = (statusOnline) => {
-  isOnline.value = statusOnline;
+  statusDeDisponibilidadeDoEntregador.value = statusOnline ? 'online' : 'offline';
+  localStorage.setItem('statusDeDisponibilidadeDoEntregador', statusDeDisponibilidadeDoEntregador.value);
   localStorage.setItem('isOnline', statusOnline);
 }
 
@@ -299,14 +302,15 @@ const carregarStatusSeguro = () => {
 const nomeMoto = ref(localStorage.getItem('nomeMoto') || '')
 const placaMoto = ref(localStorage.getItem('placaMoto') || '')
 
-const isOnline = ref(localStorage.getItem('isOnline') === 'true')
+const statusDeDisponibilidadeDoEntregador = ref(localStorage.getItem('statusDeDisponibilidadeDoEntregador') || (localStorage.getItem('isOnline') === 'true' ? 'online' : 'offline'))
+const isOnline = computed(() => statusDeDisponibilidadeDoEntregador.value === 'online')
 const statusPedido = ref(carregarStatusSeguro())
 const pinCorretoGerado = ref(localStorage.getItem('pinCorretoGerado') || '')
 
 // ✨ VARIÁVEIS PARA A CORRIDA REAL
 const corridaAtual = ref(JSON.parse(localStorage.getItem('corridaAtual') || 'null'))
 const corridasIgnoradas = ref([]) 
-let intervaloBusca = null
+let identificadorDoIntervaloDeBusca = null
 
 const showPinModal = ref(false)
 const isProfileOpen = ref(false) 
@@ -509,10 +513,10 @@ const formatarEndereco = (enderecoBanco) => {
   if (!enderecoBanco) return 'Endereço do Cliente';
   try {
     if (enderecoBanco.startsWith('{')) {
-      const obj = JSON.parse(enderecoBanco);
-      return `${obj.rua}, ${obj.numero} - ${obj.bairro || ''}`;
+      const objetoEndereco = JSON.parse(enderecoBanco);
+      return `${objetoEndereco.rua}, ${objetoEndereco.numero} - ${objetoEndereco.bairro || ''}`;
     }
-  } catch (e) {}
+  } catch (erroOcorrido) {}
   return enderecoBanco;
 }
 
@@ -543,7 +547,7 @@ const dadosDaFaseAtual = computed(() => {
 // ✨ BUSCA INVISÍVEL DE CORRIDAS (POLLING)
 const iniciarPolling = () => {
   pararPolling();
-  intervaloBusca = setInterval(async () => {
+  identificadorDoIntervaloDeBusca = setInterval(async () => {
     if (isOnline.value && statusPedido.value === null) {
       try {
         const response = await api.get('/entregador/buscar-corrida', getAuth());
@@ -563,17 +567,22 @@ const iniciarPolling = () => {
 }
 
 const pararPolling = () => {
-  if (intervaloBusca) clearInterval(intervaloBusca);
+  if (identificadorDoIntervaloDeBusca) clearInterval(identificadorDoIntervaloDeBusca);
 }
 
-const toggleStatus = () => { 
-  atualizarOnline(!isOnline.value);
-  if (isOnline.value) {
-    iniciarPolling()
+onUnmounted(() => {
+  pararPolling()
+})
+
+const alternarStatusDeDisponibilidade = () => { 
+  const proximoEstadoOnline = statusDeDisponibilidadeDoEntregador.value !== 'online';
+  atualizarOnline(proximoEstadoOnline);
+  if (proximoEstadoOnline) {
+    iniciarPolling();
   } else {
     atualizarStatus(null);
     swipeProgress.value = 0;
-    pararPolling()
+    pararPolling();
   }
 }
 
@@ -686,11 +695,12 @@ const fecharModalPin = () => {
 const realizarLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('isOnline');
+  localStorage.removeItem('statusDeDisponibilidadeDoEntregador');
   localStorage.removeItem('statusPedido');
   localStorage.removeItem('pinCorretoGerado');
   localStorage.removeItem('corridaAtual');
   pararPolling();
-  router.push('/');
+  roteador.push('/');
 }
 
 onMounted(async () => {

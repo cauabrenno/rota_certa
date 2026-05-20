@@ -8,10 +8,10 @@
       </div>
       
       <div class="hidden md:flex gap-6 items-center">
-        <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100"><Home :size="24" /></router-link>
-        <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100"><ClipboardList :size="24" /></router-link>
-        <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100"><User :size="24" /></router-link>
-        <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+        <router-link title="Início" to="/home" :class="[ 'text-2xl hover:scale-110 transition-all', rotaAtual.path === '/home' ? 'opacity-100' : 'opacity-60 hover:opacity-100' ]"><Home :size="24" /></router-link>
+        <router-link title="Meus Pedidos" to="/meus-pedidos" :class="[ 'text-2xl hover:scale-110 transition-all', rotaAtual.path === '/meus-pedidos' ? 'opacity-100' : 'opacity-60 hover:opacity-100' ]"><ClipboardList :size="24" /></router-link>
+        <router-link title="Meu Perfil" to="/perfil" :class="[ 'text-2xl hover:scale-110 transition-all', rotaAtual.path === '/perfil' ? 'opacity-100' : 'opacity-60 hover:opacity-100' ]"><User :size="24" /></router-link>
+        <button @click="irParaCarrinho" :class="[ 'relative text-2xl hover:scale-110 transition-all', rotaAtual.path === '/carrinho' ? 'opacity-100' : 'opacity-60 hover:opacity-100' ]">
           <ShoppingCart :size="24" />
           <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
             {{ totalItensCarrinho }}
@@ -21,19 +21,23 @@
     </nav>
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
-      <router-link to="/home" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><Home :size="24" class="opacity-80" /></div>
+      <router-link to="/home" :class="[ 'flex flex-col items-center gap-1', rotaAtual.path === '/home' ? 'text-[#C2F2D9]' : 'text-white/40 hover:text-white transition-all' ]">
+        <div :class="[ 'transition-all', rotaAtual.path === '/home' ? 'bg-[#C2F2D9]/20 p-2 rounded-xl' : 'p-2' ]">
+          <Home :size="24" :class="{ 'opacity-80': rotaAtual.path !== '/home' }" />
+        </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
 
-      <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><ClipboardList :size="24" class="opacity-80" /></div>
+      <router-link to="/meus-pedidos" :class="[ 'flex flex-col items-center gap-1', rotaAtual.path === '/meus-pedidos' ? 'text-[#C2F2D9]' : 'text-white/40 hover:text-white transition-all' ]">
+        <div :class="[ 'transition-all', rotaAtual.path === '/meus-pedidos' ? 'bg-[#C2F2D9]/20 p-2 rounded-xl' : 'p-2' ]">
+          <ClipboardList :size="24" :class="{ 'opacity-80': rotaAtual.path !== '/meus-pedidos' }" />
+        </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
 
-      <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
-        <div class="p-2 relative">
-          <ShoppingCart :size="24" class="opacity-80" />
+      <button @click="irParaCarrinho" :class="[ 'flex flex-col items-center gap-1 relative', rotaAtual.path === '/carrinho' ? 'text-[#C2F2D9]' : 'text-white/40 hover:text-white transition-all' ]">
+        <div :class="[ 'transition-all relative', rotaAtual.path === '/carrinho' ? 'bg-[#C2F2D9]/20 p-2 rounded-xl' : 'p-2 relative' ]">
+          <ShoppingCart :size="24" :class="{ 'opacity-80': rotaAtual.path !== '/carrinho' }" />
           <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -41,8 +45,10 @@
         <span class="text-[9px] font-black uppercase tracking-widest">Cesta</span>
       </button>
 
-      <router-link to="/perfil" class="flex flex-col items-center gap-1 text-[#C2F2D9]">
-        <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all"><User :size="24" /></div>
+      <router-link to="/perfil" :class="[ 'flex flex-col items-center gap-1', rotaAtual.path === '/perfil' ? 'text-[#C2F2D9]' : 'text-white/40 hover:text-white transition-all' ]">
+        <div :class="[ 'transition-all', rotaAtual.path === '/perfil' ? 'bg-[#C2F2D9]/20 p-2 rounded-xl' : 'p-2' ]">
+          <User :size="24" :class="{ 'opacity-80': rotaAtual.path !== '/perfil' }" />
+        </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
       </router-link>
     </div>
@@ -475,7 +481,7 @@
 <script setup>
 import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' 
 import { 
   Home, 
@@ -493,7 +499,8 @@ import {
   Ticket 
 } from 'lucide-vue-next'
 
-const router = useRouter()
+const roteador = useRouter()
+const rotaAtual = useRoute()
 const carregando = ref(true)
 
 // === CARRINHO ===
@@ -696,19 +703,20 @@ const enviarSuporte = async () => {
   }
 }
 
-const irParaCarrinho = () => { router.push('/carrinho') }
+const irParaCarrinho = () => { roteador.push('/carrinho') }
 
 // === LOGOUT COM SEGURANÇA ===
 const fazerLogout = async () => {
   if(confirm("Tem certeza que deseja sair da sua conta?")) {
     try { 
       await api.post('/logout') 
-    } catch (e) {
+    } catch (erroDeLogout) {
       console.log("Forçando logout localmente...")
     } finally {
       localStorage.removeItem('token')
       localStorage.removeItem('user') 
-      router.push('/')
+      localStorage.removeItem('tipoUsuario')
+      roteador.push('/')
     }
   }
 }

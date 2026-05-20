@@ -181,7 +181,7 @@ import {
   X 
 } from 'lucide-vue-next'
 
-const router = useRouter()
+const roteador = useRouter()
 
 // DADOS DO PERFIL MOCKADOS (Prontos para API)
 const perfil = ref({
@@ -245,7 +245,8 @@ const salvarPerfil = async () => {
 const fazerLogout = () => {
   if(confirm("Deseja sair do painel do lojista?")) {
     localStorage.removeItem('token')
-    router.push('/')
+    localStorage.removeItem('tipoUsuario')
+    roteador.push('/')
   }
 }
 

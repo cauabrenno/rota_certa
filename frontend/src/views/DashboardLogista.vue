@@ -130,14 +130,14 @@
                   <td class="py-4 px-2 text-right">
                     <button 
                       v-if="pedido.status === 'Pendente'"
-                      @click="atualizarStatus(pedido, 'Preparo')"
+                      @click="atualizarStatus(pedido, 'Em Preparo')"
                       class="bg-[#1A1A1A] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-black hover:scale-105 transition-all shadow-md tracking-widest flex items-center gap-2"
                     >
                       Aceitar <ArrowRight :size="12" />
                     </button>
                     <button 
-                      v-else-if="pedido.status === 'Preparo'"
-                      @click="atualizarStatus(pedido, 'Saiu p/ Entrega')"
+                      v-else-if="pedido.status === 'Em Preparo'"
+                      @click="atualizarStatus(pedido, 'Despachado')"
                       class="bg-[#2D4483] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-900 hover:scale-105 transition-all shadow-md tracking-widest flex items-center gap-2"
                     >
                       Despachar <ArrowRight :size="12" />
@@ -240,11 +240,11 @@
             Voltar
           </button>
           
-          <button v-if="pedidoSelecionado.status === 'Pendente'" @click="atualizarStatus(pedidoSelecionado, 'Preparo'); fecharModal()" class="flex-1 py-4 bg-[#1A1A1A] text-[#C2F2D9] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl">
+          <button v-if="pedidoSelecionado.status === 'Pendente'" @click="atualizarStatus(pedidoSelecionado, 'Em Preparo'); fecharModal()" class="flex-1 py-4 bg-[#1A1A1A] text-[#C2F2D9] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl">
             Aceitar Pedido
           </button>
           
-          <button v-else-if="pedidoSelecionado.status === 'Preparo'" @click="atualizarStatus(pedidoSelecionado, 'Saiu p/ Entrega'); fecharModal()" class="flex-1 py-4 bg-[#2D4483] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-900 transition-all shadow-xl">
+          <button v-else-if="pedidoSelecionado.status === 'Em Preparo'" @click="atualizarStatus(pedidoSelecionado, 'Despachado'); fecharModal()" class="flex-1 py-4 bg-[#2D4483] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-900 transition-all shadow-xl">
             Despachar p/ Entregador
           </button>
         </div>
@@ -257,7 +257,7 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api'
 import { 
@@ -268,8 +268,8 @@ import {
   MapPin 
 } from 'lucide-vue-next'
 
-const router = useRouter()
-const route = useRoute()
+const roteador = useRouter()
+const rotaAtual = useRoute()
 
 // Variáveis de Controle
 const filtroAtivo = ref('todos')
@@ -389,16 +389,23 @@ const buscarPedidos = async () => {
     console.error("Erro ao buscar pedidos:", error)
   }
 }
-// Quando a tela carregar, busca os pedidos e liga o "radar" a cada 30 segundos
+const identificadorDoIntervaloDeAtualizacao = ref(null)
+
 onMounted(() => {
   buscarPedidos()
   buscarStatusLoja()
   buscarEntregadoresOnline()
   
-  setInterval(() => {
+  identificadorDoIntervaloDeAtualizacao.value = setInterval(() => {
     buscarPedidos()
     buscarEntregadoresOnline()
-  }, 30000)
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (identificadorDoIntervaloDeAtualizacao.value) {
+    clearInterval(identificadorDoIntervaloDeAtualizacao.value)
+  }
 })
 
 const buscarStatusLoja = async () => {
@@ -457,7 +464,8 @@ const atualizarStatus = async (pedido, novoStatus) => {
 const fazerLogout = () => {
   if(confirm("Deseja sair do painel do lojista?")) {
     localStorage.removeItem('token')
-    router.push('/')
+    localStorage.removeItem('tipoUsuario')
+    roteador.push('/')
   }
 }
 </script>

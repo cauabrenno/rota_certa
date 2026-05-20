@@ -10,74 +10,74 @@ class EntregadorController extends Controller
     // === 1. DADOS DO PERFIL (COM FILTRO DE LOOP CORRIGIDO) ===
     public function meuPerfil()
     {
-        $user = auth()->user();
+        $usuarioAutenticado = auth()->user();
         
         // Busca os dados do entregador na tabela específica
-        $entregador = DB::table('entregadores')
-            ->where('entregadores.user_id', $user->id)
+        $dadosDoEntregador = DB::table('entregadores')
+            ->where('entregadores.user_id', $usuarioAutenticado->id)
             ->orderBy('entregadores.id', 'desc')
             ->first();
 
-        // ✨ BUSCA BLINDADA: Agora ignora status de conclusão para evitar o loop no F5
-        $pedidoAtivo = DB::table('pedidos')
+        // BUSCA BLINDADA: Agora ignora status de conclusão para evitar o loop no F5
+        $pedidoAtivoDoEntregador = DB::table('pedidos')
             ->select('pedidos.*') // Adicionado Select All para não omitir colunas (lat/lng)
-            ->where(function($query) use ($entregador, $user) {
-                if ($entregador) {
-                    $query->where('pedidos.entregador_id', $entregador->id);
+            ->where(function($query) use ($dadosDoEntregador, $usuarioAutenticado) {
+                if ($dadosDoEntregador) {
+                    $query->where('pedidos.entregador_id', $dadosDoEntregador->id);
                 }
-                $query->orWhere('pedidos.entregador_id', $user->id);
+                $query->orWhere('pedidos.entregador_id', $usuarioAutenticado->id);
             })
-            // ✨ Adicionado 'entregue' e 'Entregue' para o card não voltar após finalizar
+            // Adicionado 'entregue' e 'Entregue' para o card não voltar após finalizar
             ->whereNotIn('pedidos.status', ['finalizado', 'cancelado', 'entregue', 'Entregue'])
             ->first();
 
         // Formata os dados da loja para a navegação do Vue
-        if ($pedidoAtivo) {
-            $loja = DB::table('lojista')->where('lojista.id', $pedidoAtivo->lojista_id)->first();
-            if ($loja) {
-                $donoLoja = DB::table('users')->where('users.id', $loja->user_id)->first();
-                $pedidoAtivo->loja = $donoLoja->name ?? 'Loja Parceira';
-                $pedidoAtivo->loja_endereco = $loja->endereco ?? null;
+        if ($pedidoAtivoDoEntregador) {
+            $dadosDaLoja = DB::table('lojista')->where('lojista.id', $pedidoAtivoDoEntregador->lojista_id)->first();
+            if ($dadosDaLoja) {
+                $donoDaLoja = DB::table('users')->where('users.id', $dadosDaLoja->user_id)->first();
+                $pedidoAtivoDoEntregador->loja = $donoDaLoja->name ?? 'Loja Parceira';
+                $pedidoAtivoDoEntregador->loja_endereco = $dadosDaLoja->endereco ?? null;
             }
         }
 
         return response()->json([
-            'nome' => $user->name,
-            'avaliacao' => $entregador->avaliacao ?? 5.0, 
-            'total_entregas' => $entregador->total_entregas ?? 0, 
-            'saldo_semana' => $entregador->saldo ?? 0.00, 
+            'nome' => $usuarioAutenticado->name,
+            'avaliacao' => $dadosDoEntregador->avaliacao ?? 5.0, 
+            'total_entregas' => $dadosDoEntregador->total_entregas ?? 0, 
+            'saldo_semana' => $dadosDoEntregador->saldo ?? 0.00, 
             'ultimo_repasse' => 'Sem repasses recentes',
             'veiculo' => [
-                'modelo' => $user->modelo_veiculo,
-                'placa' => $user->placa_veiculo
+                'modelo' => $usuarioAutenticado->modelo_veiculo,
+                'placa' => $usuarioAutenticado->placa_veiculo
             ],
-            'pedido_ativo' => $pedidoAtivo,
-            'debug_id_entregador' => $entregador->id ?? null,
-            'debug_id_user' => $user->id
+            'pedido_ativo' => $pedidoAtivoDoEntregador,
+            'debug_id_entregador' => $dadosDoEntregador->id ?? null,
+            'debug_id_user' => $usuarioAutenticado->id
         ], 200);
     }
 
-    public function atualizarVeiculo(Request $request)
+    public function atualizarVeiculo(Request $requisicao)
     {
-        $request->validate([
+        $requisicao->validate([
             'modelo_veiculo' => 'required|string|max:255',
             'placa_veiculo' => 'required|string|max:15',
         ]);
 
-        $user = auth()->user();
+        $usuarioAutenticado = auth()->user();
         
         DB::table('users')
-            ->where('users.id', $user->id)
+            ->where('users.id', $usuarioAutenticado->id)
             ->update([
-                'modelo_veiculo' => $request->modelo_veiculo,
-                'placa_veiculo' => $request->placa_veiculo
+                'modelo_veiculo' => $requisicao->modelo_veiculo,
+                'placa_veiculo' => $requisicao->placa_veiculo
             ]);
 
         return response()->json([
             'message' => 'Veículo atualizado com sucesso!',
             'veiculo' => [
-                'modelo' => $user->modelo_veiculo,
-                'placa' => $user->placa_veiculo
+                'modelo' => $usuarioAutenticado->modelo_veiculo,
+                'placa' => $usuarioAutenticado->placa_veiculo
             ]
         ], 200);
     }
@@ -85,7 +85,7 @@ class EntregadorController extends Controller
     // === 2. LÓGICA DE BUSCA DE NOVAS CORRIDAS ===
     public function buscarPedidoDisponivel()
     {
-        $pedido = DB::table('pedidos')
+        $pedidoDisponivel = DB::table('pedidos')
             ->join('lojista', 'pedidos.lojista_id', '=', 'lojista.id')
             ->join('users', 'lojista.user_id', '=', 'users.id')
             ->select(
@@ -93,64 +93,64 @@ class EntregadorController extends Controller
                 'pedidos.taxa_entrega',
                 'pedidos.codigo_entrega',
                 'pedidos.endereco_entrega',
-                'pedidos.lat_entrega', // ✨ FALTAVA ISSO: Pega o GPS Real
-                'pedidos.lng_entrega', // ✨ FALTAVA ISSO: Pega o GPS Real
+                'pedidos.lat_entrega', // Pega o GPS Real
+                'pedidos.lng_entrega', // Pega o GPS Real
                 'users.name as nome_loja',
                 'lojista.endereco as loja_endereco'
             )
-            ->whereIn('pedidos.status', ['aceito', 'preparo', 'preparando', 'Aceito', 'Preparo', 'Preparando'])
+            ->whereIn('pedidos.status', ['despachado', 'Despachado'])
             ->whereNull('pedidos.entregador_id')
             ->first();
 
-        if (!$pedido) {
+        if (!$pedidoDisponivel) {
             return response()->json(['message' => 'Nenhuma corrida disponível no momento'], 404);
         }
 
-        $enderecoObj = json_decode($pedido->endereco_entrega);
-        $enderecoTexto = is_object($enderecoObj) 
-            ? "{$enderecoObj->rua}, {$enderecoObj->numero}" 
-            : $pedido->endereco_entrega;
+        $objetoEndereco = json_decode($pedidoDisponivel->endereco_entrega);
+        $textoDoEndereco = is_object($objetoEndereco) 
+            ? "{$objetoEndereco->rua}, {$objetoEndereco->numero}" 
+            : $pedidoDisponivel->endereco_entrega;
 
         return response()->json([
-            'id' => $pedido->id,
-            'loja' => $pedido->nome_loja,
-            'loja_endereco' => $pedido->loja_endereco,
-            'taxa_entrega' => $pedido->taxa_entrega,
-            'codigo' => $pedido->codigo_entrega,
-            'endereco' => $enderecoTexto,
-            'endereco_entrega' => $pedido->endereco_entrega,
-            'lat_entrega' => $pedido->lat_entrega, // ✨ Envia o GPS pro front
-            'lng_entrega' => $pedido->lng_entrega  // ✨ Envia o GPS pro front
+            'id' => $pedidoDisponivel->id,
+            'loja' => $pedidoDisponivel->nome_loja,
+            'loja_endereco' => $pedidoDisponivel->loja_endereco,
+            'taxa_entrega' => $pedidoDisponivel->taxa_entrega,
+            'codigo' => $pedidoDisponivel->codigo_entrega,
+            'endereco' => $textoDoEndereco,
+            'endereco_entrega' => $pedidoDisponivel->endereco_entrega,
+            'lat_entrega' => $pedidoDisponivel->lat_entrega, // Envia o GPS pro front
+            'lng_entrega' => $pedidoDisponivel->lng_entrega  // Envia o GPS pro front
         ], 200);
     }
 
-    public function aceitarPedido($id)
+    public function aceitarPedido($identificadorDoPedido)
     {
         try {
-            $user = auth()->user();
-            $entregador = DB::table('entregadores')->where('entregadores.user_id', $user->id)->first();
+            $usuarioAutenticado = auth()->user();
+            $dadosDoEntregador = DB::table('entregadores')->where('entregadores.user_id', $usuarioAutenticado->id)->first();
 
-            if (!$entregador) {
+            if (!$dadosDoEntregador) {
                 return response()->json(['message' => 'Perfil de entregador não encontrado.'], 403);
             }
 
-            $pedido = DB::table('pedidos')->where('pedidos.id', $id)->first();
+            $pedidoAceito = DB::table('pedidos')->where('pedidos.id', $identificadorDoPedido)->first();
 
-            if (!$pedido || $pedido->entregador_id !== null) {
+            if (!$pedidoAceito || $pedidoAceito->entregador_id !== null) {
                 return response()->json(['message' => 'Pedido indisponível.'], 400);
             }
 
             DB::table('pedidos')
-                ->where('pedidos.id', $id)
+                ->where('pedidos.id', $identificadorDoPedido)
                 ->update([
-                    'entregador_id' => $entregador->id,
+                    'entregador_id' => $dadosDoEntregador->id,
                     'status' => 'saiu'
                 ]);
 
             return response()->json(['message' => 'Corrida aceita com sucesso!'], 200);
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+        } catch (\Exception $excecaoLancada) {
+            return response()->json(['error' => $excecaoLancada->getMessage()], 500);
         }
     }
 }
