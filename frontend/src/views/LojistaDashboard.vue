@@ -56,9 +56,9 @@
               
               <button 
                 @click="avancarStatus(pedido)"
-                class="bg-[#1A1A1A] text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-xl tracking-widest"
+                class="bg-[#1A1A1A] text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-xl tracking-widest flex items-center gap-2"
               >
-                Avançar ➔
+                Avançar <ArrowRight :size="14" />
               </button>
             </div>
           </div>
@@ -71,6 +71,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { ArrowRight } from 'lucide-vue-next'
 
 const contagem = reactive({
   pendentes: 12,

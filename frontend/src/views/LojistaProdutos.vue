@@ -67,7 +67,7 @@
                     <img :src="produto.imagem_url" class="w-full h-full object-cover" />
                   </div>
                   <div v-else class="w-20 h-20 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center flex-shrink-0 text-2xl text-gray-300">
-                    📷
+                    <Camera :size="24" />
                   </div>
                   
                   <label class="flex-1 bg-gray-50 hover:bg-gray-100 border border-black/5 rounded-2xl p-4 text-center cursor-pointer transition-colors">
@@ -93,15 +93,17 @@
                 </div>
                 
                 <div>
-                  <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Categoria</label>
+                  <h4 class="text-[9px] font-black uppercase tracking-widest text-[#2D4483] mb-1 flex items-center gap-1 ml-2">
+                    <Package :size="12" /> Categoria
+                  </h4>
                   <select 
                     v-model="produto.categoria" 
                     required
                     class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm text-[#1A1A1A] cursor-pointer appearance-none"
                   >
                     <option value="" disabled>Selecione uma categoria </option>
-                    <option v-for="categoria in categoriasDaHome" :key="categoria" :value="categoria">
-                      {{ categoria }}
+                    <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.nome">
+                      {{ categoria.nome }}
                     </option>
                   </select>
                 </div>
@@ -149,7 +151,7 @@
             </div>
 
             <div v-else-if="produtos.length === 0" class="text-center py-20 flex flex-col items-center">
-              <span class="text-5xl mb-4 grayscale opacity-20">🧀</span>
+              <span class="text-5xl mb-4 grayscale opacity-20"><Box :size="48" /></span>
               <p class="font-black text-gray-400 uppercase tracking-widest text-xs">Sua vitrine está vazia.</p>
               <p class="text-[10px] text-gray-400 mt-2">Cadastre seu primeiro produto ao lado.</p>
             </div>
@@ -161,7 +163,7 @@
                 <!-- Imagem Redonda -->
                 <div class="w-20 h-20 bg-white rounded-2xl border border-black/5 shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden">
                   <img v-if="p.imagem_url" :src="p.imagem_url" class="w-full h-full object-cover" />
-                  <span v-else class="text-2xl opacity-20">📦</span>
+                  <span v-else class="text-2xl opacity-20"><Box :size="24" /></span>
                 </div>
 
                 <!-- Infos -->
@@ -179,10 +181,10 @@
                 <!-- Menu de Ações (Aparece no Hover) -->
                 <div class="absolute right-0 top-0 bottom-0 w-16 flex flex-col opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-white via-white to-transparent pr-4 justify-center items-end gap-2">
                   <button @click="editarProduto(p)" class="w-8 h-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors" title="Editar">
-                    ✎
+                    <Pencil :size="16" />
                   </button>
                   <button @click="removerProduto(p.id)" class="w-8 h-8 bg-red-50 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors" title="Excluir">
-                    ✕
+                    <Trash2 :size="16" />
                   </button>
                 </div>
 
@@ -201,7 +203,23 @@
 import iRota from '../assets/iRota.png'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api' // Certifique-se que o Axios está configurado aqui
+import api from '../services/api'
+import { 
+  Camera, 
+  Package, 
+  Box, 
+  Pencil, 
+  X, 
+  Plus, 
+  Check, 
+  Trash2, 
+  Milk, 
+  Apple, 
+  Beef, 
+  Sparkles, 
+  CupSoda, 
+  Croissant 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const carregando = ref(true)
@@ -217,14 +235,14 @@ const produto = ref({
 })
 
 // Adicione essa lista junto com as suas outras variáveis
-const categoriasDaHome = [
-  'Queijos',
-  'Laticínios',
-  'Bebidas',
-  'Doces e Geleias',
-  'Padaria',
-  'Frios e Embutidos',
-  'Outros'
+const categorias = [
+  { id: 'Mercearia', nome: 'Mercearia', icon: Package },
+  { id: 'Laticínios', nome: 'Laticínios', icon: Milk },
+  { id: 'Bebidas', nome: 'Bebidas', icon: CupSoda },
+  { id: 'Padaria', nome: 'Padaria', icon: Croissant },
+  { id: 'Hortifruti', nome: 'Hortifruti', icon: Apple },
+  { id: 'Açougue', nome: 'Açougue', icon: Beef },
+  { id: 'Limpeza', nome: 'Limpeza', icon: Sparkles }
 ]
 
 const produtos = ref([])

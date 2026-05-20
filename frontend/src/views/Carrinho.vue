@@ -8,11 +8,17 @@
   </div>
   
   <div class="hidden md:flex gap-6 items-center">
-    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
-    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
-    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
+    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">
+      <Home :size="24" />
+    </router-link>
+    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <ClipboardList :size="24" />
+    </router-link>
+    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <User :size="24" />
+    </router-link>
     <button class="relative text-2xl hover:scale-110 transition-all opacity-100">
-      🛒
+      <ShoppingCart :size="24" />
       <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
         {{ totalItensCarrinho }}
       </span>
@@ -22,18 +28,18 @@
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
       <router-link to="/home" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">🏠</span></div>
+        <div class="p-2"><Home :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
 
       <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">📄</span></div>
+        <div class="p-2"><ClipboardList :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
 
       <router-link to="/carrinho" class="flex flex-col items-center gap-1 text-[#C2F2D9] relative">
         <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all relative">
-          <span class="text-2xl">🛒</span>
+          <ShoppingCart :size="24" />
           <span v-if="totalItensCarrinho > 0" class="absolute top-0 -right-1 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -42,7 +48,7 @@
       </router-link>
 
       <router-link to="/perfil" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">👤</span></div>
+        <div class="p-2"><User :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
       </router-link>
     </div>
@@ -50,7 +56,7 @@
     <main class="p-4 lg:p-10 max-w-4xl mx-auto space-y-6">
       
       <section v-if="itensNoCarrinho.length === 0" class="bg-white rounded-3xl p-10 text-center shadow-xl border border-black/5 flex flex-col items-center gap-4">
-        <span class="text-6xl opacity-40 grayscale">🛒</span>
+        <ShoppingCart :size="64" class="opacity-40" />
         <h2 class="text-xl font-black uppercase italic tracking-tighter">Sua cesta está vazia!</h2>
         <p class="text-sm text-gray-500 font-medium">Volte para a loja e adicione produtos deliciosos.</p>
         <router-link to="/home" class="mt-4 bg-[#1A1A1A] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all text-xs">
@@ -76,9 +82,13 @@
 
             <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
               <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-black/5">
-                <button @click="item.quantidade > 1 ? alterarQuantidade(index, -1) : removerDoCarrinho(index)" class="w-9 h-9 flex items-center justify-center font-black bg-white rounded-lg shadow-sm hover:bg-gray-100">-</button>
+                <button @click="item.quantidade > 1 ? alterarQuantidade(index, -1) : removerDoCarrinho(index)" class="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-gray-100">
+                  <Minus :size="16" />
+                </button>
                 <span class="font-black text-base w-5 text-center">{{ item.quantidade }}</span>
-                <button @click="alterarQuantidade(index, 1)" class="w-9 h-9 flex items-center justify-center font-black bg-[#1A1A1A] text-white rounded-lg shadow-sm hover:bg-black">+</button>
+                <button @click="alterarQuantidade(index, 1)" class="w-9 h-9 flex items-center justify-center bg-[#1A1A1A] text-white rounded-lg shadow-sm hover:bg-black">
+                  <Plus :size="16" />
+                </button>
               </div>
 
               <button 
@@ -86,7 +96,7 @@
                 class="w-9 h-9 flex items-center justify-center bg-red-600 text-white rounded-lg shadow-md active:scale-90 transition-all border-none"
                 title="Remover Item"
               >
-                🗑️
+                <Trash2 :size="18" />
               </button>
             </div>
           </div>
@@ -99,15 +109,16 @@
           <button @click="abrirModal('enderecos')" class="text-[#2D4483] hover:underline font-bold">Trocar Local</button>
         </div>
         
-        <div v-if="enderecoEntrega" class="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-black/5">
-          <span class="text-2xl">📍</span>
-          <div>
+        <div v-if="enderecoEntrega" class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-black/5">
+          <MapPin :size="24" class="text-gray-500" />
+          <div class="flex-1 text-left">
             <p class="font-black text-xs uppercase tracking-tight">{{ enderecoEntrega.titulo }}</p>
-            <p class="text-[10px] text-gray-500 font-medium">{{ enderecoEntrega.rua }}, {{ enderecoEntrega.numero }} - {{ enderecoEntrega.cidade }}</p>
+            <p class="text-[10px] text-gray-500 font-bold">{{ enderecoEntrega.rua }}, {{ enderecoEntrega.numero }}</p>
+            <p class="text-[10px] text-gray-400 font-medium">{{ enderecoEntrega.bairro }} - {{ enderecoEntrega.cidade }}</p>
           </div>
         </div>
         <div v-else class="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-sm font-bold flex items-center gap-2">
-          ⚠️ Por favor, adicione ou selecione um endereço de entrega.
+          <AlertTriangle :size="20" /> Por favor, adicione ou selecione um endereço de entrega.
         </div>
       </section>
 
@@ -119,7 +130,8 @@
             :class="metodoPago === metodo.id ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-gray-50 text-[#1A1A1A] opacity-60'"
             class="p-5 rounded-2xl border border-black/5 flex flex-col items-center gap-2 transition-all duration-200"
           >
-            <img v-if="metodo.id === 'pix'" :src="imgPix" class="w-8 h-8 object-contain" :class="metodoPago === 'pix' ? 'invert' : 'grayscale opacity-50'" />            <span v-else class="text-2xl">{{ metodo.icon }}</span>
+            <img v-if="metodo.id === 'pix'" :src="imgPix" class="w-8 h-8 object-contain" :class="metodoPago === 'pix' ? 'invert' : 'grayscale opacity-50'" />
+            <component v-else :is="metodo.icon" :size="24" />
             <span class="font-black text-[9px] uppercase tracking-widest">{{ metodo.nome }}</span>
           </button>
         </div>
@@ -148,7 +160,7 @@
             <p class="text-white/40 font-black text-[9px] uppercase tracking-[0.4em] mb-0.5">Total a Pagar</p>
             <p class="text-5xl font-black italic tracking-tighter text-[#C2F2D9] mb-1">R$ {{ totalFinal }}</p>
             <p class="text-xs text-[#C2F2D9] opacity-80 font-bold flex items-center gap-1 justify-center sm:justify-start">
-              ⭐ Você ganhará <span class="text-white">{{ pontosGanhos }} pts</span> nesta compra
+              <Star :size="14" /> Você ganhará <span class="text-white">{{ pontosGanhos }} pts</span> nesta compra
             </p>
           </div>
           <button @click="finalizarCompra" :disabled="carregandoPedido" class="w-full sm:w-auto px-10 py-5 bg-[#C2F2D9] text-[#1A1A1A] font-black text-base rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl uppercase tracking-widest disabled:opacity-50">
@@ -162,7 +174,9 @@
     <div v-if="modalAtivo === 'enderecos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Endereços</h2>
@@ -176,14 +190,16 @@
             class="flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer relative group"
             :class="enderecoEntrega?.id === end.id ? 'border-[#1A1A1A] bg-gray-50' : 'border-transparent bg-white shadow-sm hover:border-black/10 hover:shadow-md'"
           >
-            <div class="text-2xl">📍</div>
+            <div class="flex-shrink-0">
+              <MapPin :size="24" />
+            </div>
             <div class="flex-1">
               <p class="font-black text-xs uppercase">{{ end.titulo }}</p>
               <p class="text-[11px] text-gray-500 mt-1">{{ end.rua }}, {{ end.numero }}</p>
               <p class="text-[11px] text-gray-500">{{ end.bairro }} - {{ end.cidade }}</p>
             </div>
-            <div v-if="enderecoEntrega?.id === end.id" class="w-6 h-6 bg-[#1A1A1A] text-[#C2F2D9] rounded-full flex items-center justify-center text-xs font-black">
-              ✓
+            <div v-if="enderecoEntrega?.id === end.id" class="w-6 h-6 bg-[#1A1A1A] text-[#C2F2D9] rounded-full flex items-center justify-center">
+              <Check :size="14" />
             </div>
           </div>
 
@@ -215,6 +231,10 @@
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
             <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Cidade</label>
+            <input v-model="novoEndereco.cidade" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
             <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
@@ -232,6 +252,23 @@ import imgPix from '../assets/pix.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' // Usando nossa conexão protegida
+import { 
+  Home, 
+  ClipboardList, 
+  User, 
+  ShoppingCart, 
+  Trash2, 
+  MapPin, 
+  AlertTriangle, 
+  CreditCard, 
+  Banknote, 
+  Star, 
+  X, 
+  Check, 
+  Minus, 
+  Plus,
+  QrCode
+} from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -254,9 +291,9 @@ const desconto = ref(0.00) // Pode implementar cupons depois!
 const carregandoPedido = ref(false)
 
 const metodos = [
-  { id: 'pix', nome: 'Pix', icon: '💠' },
-  { id: 'cartao', nome: 'Cartão', icon: '💳' },
-  { id: 'dinheiro', nome: 'Dinheiro', icon: '💵' }
+  { id: 'pix', nome: 'Pix', icon: QrCode },
+  { id: 'cartao', nome: 'Cartão', icon: CreditCard },
+  { id: 'dinheiro', nome: 'Dinheiro', icon: Banknote }
 ]
 
 // === CÁLCULOS MATEMÁTICOS ===
@@ -293,7 +330,7 @@ const removerDoCarrinho = (index) => {
 
 // === GESTÃO DE ENDEREÇOS (API) ===
 const enderecosSalvos = ref([])
-const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '' })
+const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' })
 const enderecoEntrega = ref(null)
 
 const buscarEnderecos = async () => {
@@ -334,7 +371,8 @@ const salvarEndereco = async () => {
       cep: novoEndereco.value.cep,
       numero: novoEndereco.value.numero,
       rua: novoEndereco.value.rua,
-      bairro: novoEndereco.value.bairro // ✨ Agora o bairro vai pro banco!
+      bairro: novoEndereco.value.bairro,
+      cidade: novoEndereco.value.cidade
     }
 
     const response = await api.post('/enderecos', payload)
@@ -350,8 +388,8 @@ const salvarEndereco = async () => {
     
     mostrandoForm.value = false
     fecharModal()
-    // Limpando o form, agora incluindo o bairro
-    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '' }
+    // Limpando o form, agora incluindo bairro e cidade
+    novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
     
   } catch (error) {
     console.error("Erro ao salvar endereço:", error)

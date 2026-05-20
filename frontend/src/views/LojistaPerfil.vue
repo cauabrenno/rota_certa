@@ -38,9 +38,9 @@
           Meu Perfil
         </router-link>
 
-        <button @click="fazerLogout" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all">
-          Sair
-        </button>
+        <button @click="fazerLogout" class="bg-red-50 text-red-600 px-6 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+      <LogOut :size="14" /> Sair
+    </button>
       </div>
 
     </nav>
@@ -62,7 +62,7 @@
             <div class="relative group cursor-pointer mb-6">
               <div class="w-40 h-40 rounded-full border-4 border-gray-50 shadow-inner overflow-hidden bg-gray-100 flex items-center justify-center">
                 <img v-if="perfil.logo_loja" :src="perfil.logo_loja" class="w-full h-full object-cover" />
-                <span v-else class="text-5xl opacity-20">🏪</span>
+                <span v-else class="text-5xl opacity-20"><Store :size="48" /></span>
               </div>
               
               <label class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
@@ -94,7 +94,9 @@
         <div class="md:col-span-2 space-y-8">
           
           <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-black/5">
-            <h3 class="text-sm font-black italic uppercase tracking-tighter mb-6 text-[#2D4483]">Informações Básicas</h3>
+            <h3 class="text-sm font-black italic uppercase tracking-tighter mb-6 text-[#2D4483] flex items-center gap-2">
+              <Mail :size="18" /> Informações Básicas
+            </h3>
             
             <div class="space-y-4">
               <div>
@@ -116,9 +118,12 @@
           </div>
 
           <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-black/5">
-            <h3 class="text-sm font-black italic uppercase tracking-tighter mb-6 text-[#2D4483]">Localização</h3>
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-black/5">
+              <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center"><MapPin :size="18" /></div>
+              <h3 class="text-sm font-black italic uppercase tracking-tighter text-[#2D4483]">Localização</h3>
+            </div>
             
-            <div class="space-y-4">
+            <div class="space-y-4 mt-6">
               <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-1">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">CEP</label>
@@ -164,7 +169,17 @@
 import iRota from '../assets/iRota.png'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api' // Seu Axios
+import api from '../services/api'
+import { 
+  LogOut, 
+  Store, 
+  Mail, 
+  MapPin, 
+  Phone, 
+  Clock, 
+  Check, 
+  X 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 

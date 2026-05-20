@@ -10,7 +10,9 @@
       
       <router-link to="/cadastro?perfil=funcionario" class="w-full md:w-96 group">
         <div class="bg-[#1A1A1A] p-12 rounded-[3.5rem] flex flex-col items-center gap-6 shadow-2xl transition-all duration-500 group-hover:-translate-y-4 group-hover:shadow-black/40 border-4 border-transparent group-hover:border-[#C2F2D9]/30">
-          <div class="text-8xl mb-2 transition-transform group-hover:scale-110 duration-500">👷‍♂️</div>
+          <div class="mb-2 transition-transform group-hover:scale-110 duration-500">
+            <HardHat :size="80" class="text-[#C2F2D9]" />
+          </div>
           <span class="text-3xl font-black text-white uppercase italic tracking-tighter">Sou Funcionário</span>
           <p class="text-white/60 text-center text-sm font-medium">Acesse o painel de entregas ou gestão de pedidos</p>
         </div>
@@ -18,7 +20,9 @@
 
       <router-link to="/cadastro?perfil=cliente" class="w-full md:w-96 group">
         <div class="bg-white/90 backdrop-blur-md border-4 border-white p-12 rounded-[3.5rem] flex flex-col items-center gap-6 shadow-2xl transition-all duration-500 group-hover:-translate-y-4 group-hover:shadow-white/20">
-          <div class="text-8xl mb-2 transition-transform group-hover:scale-110 duration-500">👤</div>
+          <div class="mb-2 transition-transform group-hover:scale-110 duration-500">
+            <User :size="80" class="text-[#1A1A1A]" />
+          </div>
           <span class="text-3xl font-black text-[#1A1A1A] uppercase italic tracking-tighter">Sou Cliente</span>
           <p class="text-[#1A1A1A]/50 text-center text-sm font-medium">Acompanhe seus pedidos e faça novas compras</p>
         </div>
@@ -33,3 +37,7 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { HardHat, User } from 'lucide-vue-next'
+</script>

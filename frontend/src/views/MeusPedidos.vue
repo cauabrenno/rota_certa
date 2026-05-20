@@ -8,11 +8,17 @@
   </div>
   
   <div class="hidden md:flex gap-6 items-center">
-    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
-    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
-    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
+    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">
+      <Home :size="24" />
+    </router-link>
+    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <ClipboardList :size="24" />
+    </router-link>
+    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <User :size="24" />
+    </router-link>
     <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
-      🛒
+      <ShoppingCart :size="24" />
       <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
         {{ totalItensCarrinho }}
       </span>
@@ -22,18 +28,18 @@
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
       <router-link to="/home" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">🏠</span></div>
+        <div class="p-2"><Home :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
 
       <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-[#C2F2D9]">
-        <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all"><span class="text-2xl">📄</span></div>
+        <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all"><ClipboardList :size="24" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
 
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
-          <span class="text-2xl grayscale opacity-80">🛒</span>
+          <ShoppingCart :size="24" class="opacity-80" />
           <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -42,7 +48,7 @@
       </button>
 
       <router-link to="/perfil" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">👤</span></div>
+        <div class="p-2"><User :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
       </router-link>
     </div>
@@ -88,8 +94,8 @@
               
               <div v-for="(etapa, idx) in etapas" :key="idx" class="flex flex-col items-center relative">
                 <div :class="idx <= pedidoAtivo.statusIndex ? 'bg-[#2D4483] text-white shadow-md scale-110' : 'bg-gray-200 text-gray-400'" class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all z-10">
-                  <span v-if="idx < pedidoAtivo.statusIndex">✓</span>
-                  <span v-else-if="idx === pedidoAtivo.statusIndex">📍</span>
+                  <Check v-if="idx < pedidoAtivo.statusIndex" :size="14" />
+                  <MapPin v-else-if="idx === pedidoAtivo.statusIndex" :size="14" />
                 </div>
                 <span :class="idx === pedidoAtivo.statusIndex ? 'text-[#1A1A1A] font-black' : 'text-gray-400 font-bold'" class="text-[8px] uppercase tracking-widest text-center absolute top-8 left-1/2 -translate-x-1/2 w-16 leading-tight transition-all">
                   {{ etapa }}
@@ -101,7 +107,7 @@
           <div class="w-full h-32 bg-gray-200 rounded-2xl relative overflow-hidden border border-black/5 md:mt-4 z-0">
             <div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-cover"></div>
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center animate-bounce">
-              <span class="text-3xl drop-shadow-md">🛵</span>
+              <Bike :size="32" class="drop-shadow-md" />
               <div class="w-4 h-1 bg-black/20 rounded-full mt-1 blur-[1px]"></div>
             </div>
             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -112,7 +118,7 @@
           </div>
           
           <div class="mt-4 text-center">
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483] transition-colors">Ver detalhes completos ➔</span>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483] transition-colors flex items-center justify-center gap-1">Ver detalhes completos <ArrowRight :size="12" /></span>
           </div>
         </div>
       </section>
@@ -134,8 +140,8 @@
               
               <!-- Selo Verde ou Vermelho Dinâmico -->
               <div class="flex items-center gap-1 px-2 py-1 rounded-lg" :class="pedido.statusIndex === 5 ? 'bg-red-50' : 'bg-green-50'">
-                <span v-if="pedido.statusIndex === 5" class="text-red-600 text-[10px]">✕</span>
-                <span v-else class="text-green-600 text-[10px]">✓</span>
+                <X v-if="pedido.statusIndex === 5" :size="12" class="text-red-600" />
+                <Check v-else :size="12" class="text-green-600" />
                 
                 <span :class="pedido.statusIndex === 5 ? 'text-red-700' : 'text-green-700'" class="text-[9px] font-black uppercase tracking-widest">
                   {{ pedido.statusIndex === 5 ? 'Cancelado' : 'Concluído' }}
@@ -180,7 +186,9 @@
       <div @click="fecharDetalhes" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       
       <div class="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] md:rounded-[2.5rem] p-5 lg:p-10 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 custom-scrollbar z-50">
-        <button @click="fecharDetalhes" class="absolute top-4 right-4 lg:top-6 lg:right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">✕</button>
+        <button @click="fecharDetalhes" class="absolute top-4 right-4 lg:top-6 lg:right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="flex items-center gap-4 border-b border-gray-100 pb-5 md:pb-6 mb-5 md:mb-6">
           <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 overflow-hidden">
@@ -208,8 +216,8 @@
             
             <div v-for="(etapa, idx) in etapas" :key="idx" class="flex flex-col items-center relative">
               <div :class="idx <= pedidoSelecionado.statusIndex ? 'bg-[#2D4483] text-white shadow-md scale-110' : 'bg-white text-gray-300 border border-gray-200'" class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all z-10">
-                <span v-if="idx < pedidoSelecionado.statusIndex">✓</span>
-                <span v-else-if="idx === pedidoSelecionado.statusIndex">📍</span>
+                <Check v-if="idx < pedidoSelecionado.statusIndex" :size="14" />
+                <MapPin v-else-if="idx === pedidoSelecionado.statusIndex" :size="14" />
               </div>
               <span :class="idx === pedidoSelecionado.statusIndex ? 'text-[#1A1A1A] font-black' : 'text-gray-400 font-bold'" class="text-[8px] uppercase tracking-widest text-center absolute top-8 left-1/2 -translate-x-1/2 w-16 leading-tight transition-all">
                 {{ etapa }}
@@ -251,7 +259,7 @@
           <div class="space-y-4 border-t md:border-t-0 md:border-l border-gray-200 pt-5 md:pt-0 md:pl-6">
             <div>
               <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Pagamento</h3>
-              <p class="font-bold text-xs flex items-center gap-2 leading-tight"><span class="text-base flex-shrink-0">💳</span> {{ pedidoSelecionado.pagamento }}</p>
+              <p class="font-bold text-xs flex items-center gap-2 leading-tight"><CreditCard :size="16" /> {{ pedidoSelecionado.pagamento }}</p>
             </div>
           </div>
 
@@ -291,6 +299,18 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
+import { 
+  Home, 
+  ClipboardList, 
+  User, 
+  ShoppingCart, 
+  Check, 
+  MapPin, 
+  Bike, 
+  ArrowRight, 
+  X, 
+  CreditCard 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 

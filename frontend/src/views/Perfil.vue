@@ -8,11 +8,11 @@
       </div>
       
       <div class="hidden md:flex gap-6 items-center">
-        <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
-        <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
-        <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
+        <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100"><Home :size="24" /></router-link>
+        <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100"><ClipboardList :size="24" /></router-link>
+        <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100"><User :size="24" /></router-link>
         <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
-          🛒
+          <ShoppingCart :size="24" />
           <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -22,18 +22,18 @@
 
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
       <router-link to="/home" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">🏠</span></div>
+        <div class="p-2"><Home :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
 
       <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
-        <div class="p-2"><span class="text-2xl grayscale opacity-80">📄</span></div>
+        <div class="p-2"><ClipboardList :size="24" class="opacity-80" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
 
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
-          <span class="text-2xl grayscale opacity-80">🛒</span>
+          <ShoppingCart :size="24" class="opacity-80" />
           <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -42,7 +42,7 @@
       </button>
 
       <router-link to="/perfil" class="flex flex-col items-center gap-1 text-[#C2F2D9]">
-        <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all"><span class="text-2xl">👤</span></div>
+        <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all"><User :size="24" /></div>
         <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
       </router-link>
     </div>
@@ -91,57 +91,57 @@
           <div class="flex flex-col">
             <button @click="abrirModal('enderecos')" class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group border-b border-gray-50">
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors">📍</div>
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors"><MapPin :size="20" /></div>
                 <div class="text-left">
                   <p class="font-bold text-sm uppercase tracking-tight">Meus Endereços</p>
                   <p class="text-[10px] text-gray-400 font-medium">Gerencie os locais de entrega</p>
                 </div>
               </div>
-              <span class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all">➔</span>
+              <ArrowRight :size="20" class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all" />
             </button>
 
             <button @click="abrirModal('pagamentos')" class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group border-b border-gray-50">
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors">💳</div>
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors"><CreditCard :size="20" /></div>
                 <div class="text-left">
                   <p class="font-bold text-sm uppercase tracking-tight">Pagamentos</p>
                   <p class="text-[10px] text-gray-400 font-medium">Cartões salvas</p>
                 </div>
               </div>
-              <span class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all">➔</span>
+              <ArrowRight :size="20" class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all" />
             </button>
 
             <button @click="abrirModal('notificacoes')" class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group border-b border-gray-50">
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors">🔔</div>
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors"><Bell :size="20" /></div>
                 <div class="text-left">
                   <p class="font-bold text-sm uppercase tracking-tight">Notificações</p>
                   <p class="text-[10px] text-gray-400 font-medium">Avisos de ofertas e pedidos</p>
                 </div>
               </div>
-              <span class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all">➔</span>
+              <ArrowRight :size="20" class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all" />
             </button>
 
             <button @click="abrirModal('seguranca')" class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group border-b border-gray-50">
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors">🛡️</div>
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors"><Shield :size="20" /></div>
                 <div class="text-left">
                   <p class="font-bold text-sm uppercase tracking-tight">Segurança e Senha</p>
                   <p class="text-[10px] text-gray-400 font-medium">Altere sua senha de acesso</p>
                 </div>
               </div>
-              <span class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all">➔</span>
+              <ArrowRight :size="20" class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all" />
             </button>
             
             <button @click="abrirModal('suporte')" class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors">🎧</div>
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-lg group-hover:bg-[#C2F2D9] group-hover:text-[#1A1A1A] transition-colors"><Headphones :size="20" /></div>
                 <div class="text-left">
                   <p class="font-bold text-sm uppercase tracking-tight">Suporte</p>
                   <p class="text-[10px] text-gray-400 font-medium">Fale com o RotaCerta</p>
                 </div>
               </div>
-              <span class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all">➔</span>
+              <ArrowRight :size="20" class="text-gray-300 font-bold group-hover:text-[#1A1A1A] group-hover:translate-x-1 transition-all" />
             </button>
           </div>
         </section>
@@ -191,10 +191,12 @@
     <div v-if="modalAtivo === 'clube'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="text-center mb-8">
-          <span class="text-5xl mb-4 block">🏆</span>
+          <Trophy :size="48" class="mb-4 mx-auto text-yellow-500" />
           <h2 class="text-2xl font-black italic tracking-tighter uppercase">Clube RotaCerta</h2>
           <p class="text-gray-500 text-xs mt-2">Você tem <span class="font-bold text-[#1A1A1A]">{{ usuario.pontos }} pontos</span></p>
         </div>
@@ -214,7 +216,7 @@
           <h3 class="text-xs font-black uppercase tracking-widest opacity-40 mb-3">Resgatar Benefícios</h3>
           <div v-for="cupom in cupons" :key="cupom.id" class="flex justify-between items-center bg-white p-4 rounded-2xl border border-black/5 shadow-sm">
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-[#1A1A1A] text-[#C2F2D9] rounded-xl flex items-center justify-center text-xl">🎟️</div>
+              <div class="w-12 h-12 bg-[#1A1A1A] text-[#C2F2D9] rounded-xl flex items-center justify-center text-xl"><Ticket :size="20" /></div>
               <div>
                 <p class="font-black text-sm uppercase">{{ cupom.titulo }}</p>
                 <p class="text-[10px] text-gray-400 font-bold">{{ cupom.custo }} pts</p>
@@ -231,7 +233,9 @@
 <div v-if="modalAtivo === 'enderecos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Endereços</h2>
@@ -244,7 +248,7 @@
           </div>
           
           <div v-for="end in enderecosSalvos" :key="end.id" class="flex items-start gap-4 p-4 rounded-2xl border border-black/5 bg-gray-50 relative group">
-            <div class="text-2xl">📍</div>
+            <div class="flex-shrink-0"><MapPin :size="24" /></div>
             <div class="flex-1">
               <p class="font-black text-xs uppercase">{{ end.nome_local }}</p>
               <p class="text-[11px] text-gray-500 mt-1">{{ end.rua }}, {{ end.numero }}</p>
@@ -304,7 +308,9 @@
     <div v-if="modalAtivo === 'pagamentos'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Pagamentos</h2>
@@ -317,7 +323,7 @@
           </div>
 
           <div v-for="cartao in cartoesSalvos" :key="cartao.id" class="flex items-center gap-4 p-4 rounded-2xl border border-black/5 bg-[#1A1A1A] text-white relative group">
-            <div class="text-2xl">💳</div>
+            <div class="flex-shrink-0"><CreditCard :size="24" /></div>
             <div class="flex-1">
               <p class="font-black text-xs uppercase">{{ cartao.nome_impresso }}</p>
               <p class="text-[11px] text-gray-400 mt-1">Final {{ cartao.numero_cartao ? cartao.numero_cartao.slice(-4) : '****' }}</p>
@@ -361,7 +367,9 @@
     <div v-if="modalAtivo === 'notificacoes'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Notificações</h2>
@@ -400,7 +408,9 @@
     <div v-if="modalAtivo === 'seguranca'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Alterar Senha</h2>
           <p class="text-gray-500 text-xs font-medium">Mantenha sua conta protegida</p>
@@ -429,7 +439,9 @@
     <div v-if="modalAtivo === 'suporte'" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Central de Ajuda</h2>
@@ -465,6 +477,21 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
+import { 
+  Home, 
+  ClipboardList, 
+  User, 
+  ShoppingCart, 
+  MapPin, 
+  CreditCard, 
+  Bell, 
+  Shield, 
+  Headphones, 
+  ArrowRight, 
+  X, 
+  Trophy, 
+  Ticket 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const carregando = ref(true)

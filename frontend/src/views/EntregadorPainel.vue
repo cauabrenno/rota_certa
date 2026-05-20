@@ -13,7 +13,7 @@
           <p class="text-sm text-gray-500 font-medium">Ganhos de hoje: <span class="text-green-600 font-bold">R$ {{ Number(dadosPerfil?.saldo_semana || 0).toFixed(2) }}</span></p>
         </div>
         <button @click="isProfileOpen = true" class="w-12 h-12 bg-gray-200 rounded-full border-2 border-[#1A1A1A] flex items-center justify-center overflow-hidden hover:scale-105 active:scale-95 transition-transform">
-           <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+           <User :size="24" class="text-gray-500" />
         </button>
       </div>
 
@@ -62,7 +62,7 @@
             </span>
           </div>
           <div class="absolute top-1.5 bottom-1.5 bg-white rounded-xl shadow-md flex items-center justify-center z-20" :style="{ left: `${swipeProgress}%`, transform: `translateX(-${swipeProgress}%)`, width: '4rem' }">
-            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            <ChevronRight :size="24" class="text-green-500" stroke-width="3" />
           </div>
           <input type="range" min="0" max="100" v-model="swipeProgress" @touchend="checkSwipeAccept" @mouseup="checkSwipeAccept" class="absolute inset-0 w-full h-full opacity-0 z-30 cursor-pointer">
         </div>
@@ -94,7 +94,7 @@
             </span>
           </div>
           <div class="absolute top-1.5 bottom-1.5 bg-white rounded-xl shadow-md flex items-center justify-center z-20" :style="{ left: `${swipeFinishProgress}%`, transform: `translateX(-${swipeFinishProgress}%)`, width: '4rem' }">
-            <svg class="w-6 h-6" :class="dadosDaFaseAtual.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+            <Check :size="24" :class="dadosDaFaseAtual.iconColor" stroke-width="3" />
           </div>
           <input type="range" min="0" max="100" v-model="swipeFinishProgress" @touchend="checkSwipeFases" @mouseup="checkSwipeFases" class="absolute inset-0 w-full h-full opacity-0 z-30 cursor-pointer">
         </div>
@@ -128,7 +128,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="fecharModalPin"></div>
         <div class="relative w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl text-center">
           <div class="w-16 h-16 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            <Lock :size="32" />
           </div>
           <h3 class="text-2xl font-black text-[#1A1A1A] italic tracking-tighter mb-1">Código de Entrega</h3>
           <p class="text-sm text-gray-500 font-medium mb-8">Peça o código de 4 dígitos ao cliente.</p>
@@ -170,7 +170,7 @@
                 </div>
               </div>
               <button @click="isProfileOpen = false" class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1A1A1A] hover:bg-gray-200 transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <X :size="24" />
               </button>
             </div>
 
@@ -184,7 +184,7 @@
                 <div>
                   <p class="text-2xl font-black italic tracking-tighter">{{ dadosPerfil?.nome || 'Entregador' }}</p>
                   <div class="flex items-center gap-3 mt-1">
-                    <span class="flex items-center gap-1 text-yellow-400 font-bold text-sm">⭐ {{ dadosPerfil?.avaliacao || '5.0' }}</span>
+                    <span class="flex items-center gap-1 text-yellow-400 font-bold text-sm"><Star :size="14" class="fill-yellow-400" /> {{ dadosPerfil?.avaliacao || '5.0' }}</span>
                     <span class="h-1 w-1 rounded-full bg-white/20"></span>
                     <span class="text-white/50 text-xs font-bold uppercase tracking-widest">{{ dadosPerfil?.total_entregas || 0 }} Corridas</span>
                   </div>
@@ -222,13 +222,13 @@
                 @click="salvarDadosVeiculoNoBanco" 
                 class="w-full py-5 bg-[#1A1A1A] text-white font-black rounded-[2rem] hover:shadow-2xl active:scale-[0.98] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lg"
               >
-                <svg v-if="carregandoVeiculo" class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <div v-if="carregandoVeiculo" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
                 {{ carregandoVeiculo ? 'Atualizando...' : 'Salvar Alterações' }}
               </button>
             </div>
 
             <button @click="realizarLogout" class="flex items-center justify-center gap-2 text-red-400 font-black uppercase text-[10px] tracking-widest hover:text-red-600 transition-colors py-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              <LogOut :size="16" />
               Encerrar Sessão
             </button>
             
@@ -247,6 +247,17 @@ import 'leaflet/dist/leaflet.css'
 import mapsLogo from '../assets/mapsLogo.png'
 import wazeLogo from '../assets/wazeLogo.png'
 import api from '../services/api' 
+import { 
+  Bike, 
+  Star, 
+  LogOut, 
+  Check, 
+  X, 
+  MapPin, 
+  Lock, 
+  ChevronRight, 
+  User 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 

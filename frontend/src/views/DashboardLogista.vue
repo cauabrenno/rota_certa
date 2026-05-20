@@ -85,7 +85,10 @@
             <h2 class="text-xl font-black italic uppercase tracking-tighter">Gerenciar Pedidos</h2>
             <div class="flex gap-2 bg-gray-100 p-1 rounded-xl">
               <button @click="filtroAtivo = 'todos'" :class="filtroAtivo === 'todos' ? 'bg-white shadow-sm text-[#1A1A1A]' : 'text-gray-400'" class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Todos</button>
-              <button @click="filtroAtivo = 'pendente'" :class="filtroAtivo === 'pendente' ? 'bg-white shadow-sm text-[#1A1A1A]' : 'text-gray-400'" class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Pendentes</button>
+              <button @click="alternarStatusLojista" :class="lojaAberta ? 'bg-[#C2F2D9] text-[#1A1A1A]' : 'bg-red-100 text-red-600'" class="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm border border-black/5">
+                <Zap :size="14" :class="lojaAberta ? 'fill-[#1A1A1A]' : 'fill-none'" />
+                {{ lojaAberta ? 'Loja Aberta' : 'Loja Fechada' }}
+              </button>
             </div>
           </div>
 
@@ -111,7 +114,9 @@
                   <td class="py-4 px-2 font-black text-sm">#{{ pedido.id }}</td>
                   <td class="py-4 px-4">
                     <p class="font-bold text-sm uppercase">{{ pedido.cliente }}</p>
-                    <p class="text-[10px] text-gray-500 font-medium">{{ pedido.itensCount }} itens</p>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase flex items-center gap-1">
+                      <MapPin :size="12" /> {{ formatarEndereco(pedido.endereco) }}
+                    </p>
                   </td>
                   <td class="py-4 px-4">
                     <p class="text-[10px] font-bold text-gray-500 uppercase leading-tight line-clamp-2">{{ pedido.descricao_curta }}</p>
@@ -123,13 +128,23 @@
                   </td>
                   <td class="py-4 px-4 font-black text-[#1A1A1A]">R$ {{ pedido.total.toFixed(2) }}</td>
                   <td class="py-4 px-2 text-right">
-                    <button v-if="pedido.status === 'Pendente'" @click.stop="atualizarStatus(pedido, 'Preparo')" class="bg-[#1A1A1A] text-[#C2F2D9] px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-black transition-colors shadow-md">
-                      Aceitar
+                    <button 
+                      v-if="pedido.status === 'Pendente'"
+                      @click="atualizarStatus(pedido, 'Preparo')"
+                      class="bg-[#1A1A1A] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-black hover:scale-105 transition-all shadow-md tracking-widest flex items-center gap-2"
+                    >
+                      Aceitar <ArrowRight :size="12" />
                     </button>
-                    <button v-else-if="pedido.status === 'Preparo'" @click.stop="atualizarStatus(pedido, 'Saiu p/ Entrega')" class="bg-[#2D4483] text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-900 transition-colors shadow-md">
-                      Despachar
+                    <button 
+                      v-else-if="pedido.status === 'Preparo'"
+                      @click="atualizarStatus(pedido, 'Saiu p/ Entrega')"
+                      class="bg-[#2D4483] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-900 hover:scale-105 transition-all shadow-md tracking-widest flex items-center gap-2"
+                    >
+                      Despachar <ArrowRight :size="12" />
                     </button>
-                    <span v-else class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483]">Ver Detalhes ➔</span>
+                    <span v-else class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483] cursor-pointer" @click="abrirModalPedido(pedido)">
+                      Ver Detalhes ➔
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -140,30 +155,21 @@
         <!-- COLUNA DA DIREITA -->
         <div class="space-y-8">
           
-          <!-- NOTIFICAÇÕES -->
-          <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-black/5">
-            <h2 class="text-lg font-black italic uppercase tracking-tighter mb-6">Avisos Recentes</h2>
-            <div class="space-y-4">
-              <div v-for="(notif, idx) in notificacoes" :key="idx" class="flex gap-4 items-start p-4 bg-gray-50 rounded-2xl border border-black/5">
-                <span class="text-2xl">{{ notif.icone }}</span>
-                <div>
-                  <p class="font-bold text-xs uppercase text-[#1A1A1A] leading-tight">{{ notif.titulo }}</p>
-                  <p class="text-[10px] text-gray-500 font-medium mt-1">{{ notif.tempo }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- ÁREA DOS ENTREGADORES ATIVOS (COM O NOVO FUNDO GRADIENTE) -->
+          <!-- ÁREA DOS ENTREGADORES ATIVOS -->
           <div class="bg-gradient-to-br from-[#1A1A1A] to-[#2D4483] rounded-[2.5rem] p-8 shadow-xl text-white relative overflow-hidden flex flex-col justify-center items-center text-center">
             <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-cover"></div>
             
             <h2 class="text-lg font-black italic uppercase tracking-tighter mb-4 relative z-10 text-[#C2F2D9]">Entregadores</h2>
             
             <div class="relative z-10 flex flex-col items-center gap-1">
-              <span class="text-5xl mb-2 drop-shadow-md animate-bounce">🛵</span>
-              <span class="text-3xl font-black italic tracking-tighter">2</span>
-              <span class="text-[10px] font-black uppercase tracking-widest text-gray-300">Ativos no Momento</span>
+              <div class="flex items-center gap-3 mt-4">
+                <Bike :size="20" :class="entregadoresOnline > 0 ? 'text-[#C2F2D9]' : 'text-gray-400'" />
+                <p class="text-xs font-bold uppercase" :class="entregadoresOnline > 0 ? 'text-white' : 'text-gray-500'">
+                  {{ entregadoresOnline }} {{ entregadoresOnline === 1 ? 'Entregador ativo' : 'Entregadores ativos' }}
+                </p>
+              </div>
+              <span class="text-[10px] font-black uppercase tracking-widest text-gray-300">No momento</span>
             </div>
           </div>
 
@@ -176,8 +182,10 @@
     <div v-if="pedidoSelecionado" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div @click="fecharModal" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       
-      <div class="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 custom-scrollbar z-50">
-        <button @click="fecharModal" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+      <div class="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 lg:p-10 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 custom-scrollbar z-50">
+        <button @click="pedidoSelecionado = null" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <!-- Cabeçalho do Modal -->
         <div class="border-b border-gray-100 pb-6 mb-6">
@@ -192,7 +200,7 @@
 
         <!-- Endereço de Entrega (Agora com Bairro) -->
         <div class="bg-[#F8FAFC] p-6 rounded-3xl border border-gray-100 mb-6 flex items-start gap-4">
-          <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl flex-shrink-0">📍</div>
+          <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl flex-shrink-0"><MapPin :size="24" /></div>
           <div>
             <p class="text-[10px] font-black uppercase tracking-widest text-[#2D4483] mb-1">Local de Entrega</p>
             <p class="font-bold text-sm uppercase text-[#1A1A1A]">{{ pedidoSelecionado.cliente }}</p>
@@ -249,9 +257,16 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import api from '../services/api' // Não esqueça de importar a API!
+import api from '../services/api'
+import { 
+  Zap, 
+  ArrowRight, 
+  Bike, 
+  X, 
+  MapPin 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -259,6 +274,8 @@ const route = useRoute()
 // Variáveis de Controle
 const filtroAtivo = ref('todos')
 const pedidoSelecionado = ref(null)
+const lojaAberta = ref(true)
+const entregadoresOnline = ref(0)
 
 // Os pedidos reais vão entrar aqui
 const pedidos = ref([])
@@ -266,18 +283,21 @@ const pedidos = ref([])
 // Resumo calculado em tempo real
 const resumo = ref({ pendentes: 0, emPreparo: 0, emEntrega: 0, finalizados: 0, faturamento: 0 })
 
-const notificacoes = ref([
-  { icone: '🔌', titulo: 'Painel Conectado ao Banco', tempo: 'Agora' },
-])
+const notificacoes = ref([])
 
 // === LÓGICA DE INTERFACE ===
 
 const pedidosFiltrados = computed(() => {
-  if (filtroAtivo.value === 'pendente') {
-    return pedidos.value.filter(p => p.status.toLowerCase() === 'pendente' || p.status.toLowerCase() === 'pendentes')
-  }
   return pedidos.value
 })
+
+const formatarEndereco = (endereco) => {
+  if (!endereco) return 'Endereço não informado';
+  if (typeof endereco === 'object') {
+    return `${endereco.rua}, ${endereco.numero}${endereco.bairro ? ' - ' + endereco.bairro : ''}`;
+  }
+  return endereco;
+}
 
 const obterCorStatus = (status) => {
   const s = status ? String(status).toLowerCase() : ''
@@ -372,10 +392,40 @@ const buscarPedidos = async () => {
 // Quando a tela carregar, busca os pedidos e liga o "radar" a cada 30 segundos
 onMounted(() => {
   buscarPedidos()
+  buscarStatusLoja()
+  buscarEntregadoresOnline()
+  
   setInterval(() => {
     buscarPedidos()
+    buscarEntregadoresOnline()
   }, 30000)
 })
+
+const buscarStatusLoja = async () => {
+  try {
+    const res = await api.get('/lojista/perfil')
+    if (res.data) {
+      lojaAberta.value = res.data.aberto
+    }
+  } catch (error) {}
+}
+
+const alternarStatusLojista = async () => {
+  const novoStatus = !lojaAberta.value
+  try {
+    await api.post('/lojista/perfil', { aberto: novoStatus })
+    lojaAberta.value = novoStatus
+  } catch (error) {
+    alert("Erro ao mudar o status da loja.")
+  }
+}
+
+const buscarEntregadoresOnline = async () => {
+  try {
+    const res = await api.get('/lojista/entregadores-online')
+    entregadoresOnline.value = res.data.count || 0
+  } catch (error) {}
+}
 
 // === FUNÇÕES DO MODAL E AÇÕES ===
 

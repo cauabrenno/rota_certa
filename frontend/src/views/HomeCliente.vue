@@ -8,11 +8,17 @@
   </div>
   
   <div class="hidden md:flex gap-6 items-center">
-    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">🏠</router-link>
-    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">📄</router-link>
-    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">👤</router-link>
+    <router-link title="Início" to="/home" class="text-2xl hover:scale-110 transition-all opacity-100">
+      <Home :size="24" />
+    </router-link>
+    <router-link title="Meus Pedidos" to="/meus-pedidos" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <ClipboardList :size="24" />
+    </router-link>
+    <router-link title="Meu Perfil" to="/perfil" class="text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
+      <User :size="24" />
+    </router-link>
     <button @click="irParaCarrinho" class="relative text-2xl hover:scale-110 transition-all opacity-60 hover:opacity-100">
-      🛒
+      <ShoppingCart :size="24" />
       <span v-if="totalItensCarrinho > 0" class="absolute -top-2 -right-2 bg-[#2D4483] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold italic shadow-md">
         {{ totalItensCarrinho }}
       </span>
@@ -23,19 +29,19 @@
     <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1A1A] rounded-[2rem] shadow-[0_10px_50px_rgba(0,0,0,0.4)] border border-white/10 flex justify-between items-center px-6 py-4 z-50">
       <router-link to="/home" class="flex flex-col items-center gap-1 text-[#C2F2D9]">
         <div class="bg-[#C2F2D9]/20 p-2 rounded-xl transition-all">
-          <span class="text-2xl">🏠</span>
+          <Home :size="24" />
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
       </router-link>
       <router-link to="/meus-pedidos" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
         <div class="p-2">
-          <span class="text-2xl grayscale opacity-80">📄</span>
+          <ClipboardList :size="24" class="opacity-80" />
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Pedidos</span>
       </router-link>
       <button @click="irParaCarrinho" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all relative">
         <div class="p-2 relative">
-          <span class="text-2xl grayscale opacity-80">🛒</span>
+          <ShoppingCart :size="24" class="opacity-80" />
           <span v-if="totalItensCarrinho > 0" class="absolute top-1 right-0 bg-[#C2F2D9] text-[#1A1A1A] text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-md">
             {{ totalItensCarrinho }}
           </span>
@@ -44,7 +50,7 @@
       </button>
       <router-link to="/perfil" class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-all">
         <div class="p-2">
-          <span class="text-2xl grayscale opacity-80">👤</span>
+          <User :size="24" class="opacity-80" />
         </div>
         <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
       </router-link>
@@ -60,7 +66,9 @@
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Semana do Consumidor</h4>
                <p class="text-xs font-medium opacity-90">Até 40% OFF no app</p>
              </div>
-             <div class="absolute -right-4 -bottom-4 text-7xl lg:text-8xl opacity-20 transform rotate-12">🛍️</div>
+             <div class="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
+               <ShoppingBag :size="96" />
+             </div>
           </div>
 
           <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#2D4483] to-blue-600 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
@@ -69,7 +77,9 @@
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Laticínios Deleite</h4>
                <p class="text-xs font-medium opacity-90">Compre e ganhe pontos em double!</p>
              </div>
-             <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-20 transform -rotate-12">🧀</div>
+             <div class="absolute -right-2 -bottom-2 opacity-20 transform -rotate-12">
+               <Milk :size="96" />
+             </div>
           </div>
           
           <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#1A1A1A] to-gray-800 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
@@ -78,20 +88,31 @@
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Frete Grátis</h4>
                <p class="text-xs font-medium opacity-90">Nas compras acima de R$ 150</p>
              </div>
-             <div class="absolute -right-2 -bottom-2 text-7xl lg:text-8xl opacity-10">🚀</div>
+             <div class="absolute -right-2 -bottom-2 opacity-10">
+               <Rocket :size="96" />
+             </div>
           </div>
         </div>
       </section>
 
       <div class="space-y-4">
        <div class="relative group">
-          <span class="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-30">🔍</span>
+          <span class="absolute left-6 top-1/2 -translate-y-1/2 opacity-30">
+            <Search :size="24" />
+          </span>
           <input v-model="termoBusca" type="text" placeholder="Buscar produtos ou marcas..." class="w-full p-6 pl-16 rounded-[2rem] bg-white shadow-xl shadow-black/5 border-none outline-none focus:ring-4 focus:ring-[#C2F2D9] transition-all font-medium" />
         </div>
         
-        <div @click="abrirModalEnderecos" class="flex items-center gap-3 px-6 py-3 bg-white/60 backdrop-blur-sm rounded-2xl cursor-pointer hover:bg-[#C2F2D9] transition-all w-fit border border-black/5 shadow-sm">
-          <span class="text-lg">📍</span>
-          <p class="text-sm font-black">{{ enderecoAtual.rua }}, {{ enderecoAtual.numero }} <span class="text-[#2D4483] ml-2">Mudar ➔</span></p>
+        <div @click="abrirModalEnderecos" class="flex items-center gap-4 p-4 bg-white/80 backdrop-blur-md rounded-3xl cursor-pointer hover:bg-[#C2F2D9] transition-all w-full md:w-fit border border-black/5 shadow-xl shadow-black/5">
+          <MapPin :size="24" class="text-gray-500" />
+          <div class="flex-1 text-left">
+            <p class="font-black text-xs uppercase tracking-tight">{{ enderecoAtual.titulo }}</p>
+            <p class="text-[10px] text-gray-500 font-bold">{{ enderecoAtual.rua }}, {{ enderecoAtual.numero }}</p>
+            <p class="text-[10px] text-gray-400 font-medium">{{ enderecoAtual.bairro }} - {{ enderecoAtual.cidade }}</p>
+          </div>
+          <span class="text-[#2D4483] ml-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">
+            Mudar <ArrowRight :size="14" />
+          </span>
         </div>
       </div>
 
@@ -126,7 +147,9 @@
         </div>
       </section>
 
-      <h3 class="text-xl font-black uppercase italic tracking-tighter mb-4 pl-2 mt-4">🛒 Mercados e Atacados</h3>
+      <h3 class="text-xl font-black uppercase italic tracking-tighter mb-4 pl-2 mt-4 flex items-center gap-2">
+        <ShoppingCart :size="24" /> Mercados e Atacados
+      </h3>
       <div class="flex gap-6 overflow-x-auto custom-scrollbar pb-4">
         
         <div v-if="lojas.length === 0" class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
@@ -179,7 +202,7 @@
               </div>
             </div>
             <button @click.stop="adicionarRapido(prod)" class="absolute top-3 right-3 w-10 h-10 bg-[#1A1A1A] text-white rounded-full shadow-xl hover:scale-110 active:scale-90 transition-all z-10 flex items-center justify-center">
-              <span class="text-xl font-light leading-none mb-1">+</span>
+              <Plus :size="20" />
             </button>
           </div>
         </div>
@@ -190,7 +213,9 @@
       <div @click="prodSel = null" class="absolute inset-0 bg-[#1A1A1A]/90 backdrop-blur-md"></div>
       
       <div class="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2rem] lg:rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row animate-in zoom-in duration-300 custom-scrollbar">
-        <button @click="prodSel = null" class="absolute top-4 right-4 lg:top-6 lg:right-6 w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 transition-all flex items-center justify-center">✕</button>
+        <button @click="prodSel = null" class="absolute top-4 right-4 lg:top-6 lg:right-6 w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 transition-all flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="md:w-1/2 p-8 lg:p-12 bg-white flex items-center justify-center relative border-b md:border-b-0 md:border-r border-gray-100 min-h-[250px]">
           <img :src="prodSel.foto" class="max-h-60 lg:max-h-80 object-contain" />
@@ -234,9 +259,13 @@
           <div class="mt-4 lg:mt-6">
             <div class="flex flex-col xl:flex-row gap-4">
               <div class="flex items-center justify-between xl:justify-center gap-4 bg-gray-100 px-6 py-2 xl:py-0 rounded-2xl border border-black/5 font-black">
-                <button @click="qtdModal > 1 ? qtdModal-- : null" class="text-2xl px-2">-</button>
+                <button @click="qtdModal > 1 ? qtdModal-- : null" class="flex items-center justify-center p-2">
+                  <Minus :size="20" />
+                </button>
                 <span class="text-lg w-6 text-center">{{ qtdModal }}</span>
-                <button @click="qtdModal++" class="text-2xl px-2">+</button>
+                <button @click="qtdModal++" class="flex items-center justify-center p-2">
+                  <Plus :size="20" />
+                </button>
               </div>
               <button @click="adicionarPeloModal" class="w-full py-4 lg:py-5 bg-[#1A1A1A] text-white font-black rounded-2xl uppercase tracking-widest shadow-xl hover:bg-black transition-all">
                 Adicionar
@@ -250,7 +279,9 @@
     <div v-if="modalEnderecosAberto" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div @click="fecharModalEnderecos" class="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-sm"></div>
       <div class="relative bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <button @click="fecharModalEnderecos" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200">✕</button>
+        <button @click="fecharModalEnderecos" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full font-bold z-50 hover:bg-gray-200 flex items-center justify-center">
+          <X :size="20" />
+        </button>
         
         <div class="mb-8">
           <h2 class="text-2xl font-black italic tracking-tighter uppercase mb-1">Endereços</h2>
@@ -264,7 +295,9 @@
             class="flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer relative group"
             :class="enderecoAtual.titulo === end.titulo ? 'border-[#1A1A1A] bg-gray-50' : 'border-transparent bg-white shadow-sm hover:border-black/10 hover:shadow-md'"
           >
-            <div class="text-2xl">📍</div>
+            <div class="flex-shrink-0">
+              <MapPin :size="24" />
+            </div>
             <div class="flex-1">
               <p class="font-black text-xs uppercase">{{ end.titulo }}</p>
               <p class="text-[11px] text-gray-500 mt-1">{{ end.rua }}, {{ end.numero }}</p>
@@ -299,6 +332,14 @@
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
             <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
           </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
+            <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Cidade - Estado (Ex: PE)</label>
+            <input v-model="novoEndereco.cidade" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <button type="button" @click="mostrandoFormEndereco = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
             <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
@@ -315,6 +356,28 @@ import iRota from '../assets/iRota.png'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
+import { 
+  Home, 
+  ClipboardList, 
+  User, 
+  ShoppingCart, 
+  ShoppingBag, 
+  Milk, 
+  Rocket, 
+  Search, 
+  MapPin, 
+  ArrowRight, 
+  Plus, 
+  Minus, 
+  X, 
+  Star, 
+  Apple, 
+  Beef, 
+  Sparkles, 
+  Package, 
+  CupSoda, 
+  Croissant 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -328,7 +391,7 @@ const qtdModal = ref(1)
 const enderecosSalvos = ref([])
 // ✨ NOVO: Bairro e Cidade adicionados para ficar padrão com o banco
 const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' })
-const enderecoAtual = ref({ titulo: 'Carregando...', rua: 'Buscando endereço', numero: '' })
+const enderecoAtual = ref({ titulo: 'Carregando...', rua: 'Buscando endereço', numero: '', bairro: 'Carregando...', cidade: 'Carregando...' })
 const pontosClube = ref(0)
 
 const lojas = ref([])
