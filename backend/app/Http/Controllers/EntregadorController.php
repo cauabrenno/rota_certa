@@ -52,6 +52,7 @@ class EntregadorController extends Controller
                 'placa' => $usuarioAutenticado->placa_veiculo
             ],
             'pedido_ativo' => $pedidoAtivoDoEntregador,
+            'status' => $dadosDoEntregador->status ?? 'indisponivel',
             'debug_id_entregador' => $dadosDoEntregador->id ?? null,
             'debug_id_user' => $usuarioAutenticado->id
         ], 200);
@@ -152,5 +153,25 @@ class EntregadorController extends Controller
         } catch (\Exception $excecaoLancada) {
             return response()->json(['error' => $excecaoLancada->getMessage()], 500);
         }
+    }
+
+    public function atualizarStatusDeDisponibilidade(Request $requisicao)
+    {
+        $requisicao->validate([
+            'status' => 'required|string|in:disponivel,indisponivel'
+        ]);
+
+        $usuarioAutenticado = auth()->user();
+
+        DB::table('entregadores')
+            ->where('user_id', $usuarioAutenticado->id)
+            ->update([
+                'status' => $requisicao->status,
+                'updated_at' => now()
+            ]);
+
+        return response()->json([
+            'message' => 'Status de disponibilidade atualizado com sucesso!'
+        ], 200);
     }
 }

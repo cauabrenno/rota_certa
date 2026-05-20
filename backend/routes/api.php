@@ -88,14 +88,20 @@ Route::middleware('auth:api')->group(function () {
         // ROTAS DE PEDIDOS DO LOJISTA ✨
         Route::get('/lojista/pedidos', [PedidoController::class, 'pedidosDoLojista']);
         Route::put('/lojista/pedidos/{id}/status', [PedidoController::class, 'atualizarStatusLojista']);
-    });
 
+        // ✨ ROTA PARA CONTAGEM DE ENTREGADORES ONLINE
+        Route::get('/lojista/entregadores-online', [LojistaController::class, 'obterQuantidadeDeEntregadoresOnline']);
+    });
+ 
     // --- ÁREA DO ENTREGADOR ---
     Route::middleware(VerificaTipoUsuario::class . ':entregador')->group(function () {
         Route::put('/pedidos/{id}/status', [PedidoController::class, 'atualizarStatus']);
         Route::get('/entregador/perfil', [EntregadorController::class, 'meuPerfil']);
         Route::put('/entregador/veiculo', [EntregadorController::class, 'atualizarVeiculo']);
         
+        // ✨ ROTA PARA ATUALIZAR STATUS DE DISPONIBILIDADE DO ENTREGADOR
+        Route::put('/entregador/status', [EntregadorController::class, 'atualizarStatusDeDisponibilidade']);
+
         // ✨ NOVAS ROTAS DE CORRIDA DO ENTREGADOR
         Route::get('/entregador/buscar-corrida', [EntregadorController::class, 'buscarPedidoDisponivel']);
         Route::put('/entregador/aceitar-corrida/{id}', [EntregadorController::class, 'aceitarPedido']);

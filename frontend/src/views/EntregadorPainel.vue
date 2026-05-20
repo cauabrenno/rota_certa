@@ -281,10 +281,18 @@ const atualizarStatus = (novoStatus) => {
   else localStorage.removeItem('statusPedido');
 }
 
-const atualizarOnline = (statusOnline) => {
+const atualizarOnline = async (statusOnline) => {
   statusDeDisponibilidadeDoEntregador.value = statusOnline ? 'online' : 'offline';
   localStorage.setItem('statusDeDisponibilidadeDoEntregador', statusDeDisponibilidadeDoEntregador.value);
   localStorage.setItem('isOnline', statusOnline);
+
+  try {
+    const statusNoBancoDeDados = statusOnline ? 'disponivel' : 'indisponivel';
+    const cabecalhoDeAutenticacao = getAuth();
+    await api.put('/entregador/status', { status: statusNoBancoDeDados }, cabecalhoDeAutenticacao);
+  } catch (erroAoAtualizarStatus) {
+    console.error("Erro ao atualizar o status no servidor:", erroAoAtualizarStatus);
+  }
 }
 
 const atualizarPin = (novoPin) => {
@@ -434,6 +442,14 @@ const buscarDadosIniciaisEntregador = async () => {
       placaMoto.value = res.data.veiculo.placa || placaMoto.value
       localStorage.setItem('nomeMoto', nomeMoto.value)
       localStorage.setItem('placaMoto', placaMoto.value)
+    }
+
+    // 3. Atualiza o status de disponibilidade a partir do banco de dados
+    if (res.data.status) {
+      const estaDisponivel = res.data.status === 'disponivel';
+      statusDeDisponibilidadeDoEntregador.value = estaDisponivel ? 'online' : 'offline';
+      localStorage.setItem('statusDeDisponibilidadeDoEntregador', statusDeDisponibilidadeDoEntregador.value);
+      localStorage.setItem('isOnline', estaDisponivel);
     }
 
     // 2. ✨ A MÁGICA: Verifica se o Klaus já tem uma corrida vinculada

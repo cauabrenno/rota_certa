@@ -91,4 +91,15 @@ public function listarLojas()
 
         return response()->json($lojas, 200);
     }
+
+    public function obterQuantidadeDeEntregadoresOnline()
+    {
+        $quantidadeDeEntregadoresOnline = DB::table('entregadores')
+            ->where('status', 'disponivel')
+            ->count();
+
+        return response()->json([
+            'count' => $quantidadeDeEntregadoresOnline
+        ], 200);
+    }
 }
