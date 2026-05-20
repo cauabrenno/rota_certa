@@ -142,6 +142,13 @@
                     >
                       Despachar <ArrowRight :size="12" />
                     </button>
+                    <button 
+                      v-else-if="verificarSePedidoEstaDespachadoEAguardandoFinalizacao(pedido)"
+                      @click="atualizarStatus(pedido, 'Entregue')"
+                      class="bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-green-700 hover:scale-105 transition-all shadow-md tracking-widest flex items-center gap-2"
+                    >
+                      Confirmar Entrega <ArrowRight :size="12" />
+                    </button>
                     <span v-else class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-[#2D4483] cursor-pointer" @click="abrirModalPedido(pedido)">
                       Ver Detalhes ➔
                     </span>
@@ -247,6 +254,10 @@
           <button v-else-if="pedidoSelecionado.status === 'Em Preparo'" @click="atualizarStatus(pedidoSelecionado, 'Despachado'); fecharModal()" class="flex-1 py-4 bg-[#2D4483] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-900 transition-all shadow-xl">
             Despachar p/ Entregador
           </button>
+
+          <button v-else-if="verificarSePedidoEstaDespachadoEAguardandoFinalizacao(pedidoSelecionado)" @click="atualizarStatus(pedidoSelecionado, 'Entregue'); fecharModal()" class="flex-1 py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-green-700 transition-all shadow-xl">
+            Confirmar Entrega
+          </button>
         </div>
 
       </div>
@@ -300,93 +311,154 @@ const formatarEndereco = (endereco) => {
 }
 
 const obterCorStatus = (status) => {
-  const s = status ? String(status).toLowerCase() : ''
-  if (s.includes('pendente')) return 'bg-red-50 text-red-600 border border-red-100'
-  if (s.includes('preparo') || s.includes('preparando')) return 'bg-yellow-50 text-yellow-600 border border-yellow-100'
-  if (s.includes('saiu') || s.includes('aguardando')) return 'bg-blue-50 text-blue-600 border border-blue-100'
-  if (s.includes('entregue') || s.includes('concluido')) return 'bg-green-50 text-green-600 border border-green-100'
-  if (s.includes('cancelado')) return 'bg-gray-100 text-gray-500 border border-gray-300'
-  return 'bg-gray-100 text-gray-600'
+  const statusMinusculo = status ? String(status).toLowerCase() : '';
+  if (statusMinusculo.includes('pendente')) {
+    return 'bg-red-50 text-red-600 border border-red-100';
+  }
+  if (statusMinusculo.includes('preparo') || statusMinusculo.includes('preparando')) {
+    return 'bg-yellow-50 text-yellow-600 border border-yellow-100';
+  }
+  if (
+    statusMinusculo.includes('saiu') ||
+    statusMinusculo.includes('aguardando') ||
+    statusMinusculo.includes('despachado') ||
+    statusMinusculo.includes('perto') ||
+    statusMinusculo.includes('caminho')
+  ) {
+    return 'bg-blue-50 text-blue-600 border border-blue-100';
+  }
+  if (statusMinusculo.includes('entregue') || statusMinusculo.includes('concluido')) {
+    return 'bg-green-50 text-green-600 border border-green-100';
+  }
+  if (statusMinusculo.includes('cancelado')) {
+    return 'bg-gray-100 text-gray-500 border border-gray-300';
+  }
+  return 'bg-gray-100 text-gray-600';
 }
 
 // === INTEGRAÇÃO COM A API (A Mágica!) ===
 
 // Tradutor para garantir que o HTML mostre os botões
 const formatarStatusParaHTML = (statusBanco) => {
-  if (!statusBanco) return 'Pendente';
-  const s = String(statusBanco).toLowerCase();
+  if (!statusBanco) {
+    return 'Pendente';
+  }
+  const statusMinusculo = String(statusBanco).toLowerCase();
   
-  if (s.includes('pendente')) return 'Pendente';
-  if (s.includes('preparo')) return 'Preparo';
-  if (s.includes('saiu') || s.includes('aguardando')) return 'Saiu p/ Entrega';
-  if (s.includes('entregue') || s.includes('concluido')) return 'Entregue';
+  if (statusMinusculo.includes('pendente')) {
+    return 'Pendente';
+  }
+  if (statusMinusculo.includes('preparo') || statusMinusculo.includes('preparando')) {
+    return 'Em Preparo';
+  }
+  if (statusMinusculo.includes('saiu') || statusMinusculo.includes('aguardando')) {
+    return 'Saiu p/ Entrega';
+  }
+  if (statusMinusculo.includes('entregue') || statusMinusculo.includes('concluido')) {
+    return 'Entregue';
+  }
   
-  // Se não for nenhum dos acima, capitaliza a primeira letra
   return statusBanco.charAt(0).toUpperCase() + statusBanco.slice(1);
+}
+
+const verificarSePedidoEstaDespachadoEAguardandoFinalizacao = (pedido) => {
+  if (!pedido || !pedido.status) {
+    return false;
+  }
+  const statusFormatado = pedido.status;
+  const statusesNaoFinalizadosOuNaoDespachados = [
+    'Pendente',
+    'Em Preparo',
+    'Entregue',
+    'Cancelado',
+    'Finalizado',
+    'Concluido',
+    'Concluído'
+  ];
+  return !statusesNaoFinalizadosOuNaoDespachados.includes(statusFormatado);
 }
 
 const buscarPedidos = async () => {
   try {
-    const res = await api.get('/lojista/pedidos')
+    const resposta = await api.get('/lojista/pedidos');
     
-    pedidos.value = res.data.map(p => {
+    pedidos.value = resposta.data.map(pedidoDoBanco => {
       
       // ✨ DESEMPACOTANDO O JSON COM SEGURANÇA
-      let enderecoLido = { rua: 'Não informado', numero: '', bairro: '', cep: '' }
+      let enderecoLido = { rua: 'Não informado', numero: '', bairro: '', cep: '' };
       
-      if (p.endereco_entrega) {
+      if (pedidoDoBanco.endereco_entrega) {
         try {
-          const parsed = JSON.parse(p.endereco_entrega)
-          if (parsed && typeof parsed === 'object') {
+          const enderecoParcial = JSON.parse(pedidoDoBanco.endereco_entrega);
+          if (enderecoParcial && typeof enderecoParcial === 'object') {
             // Se conseguiu ler o JSON, mescla os dados
-            enderecoLido = { ...enderecoLido, ...parsed }
+            enderecoLido = { ...enderecoLido, ...enderecoParcial };
           } else {
             // Se por acaso vier só uma string normal
-            enderecoLido.rua = p.endereco_entrega 
+            enderecoLido.rua = pedidoDoBanco.endereco_entrega;
           }
-        } catch (e) {
+        } catch (erroDeLeitura) {
           // Se for um pedido antigo que falhar no JSON.parse
-          enderecoLido.rua = p.endereco_entrega 
+          enderecoLido.rua = pedidoDoBanco.endereco_entrega;
         }
       }
 
+      const listaItens = pedidoDoBanco.produtos ? pedidoDoBanco.produtos.map(produto => ({
+        nome: produto.nome,
+        qtd: produto.pivot.quantidade,
+        preco: parseFloat(produto.pivot.preco_unitario)
+      })) : [];
+
+      const contagemItens = pedidoDoBanco.produtos ? pedidoDoBanco.produtos.reduce((acumulador, itemAtual) => acumulador + itemAtual.pivot.quantidade, 0) : 0;
+
       return {
-        ...p,
-        id: p.id,
-        cliente: p.nome_cliente || 'Cliente #' + p.user_id, 
-        hora: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ...pedidoDoBanco,
+        id: pedidoDoBanco.id,
+        cliente: pedidoDoBanco.nome_cliente || 'Cliente #' + pedidoDoBanco.user_id, 
+        hora: new Date(pedidoDoBanco.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         
         // Passamos o objeto perfeito que acabamos de montar ali em cima!
         endereco: enderecoLido,
         
-        lista_itens: p.produtos ? p.produtos.map(prod => ({
-          nome: prod.nome,
-          qtd: prod.pivot.quantidade,
-          preco: parseFloat(prod.pivot.preco_unitario)
-        })) : [],
-        descricao_curta: p.descricao,
-        itensCount: p.produtos ? p.produtos.reduce((acc, curr) => acc + curr.pivot.quantidade, 0) : 0,
-        status: formatarStatusParaHTML(p.status), 
-        pagamento: p.forma_pagamento || 'Não informado',
-        total: parseFloat(p.valor_total)
-      }
-    })
+        lista_itens: listaItens,
+        descricao_curta: pedidoDoBanco.descricao,
+        itensCount: contagemItens,
+        status: formatarStatusParaHTML(pedidoDoBanco.status), 
+        pagamento: pedidoDoBanco.forma_pagamento || 'Não informado',
+        total: parseFloat(pedidoDoBanco.valor_total)
+      };
+    });
 
-    let pendentes = 0, emPreparo = 0, emEntrega = 0, finalizados = 0, faturamento = 0
-    pedidos.value.forEach(p => {
-      const s = p.status.toLowerCase()
-      if (s.includes('pendente')) pendentes++
-      else if (s.includes('preparo')) emPreparo++
-      else if (s.includes('saiu') || s.includes('aguardando')) emEntrega++
-      else if (s.includes('entregue') || s.includes('concluido')) {
-        finalizados++
-        faturamento += p.total
+    let pendentes = 0;
+    let emPreparo = 0;
+    let emEntrega = 0;
+    let finalizados = 0;
+    let faturamento = 0;
+    
+    pedidos.value.forEach(pedido => {
+      const statusMinusculo = pedido.status.toLowerCase();
+      if (statusMinusculo.includes('pendente')) {
+        pendentes++;
+      } else if (statusMinusculo.includes('preparo')) {
+        emPreparo++;
+      } else if (
+        statusMinusculo.includes('saiu') ||
+        statusMinusculo.includes('aguardando') ||
+        statusMinusculo.includes('despachado') ||
+        statusMinusculo.includes('perto') ||
+        statusMinusculo.includes('caminho')
+      ) {
+        emEntrega++;
+      } else if (statusMinusculo.includes('entregue') || statusMinusculo.includes('concluido')) {
+        finalizados++;
+        faturamento += pedido.total;
       }
-    })
-    resumo.value = { pendentes, emPreparo, emEntrega, finalizados, faturamento }
+    });
+    
+    resumo.value = { pendentes, emPreparo, emEntrega, finalizados, faturamento };
 
-  } catch (error) {
-    console.error("Erro ao buscar pedidos:", error)
+  } catch (erroDeBusca) {
+    console.error("Erro ao buscar pedidos:", erroDeBusca);
   }
 }
 const identificadorDoIntervaloDeAtualizacao = ref(null)
