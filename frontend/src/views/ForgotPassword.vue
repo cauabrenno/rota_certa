@@ -22,9 +22,15 @@
               required
               class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-4 px-4 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
             >
+            <p v-if="email && !emailEhValido" class="text-red-500 text-xs font-bold mt-1 ml-1">E-mail com formato inválido</p>
           </div>
 
-          <button type="submit" :disabled="loading" class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black transition-all shadow-xl uppercase tracking-widest flex items-center justify-center gap-3">
+          <button 
+            type="submit" 
+            :disabled="!formularioEstaValido" 
+            :class="[!formularioEstaValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+            class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-widest flex items-center justify-center gap-3"
+          >
             <span v-if="loading" class="animate-spin text-xl">⏳</span>
             {{ loading ? 'Enviando...' : 'Enviar Link' }}
           </button>
@@ -46,15 +52,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import iRota from '../assets/iRota.png'
 import api from '../services/api'
+import { validarFormatoDeEmail } from '../utils/validadoresDeFormatacao.js'
 
 const email = ref('')
 const loading = ref(false)
 const linkEnviado = ref(false)
 
+const emailEhValido = computed(() => validarFormatoDeEmail(email.value))
+const formularioEstaValido = computed(() => email.value && emailEhValido.value && !loading.value)
+
 const solicitarLink = async () => {
+  if (!formularioEstaValido.value) {
+    alert("Por favor, preencha um endereço de e-mail válido!");
+    return
+  }
+
   loading.value = true
   try {
     // Esse endpoint deve estar configurado no seu Laravel (Fortify ou manualmente)

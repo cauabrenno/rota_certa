@@ -33,6 +33,7 @@
               placeholder="email@exemplo.com" 
               class="w-full text-[#1A1A1A] bg-transparent border-2 border-gray-200 rounded-2xl py-3 pl-4 pr-4 focus:outline-none focus:border-[#1A1A1A] transition-all font-medium"
             >
+            <p v-if="emailDoUsuario && !emailEhValido" class="text-red-500 text-xs font-bold mt-1 ml-1">E-mail com formato inválido</p>
           </div>
           
           <div>
@@ -55,7 +56,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
                 <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 01-1.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
                 </svg>
               </button>
             </div>
@@ -80,7 +81,12 @@
             </label>
           </div>
 
-          <button type="submit" class="w-full py-4 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black transition-all shadow-xl uppercase tracking-widest mt-2">
+          <button 
+            type="submit" 
+            :disabled="!formularioEstaValido"
+            :class="[!formularioEstaValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+            class="w-full py-4 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-widest mt-2"
+          >
             Entrar no Sistema
           </button>
 
@@ -101,9 +107,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
+import { validarFormatoDeEmail } from '../utils/validadoresDeFormatacao.js'
 
 import rotaLogo from '../assets/rotaLogo.png'
 
@@ -114,14 +121,15 @@ const roteador = useRouter()
 const emailDoUsuario = ref('')
 const senhaDoUsuario = ref('')
 
-const executarLogin = async () => {
-  if (!emailDoUsuario.value || !senhaDoUsuario.value) {
-    alert("Por favor, preencha tudo!");
-    return;
-  }
+const emailEhValido = computed(() => validarFormatoDeEmail(emailDoUsuario.value))
 
-  if (!aceitouOsTermosDePrivacidade.value) {
-    alert("Você precisa aceitar os Termos de Política e Privacidade para entrar no sistema!");
+const formularioEstaValido = computed(() => {
+  return emailDoUsuario.value && senhaDoUsuario.value && emailEhValido.value && aceitouOsTermosDePrivacidade.value
+})
+
+const executarLogin = async () => {
+  if (!formularioEstaValido.value) {
+    alert("Por favor, preencha o e-mail e a senha corretamente, e concorde com os Termos de Política e Privacidade!");
     return;
   }
 

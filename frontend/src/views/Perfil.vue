@@ -176,17 +176,40 @@
         <form @submit.prevent="salvarPerfil" class="space-y-4">
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome Completo</label>
-            <input v-model="formPerfil.nome" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="formPerfil.nome" 
+              type="text" 
+              required 
+              @input="formPerfil.nome = filtrarApenasLetrasEEspacos($event.target.value)" 
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">E-mail</label>
-            <input v-model="formPerfil.email" type="email" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="formPerfil.email" 
+              type="email" 
+              required 
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
+            <p v-if="formPerfil.email && !emailDoPerfilEhValido" class="text-red-500 text-[10px] font-bold mt-1 ml-4">E-mail com formato inválido</p>
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Telefone</label>
-            <input v-model="formPerfil.telefone" type="tel" class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" placeholder="(00) 00000-0000" />
+            <input 
+              v-model="formPerfil.telefone" 
+              type="tel" 
+              @input="formPerfil.telefone = aplicarMascaraDeTelefone($event.target.value)" 
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              placeholder="(00) 00000-0000" 
+            />
           </div>
-          <button type="submit" class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black shadow-xl mt-4 transition-all">
+          <button 
+            type="submit" 
+            :disabled="!formPerfilValido" 
+            :class="[!formPerfilValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black hover:scale-[1.02]']" 
+            class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl mt-4 transition-all"
+          >
             Salvar Alterações
           </button>
         </form>
@@ -274,35 +297,78 @@
         <form v-if="mostrandoForm" @submit.prevent="salvarEndereco" class="space-y-4">
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome do Local</label>
-            <input v-model="novoEndereco.nome_local" type="text" placeholder="Ex: Casa, Trabalho" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.nome_local" 
+              type="text" 
+              placeholder="Ex: Casa, Trabalho" 
+              required 
+              @input="novoEndereco.nome_local = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">CEP</label>
-              <input v-model="novoEndereco.cep" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.cep" 
+                type="text" 
+                required 
+                @input="novoEndereco.cep = $event.target.value.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2')"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Número</label>
-              <input v-model="novoEndereco.numero" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.numero" 
+                type="text" 
+                required 
+                @input="novoEndereco.numero = filtrarApenasAlfanumericosComEspaco($event.target.value)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
-            <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.rua" 
+              type="text" 
+              required 
+              @input="novoEndereco.rua = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
-              <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.bairro" 
+                type="text" 
+                required 
+                @input="novoEndereco.bairro = filtrarApenasLetrasEEspacos($event.target.value)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Cidade</label>
-              <input v-model="novoEndereco.cidade" type="text" placeholder="Ex: Crato - CE" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.cidade" 
+                type="text" 
+                placeholder="Ex: Crato CE" 
+                required 
+                @input="novoEndereco.cidade = filtrarApenasLetrasEEspacos($event.target.value)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4 mt-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
-            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">
+            <button 
+              type="submit" 
+              :disabled="!formEnderecoValido"
+              :class="[!formEnderecoValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+              class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
+            >
               {{ enderecoEditandoId ? 'Atualizar' : 'Salvar' }}
             </button>
           </div>
@@ -345,25 +411,60 @@
         <form v-if="mostrandoForm" @submit.prevent="salvarCartao" class="space-y-4">
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Número do Cartão</label>
-            <input v-model="novoCartao.numero_cartao" type="text" placeholder="0000 0000 0000 0000" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoCartao.numero_cartao" 
+              type="text" 
+              placeholder="0000 0000 0000 0000" 
+              required 
+              @input="novoCartao.numero_cartao = $event.target.value.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ')"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome Impresso</label>
-            <input v-model="novoCartao.nome_impresso" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoCartao.nome_impresso" 
+              type="text" 
+              required 
+              @input="novoCartao.nome_impresso = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Validade</label>
-              <input v-model="novoCartao.validade" type="text" placeholder="MM/AA" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoCartao.validade" 
+                type="text" 
+                placeholder="MM/AA" 
+                required 
+                @input="novoCartao.validade = aplicarMascaraDeValidadeDeCartao($event.target.value)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
+              <p v-if="novoCartao.validade && !validarDataDeValidadeDeCartao(novoCartao.validade)" class="text-red-500 text-[10px] font-bold mt-1 ml-4">Mês de validade inválido</p>
             </div>
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">CVV</label>
-              <input v-model="novoCartao.cvv" type="text" placeholder="123" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoCartao.cvv" 
+                type="text" 
+                placeholder="123" 
+                required 
+                @input="novoCartao.cvv = $event.target.value.replace(/\D/g, '').slice(0, 4)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4 mt-2">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
-            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar Cartão</button>
+            <button 
+              type="submit" 
+              :disabled="!formCartaoValido"
+              :class="[!formCartaoValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+              class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
+            >
+              Salvar Cartão
+            </button>
           </div>
         </form>
       </div>
@@ -429,12 +530,19 @@
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nova Senha</label>
             <input v-model="formSenha.nova" type="password" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <p v-if="formSenha.nova && formSenha.nova.length < 8" class="text-red-500 text-[10px] font-bold mt-1 ml-4">A nova senha deve ter pelo menos 8 caracteres</p>
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Confirmar Nova Senha</label>
             <input v-model="formSenha.confirmar" type="password" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <p v-if="formSenha.confirmar && formSenha.nova !== formSenha.confirmar" class="text-red-500 text-[10px] font-bold mt-1 ml-4">As senhas não coincidem</p>
           </div>
-          <button type="submit" class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black mt-4">
+          <button 
+            type="submit" 
+            :disabled="!formSenhaValido"
+            :class="[!formSenhaValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+            class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black mt-4"
+          >
             Atualizar Senha
           </button>
         </form>
@@ -468,7 +576,12 @@
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Mensagem</label>
             <textarea v-model="formSuporte.mensagem" rows="4" required placeholder="Detalhe o seu problema..." class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm resize-none"></textarea>
           </div>
-          <button type="submit" class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-black shadow-xl mt-4">
+          <button 
+            type="submit" 
+            :disabled="!formSuporteValido"
+            :class="[!formSuporteValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+            class="w-full bg-[#1A1A1A] text-[#C2F2D9] py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl mt-4"
+          >
             Enviar Mensagem
           </button>
         </form>
@@ -483,6 +596,14 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' 
+import { 
+  validarFormatoDeEmail,
+  validarDataDeValidadeDeCartao,
+  aplicarMascaraDeTelefone,
+  aplicarMascaraDeValidadeDeCartao,
+  filtrarApenasLetrasEEspacos,
+  filtrarApenasAlfanumericosComEspaco
+} from '../utils/validadoresDeFormatacao.js'
 import { 
   Home, 
   ClipboardList, 
@@ -575,6 +696,44 @@ const enderecoEditandoId = ref(null)
 const novoCartao = ref({ numero_cartao: '', nome_impresso: '', validade: '', cvv: '' })
 const formSuporte = ref({ assunto: '', mensagem: '' })
 const notificacoesConfig = ref({ pedidos: true, promocoes: false })
+
+const emailDoPerfilEhValido = computed(() => validarFormatoDeEmail(formPerfil.value.email))
+const formPerfilValido = computed(() => {
+  return formPerfil.value.nome && formPerfil.value.email && emailDoPerfilEhValido.value
+})
+
+const formEnderecoValido = computed(() => {
+  const cepLimpo = novoEndereco.value.cep ? novoEndereco.value.cep.replace(/\D/g, '') : ''
+  return novoEndereco.value.nome_local && 
+         novoEndereco.value.cep && 
+         cepLimpo.length === 8 &&
+         novoEndereco.value.numero && 
+         novoEndereco.value.rua && 
+         novoEndereco.value.bairro && 
+         novoEndereco.value.cidade
+})
+
+const formCartaoValido = computed(() => {
+  const cartaoDigitos = novoCartao.value.numero_cartao ? novoCartao.value.numero_cartao.replace(/\D/g, '') : ''
+  const cvvDigitos = novoCartao.value.cvv ? novoCartao.value.cvv.replace(/\D/g, '') : ''
+  return cartaoDigitos.length >= 13 && cartaoDigitos.length <= 16 &&
+         novoCartao.value.nome_impresso &&
+         novoCartao.value.validade &&
+         validarDataDeValidadeDeCartao(novoCartao.value.validade) &&
+         (cvvDigitos.length === 3 || cvvDigitos.length === 4)
+})
+
+const formSenhaValido = computed(() => {
+  return formSenha.value.atual &&
+         formSenha.value.nova &&
+         formSenha.value.nova.length >= 8 &&
+         formSenha.value.confirmar &&
+         formSenha.value.nova === formSenha.value.confirmar
+})
+
+const formSuporteValido = computed(() => {
+  return formSuporte.value.assunto && formSuporte.value.mensagem
+})
 
 // Cupons Mockados
 const cupons = ref([

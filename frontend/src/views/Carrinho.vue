@@ -217,33 +217,77 @@
         <form v-if="mostrandoForm" @submit.prevent="salvarEndereco" class="space-y-4">
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Nome do Local</label>
-            <input v-model="novoEndereco.titulo" type="text" placeholder="Ex: Casa da Mãe" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.titulo" 
+              type="text" 
+              placeholder="Ex: Casa da Mae" 
+              required 
+              @input="novoEndereco.titulo = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">CEP</label>
-              <input v-model="novoEndereco.cep" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.cep" 
+                type="text" 
+                required 
+                @input="novoEndereco.cep = $event.target.value.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2')"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
             <div>
               <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Número</label>
-              <input v-model="novoEndereco.numero" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+              <input 
+                v-model="novoEndereco.numero" 
+                type="text" 
+                required 
+                @input="novoEndereco.numero = filtrarApenasAlfanumericosComEspaco($event.target.value)"
+                class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+              />
             </div>
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Rua / Avenida</label>
-            <input v-model="novoEndereco.rua" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.rua" 
+              type="text" 
+              required 
+              @input="novoEndereco.rua = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Bairro</label>
-            <input v-model="novoEndereco.bairro" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.bairro" 
+              type="text" 
+              required 
+              @input="novoEndereco.bairro = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div>
             <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Cidade</label>
-            <input v-model="novoEndereco.cidade" type="text" required class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+            <input 
+              v-model="novoEndereco.cidade" 
+              type="text" 
+              required 
+              @input="novoEndereco.cidade = filtrarApenasLetrasEEspacos($event.target.value)"
+              class="w-full mt-1 p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+            />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <button type="button" @click="mostrandoForm = false" class="py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-[#1A1A1A]">Cancelar</button>
-            <button type="submit" class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black">Salvar</button>
+            <button 
+              type="submit" 
+              :disabled="!formEnderecoValido"
+              :class="[!formEnderecoValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+              class="bg-[#1A1A1A] text-[#C2F2D9] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
+            >
+              Salvar
+            </button>
           </div>
         </form>
       </div>
@@ -258,6 +302,10 @@ import imgPix from '../assets/pix.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' // Usando nossa conexão protegida
+import { 
+  filtrarApenasLetrasEEspacos,
+  filtrarApenasAlfanumericosComEspaco
+} from '../utils/validadoresDeFormatacao.js'
 import { 
   Home, 
   ClipboardList, 
@@ -338,6 +386,16 @@ const removerDoCarrinho = (index) => {
 // === GESTÃO DE ENDEREÇOS (API) ===
 const enderecosSalvos = ref([])
 const novoEndereco = ref({ titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' })
+const formEnderecoValido = computed(() => {
+  const cepLimpo = novoEndereco.value.cep ? novoEndereco.value.cep.replace(/\D/g, '') : ''
+  return novoEndereco.value.titulo && 
+         novoEndereco.value.cep && 
+         cepLimpo.length === 8 &&
+         novoEndereco.value.numero && 
+         novoEndereco.value.rua && 
+         novoEndereco.value.bairro && 
+         novoEndereco.value.cidade
+})
 const enderecoEntrega = ref(null)
 
 const buscarEnderecos = async () => {
