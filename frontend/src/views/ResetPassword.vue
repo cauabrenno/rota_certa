@@ -8,7 +8,7 @@
         <p class="text-gray-500 font-medium text-sm">Crie uma senha forte e segura.</p>
       </div>
 
-      <form @submit.prevent="handleReset" class="space-y-5">
+      <form @submit.prevent="lidarComRedefinicao" class="space-y-5">
         <div>
           <label class="block text-sm font-bold text-[#1A1A1A] mb-1.5 ml-1">Nova Senha</label>
           <div class="relative w-full">
@@ -32,6 +32,7 @@
               </svg>
             </button>
           </div>
+          <p v-if="password && !tamanhoMinimoEhValido" class="text-red-500 text-xs font-bold mt-1 ml-1">A senha precisa ter pelo menos 8 caracteres.</p>
         </div>
 
         <div>
@@ -57,9 +58,15 @@
               </svg>
             </button>
           </div>
+          <p v-if="password_confirmation && !senhasCoincidem" class="text-red-500 text-xs font-bold mt-1 ml-1">As senhas não coincidem.</p>
         </div>
 
-        <button type="submit" :disabled="carregando" class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl hover:bg-black transition-all shadow-xl uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+        <button 
+          type="submit" 
+          :disabled="!formularioEstaValido" 
+          :class="[!formularioEstaValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black']"
+          class="w-full py-5 bg-[#1A1A1A] text-white font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-widest mt-2 flex items-center justify-center gap-2"
+        >
           <span v-if="carregando" class="animate-spin text-xl">⏳</span>
           {{ carregando ? 'Salvando...' : 'Redefinir Senha' }}
         </button>
@@ -69,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import iRota from '../assets/iRota.png'
 import api from '../services/api'
@@ -83,14 +90,16 @@ const mostrarSenha = ref(false)
 const mostrarConfirmarSenha = ref(false)
 const carregando = ref(false)
 
-const handleReset = async () => {
-  if (password.value !== password_confirmation.value) {
-    alert("As senhas não coincidem!");
-    return;
-  }
-  
-  if (password.value.length < 8) {
-    alert("A senha precisa ter pelo menos 8 caracteres.");
+const senhasCoincidem = computed(() => password.value === password_confirmation.value)
+const tamanhoMinimoEhValido = computed(() => password.value.length >= 8)
+
+const formularioEstaValido = computed(() => {
+  return password.value && password_confirmation.value && senhasCoincidem.value && tamanhoMinimoEhValido.value && !carregando.value
+})
+
+const lidarComRedefinicao = async () => {
+  if (!formularioEstaValido.value) {
+    alert("Por favor, preencha os campos de senha corretamente!");
     return;
   }
 

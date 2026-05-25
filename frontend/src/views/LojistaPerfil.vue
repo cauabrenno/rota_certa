@@ -49,7 +49,12 @@
       
       <div class="flex items-center justify-between mb-8">
         <h2 class="text-3xl font-black italic uppercase tracking-tighter text-[#1A1A1A]">Perfil da Loja</h2>
-        <button @click="salvarPerfil" class="bg-[#2D4483] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-900 shadow-xl transition-all">
+        <button 
+          @click="salvarPerfil" 
+          :disabled="!perfilEstaValido"
+          :class="[!perfilEstaValido ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-900']"
+          class="bg-[#2D4483] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all"
+        >
           Salvar Alterações
         </button>
       </div>
@@ -101,17 +106,34 @@
             <div class="space-y-4">
               <div>
                 <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Nome do Estabelecimento</label>
-                <input v-model="perfil.nome" type="text" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                <input 
+                  v-model="perfil.nome" 
+                  type="text" 
+                  @input="perfil.nome = filtrarApenasLetrasEEspacos($event.target.value)"
+                  class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                />
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">CNPJ</label>
-                  <input v-model="perfil.cnpj" type="text" v-mask="'##.###.###/####-##'" placeholder="00.000.000/0000-00" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <input 
+                    v-model="perfil.cnpj" 
+                    type="text" 
+                    placeholder="00.000.000/0000-00" 
+                    @input="perfil.cnpj = aplicarMascaraDeCadastroNacionalDaPessoaJuridica($event.target.value)"
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                  />
                 </div>
                 <div>
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Telefone / WhatsApp</label>
-                  <input v-model="perfil.telefone" type="text" v-mask="'(##) #####-####'" placeholder="(88) 90000-0000" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <input 
+                    v-model="perfil.telefone" 
+                    type="text" 
+                    placeholder="(88) 90000-0000" 
+                    @input="perfil.telefone = aplicarMascaraDeTelefone($event.target.value)"
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                  />
                 </div>
               </div>
             </div>
@@ -127,14 +149,21 @@
               <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-1">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">CEP</label>
-                  <input v-model="perfil.endereco.cep" type="text" v-mask="'#####-###'" placeholder="63010-000" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <input 
+                    v-model="perfil.endereco.cep" 
+                    type="text" 
+                    placeholder="63010-000" 
+                    @input="perfil.endereco.cep = $event.target.value.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2')"
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                  />
                 </div>
                 <div class="col-span-2">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Cidade - Estado</label>
                   <input 
                     v-model="perfil.endereco.cidade" 
                     type="text" 
-                    placeholder="Ex: Crato - CE" 
+                    placeholder="Ex: Crato CE" 
+                    @input="perfil.endereco.cidade = filtrarApenasLetrasEEspacos($event.target.value)"
                     class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm text-[#1A1A1A] focus:border-[#1A1A1A] transition-all" 
                   />
                 </div>
@@ -143,17 +172,34 @@
               <div class="grid grid-cols-4 gap-4">
                 <div class="col-span-3">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Rua / Avenida</label>
-                  <input v-model="perfil.endereco.rua" type="text" placeholder="Ex: Av. Padre Cícero" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <input 
+                    v-model="perfil.endereco.rua" 
+                    type="text" 
+                    placeholder="Ex: Av. Padre Cicero" 
+                    @input="perfil.endereco.rua = filtrarApenasLetrasEEspacos($event.target.value)"
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                  />
                 </div>
                 <div class="col-span-1">
                   <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Número</label>
-                  <input v-model="perfil.endereco.numero" type="text" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                  <input 
+                    v-model="perfil.endereco.numero" 
+                    type="text" 
+                    @input="perfil.endereco.numero = filtrarApenasAlfanumericosComEspaco($event.target.value)"
+                    class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                  />
                 </div>
               </div>
 
               <div>
                 <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 ml-2">Bairro</label>
-                <input v-model="perfil.endereco.bairro" type="text" placeholder="Ex: Centro" class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" />
+                <input 
+                  v-model="perfil.endereco.bairro" 
+                  type="text" 
+                  placeholder="Ex: Centro" 
+                  @input="perfil.endereco.bairro = filtrarApenasLetrasEEspacos($event.target.value)"
+                  class="w-full p-4 bg-gray-50 rounded-2xl border border-black/5 outline-none font-medium text-sm" 
+                />
               </div>
             </div>
           </div>
@@ -167,9 +213,15 @@
 
 <script setup>
 import iRota from '../assets/iRota.png'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { 
+  aplicarMascaraDeTelefone,
+  aplicarMascaraDeCadastroNacionalDaPessoaJuridica,
+  filtrarApenasLetrasEEspacos,
+  filtrarApenasAlfanumericosComEspaco
+} from '../utils/validadoresDeFormatacao.js'
 import { 
   LogOut, 
   Store, 
@@ -197,6 +249,21 @@ const perfil = ref({
     numero: '',
     bairro: ''
   }
+})
+
+const perfilEstaValido = computed(() => {
+  const cnpjLimpo = perfil.value.cnpj ? perfil.value.cnpj.replace(/\D/g, '') : ''
+  const telefoneLimpo = perfil.value.telefone ? perfil.value.telefone.replace(/\D/g, '') : ''
+  const cepLimpo = perfil.value.endereco?.cep ? perfil.value.endereco.cep.replace(/\D/g, '') : ''
+  
+  return perfil.value.nome && 
+         perfil.value.cnpj && cnpjLimpo.length === 14 &&
+         perfil.value.telefone && (telefoneLimpo.length === 10 || telefoneLimpo.length === 11) &&
+         perfil.value.endereco?.cep && cepLimpo.length === 8 &&
+         perfil.value.endereco?.cidade &&
+         perfil.value.endereco?.rua &&
+         perfil.value.endereco?.numero &&
+         perfil.value.endereco?.bairro
 })
 
 // Lida com o Upload da Foto
