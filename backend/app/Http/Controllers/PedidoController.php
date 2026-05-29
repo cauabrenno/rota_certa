@@ -80,14 +80,14 @@ class PedidoController extends Controller {
     public function meusPedidos()
     {
         try {
-            $user = auth()->user();
+            $usuarioAutenticado = auth()->user();
 
-            $pedidos = \App\Models\Pedido::where('user_id', $user->id)
+            $pedidos = \App\Models\Pedido::where('user_id', $usuarioAutenticado->id)
                                          ->with('produtos')
                                          ->orderBy('created_at', 'desc')
                                          ->get();
 
-            // ✨ ATUALIZADO: Buscar a logo e o nome do Lojista em cada pedido
+            // Buscar a logo, nome do lojista e nome do entregador para cada pedido
             $pedidosComLoja = $pedidos->map(function ($pedido) {
                 $lojista = DB::table('lojista')
                     ->join('users', 'lojista.user_id', '=', 'users.id')
@@ -95,22 +95,31 @@ class PedidoController extends Controller {
                     ->select('users.name as nome_loja', 'users.logo_loja')
                     ->first();
 
-                $p = $pedido->toArray();
-                $p['loja'] = [
+                $entregador = DB::table('entregadores')
+                    ->join('users', 'entregadores.user_id', '=', 'users.id')
+                    ->where('entregadores.id', $pedido->entregador_id)
+                    ->select('users.name as nome_entregador')
+                    ->first();
+
+                $pedidoArray = $pedido->toArray();
+                $pedidoArray['loja'] = [
                     'nome' => $lojista ? $lojista->nome_loja : 'Loja Parceira',
-                    'logo' => $lojista ? $lojista->logo_loja : null,
+                    'logo' => $lojista ? \App\Helpers\FormatadorDeImagem::obterCaminhoCompletoDaImagem($lojista->logo_loja) : null,
                 ];
-                return $p;
+                $pedidoArray['entregador'] = [
+                    'nome' => $entregador ? $entregador->nome_entregador : 'Entregador Rota Certa',
+                ];
+                return $pedidoArray;
             });
 
             return response()->json([
                 'pedidos' => $pedidosComLoja
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro ao buscar o histórico de pedidos',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }
@@ -118,10 +127,10 @@ class PedidoController extends Controller {
     public function show($id)
     {
         try {
-            $user = auth()->user();
+            $usuarioAutenticado = auth()->user();
 
             $pedido = \App\Models\Pedido::where('id', $id)
-                                        ->where('user_id', $user->id)
+                                        ->where('user_id', $usuarioAutenticado->id)
                                         ->with('produtos')
                                         ->first();
 
@@ -131,44 +140,63 @@ class PedidoController extends Controller {
                 ], 404);
             }
 
-            // ✨ ATUALIZADO: Buscar a logo e o nome para a tela de detalhes (Show)
+            // Buscar a logo, nome do lojista e nome do entregador para o pedido
             $lojista = DB::table('lojista')
                 ->join('users', 'lojista.user_id', '=', 'users.id')
                 ->where('lojista.id', $pedido->lojista_id)
                 ->select('users.name as nome_loja', 'users.logo_loja')
                 ->first();
 
-            $p = $pedido->toArray();
-            $p['loja'] = [
+            $entregador = DB::table('entregadores')
+                ->join('users', 'entregadores.user_id', '=', 'users.id')
+                ->where('entregadores.id', $pedido->entregador_id)
+                ->select('users.name as nome_entregador')
+                ->first();
+
+            $pedidoArray = $pedido->toArray();
+            $pedidoArray['loja'] = [
                 'nome' => $lojista ? $lojista->nome_loja : 'Loja Parceira',
-                'logo' => $lojista ? $lojista->logo_loja : null,
+                'logo' => $lojista ? \App\Helpers\FormatadorDeImagem::obterCaminhoCompletoDaImagem($lojista->logo_loja) : null,
+            ];
+            $pedidoArray['entregador'] = [
+                'nome' => $entregador ? $entregador->nome_entregador : 'Entregador Rota Certa',
             ];
 
-            return response()->json($p, 200);
+            return response()->json($pedidoArray, 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro ao buscar o pedido',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }
 
-    public function atualizarStatus(Request $request, $id)
+    public function atualizarStatus(Request $requisicao, $identificadorDoPedido)
     {
-        $request->validate([
+        $requisicao->validate([
             'status' => 'required|string', 
+            'codigo_entrega' => 'nullable|string'
         ]);
 
         try {
-            $pedido = \App\Models\Pedido::findOrFail($id);
-            $statusAntigo = $pedido->status; // Salva o status anterior para comparar
+            $pedido = \App\Models\Pedido::findOrFail($identificadorDoPedido);
+            $statusAntigo = $pedido->status;
             
-            $pedido->status = $request->status;
+            // Se o novo status for entregue, valida o código de entrega
+            if (strtolower($requisicao->status) === 'entregue') {
+                if (!$requisicao->has('codigo_entrega') || $requisicao->codigo_entrega !== $pedido->codigo_entrega) {
+                    return response()->json([
+                        'message' => 'Código incorreto'
+                    ], 400);
+                }
+            }
+
+            $pedido->status = $requisicao->status;
             $pedido->save();
 
-            // ✨ LÓGICA DA CARTEIRA: Se a corrida foi finalizada agora, paga o entregador!
-            if (strtolower($request->status) === 'entregue' && strtolower($statusAntigo) !== 'entregue') {
+            // LÓGICA DA CARTEIRA: Se a corrida foi finalizada agora, paga o entregador!
+            if (strtolower($requisicao->status) === 'entregue' && strtolower($statusAntigo) !== 'entregue') {
                 if ($pedido->entregador_id) {
                     DB::table('entregadores')
                         ->where('id', $pedido->entregador_id)
@@ -186,21 +214,21 @@ class PedidoController extends Controller {
                 'pedido' => $pedido
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro ao atualizar o pedido.',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }
 
-    public function cancelar($id)
+    public function cancelar($identificadorDoPedido)
     {
         try {
-            $user = auth()->user();
+            $usuarioAutenticado = auth()->user();
 
-            $pedido = \App\Models\Pedido::where('id', $id)
-                                        ->where('user_id', $user->id)
+            $pedido = \App\Models\Pedido::where('id', $identificadorDoPedido)
+                                        ->where('user_id', $usuarioAutenticado->id)
                                         ->first();
 
             if (!$pedido) {
@@ -223,10 +251,10 @@ class PedidoController extends Controller {
                 'message' => 'Pedido cancelado com sucesso!'
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro ao cancelar o pedido.',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }
@@ -238,9 +266,9 @@ class PedidoController extends Controller {
     public function pedidosDoLojista()
     {
         try {
-            $user = auth()->user();
+            $usuarioAutenticado = auth()->user();
             
-            $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+            $lojista = DB::table('lojista')->where('user_id', $usuarioAutenticado->id)->first();
 
             if (!$lojista) {
                 return response()->json(['message' => 'Lojista não encontrado.'], 404);
@@ -251,40 +279,40 @@ class PedidoController extends Controller {
                                          ->orderBy('created_at', 'desc')
                                          ->get();
 
-            // ✨ MÁGICA NOVA: Puxa o nome do cliente para cada pedido
+            // Puxa o nome do cliente para cada pedido
             $pedidosComCliente = $pedidos->map(function ($pedido) {
                 $cliente = DB::table('users')->where('id', $pedido->user_id)->first();
                 
-                $p = $pedido->toArray();
-                $p['nome_cliente'] = $cliente ? $cliente->name : 'Cliente #' . $pedido->user_id;
-                return $p;
+                $pedidoArray = $pedido->toArray();
+                $pedidoArray['nome_cliente'] = $cliente ? $cliente->name : 'Cliente #' . $pedido->user_id;
+                return $pedidoArray;
             });
 
             return response()->json($pedidosComCliente, 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro ao buscar os pedidos da loja.',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }
 
-    public function atualizarStatusLojista(Request $request, $id)
+    public function atualizarStatusLojista(Request $requisicao, $identificadorDoPedido)
     {
-        $request->validate([
+        $requisicao->validate([
             'status' => 'required|string', 
         ]);
 
         try {
-            $user = auth()->user();
-            $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+            $usuarioAutenticado = auth()->user();
+            $lojista = DB::table('lojista')->where('user_id', $usuarioAutenticado->id)->first();
 
             if (!$lojista) {
                 return response()->json(['message' => 'Acesso negado. Lojista não encontrado.'], 404);
             }
 
-            $pedido = \App\Models\Pedido::where('id', $id)
+            $pedido = \App\Models\Pedido::where('id', $identificadorDoPedido)
                                         ->where('lojista_id', $lojista->id)
                                         ->first();
 
@@ -292,7 +320,7 @@ class PedidoController extends Controller {
                 return response()->json(['message' => 'Pedido não encontrado ou não pertence à sua loja.'], 404);
             }
 
-            $pedido->status = $request->status;
+            $pedido->status = $requisicao->status;
             $pedido->save();
 
             return response()->json([
@@ -300,10 +328,10 @@ class PedidoController extends Controller {
                 'pedido' => $pedido
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $excecaoLancada) {
             return response()->json([
                 'message' => 'Erro interno ao atualizar o pedido.',
-                'error' => $e->getMessage()
+                'error' => $excecaoLancada->getMessage()
             ], 500);
         }
     }

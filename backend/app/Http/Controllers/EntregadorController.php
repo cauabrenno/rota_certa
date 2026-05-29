@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class EntregadorController extends Controller
 {
-    // === 1. DADOS DO PERFIL (COM FILTRO DE LOOP CORRIGIDO) ===
+    // === 1. DADOS DO PERFIL ===
     public function meuPerfil()
     {
         $usuarioAutenticado = auth()->user();
@@ -18,20 +18,35 @@ class EntregadorController extends Controller
             ->orderBy('entregadores.id', 'desc')
             ->first();
 
-        // BUSCA BLINDADA: Agora ignora status de conclusão para evitar o loop no F5
+        // Busca o pedido ativo ignorando status concluído ou cancelado, e omitindo o código de entrega
         $pedidoAtivoDoEntregador = DB::table('pedidos')
-            ->select('pedidos.*') // Adicionado Select All para não omitir colunas (lat/lng)
+            ->select(
+                'pedidos.id',
+                'pedidos.user_id',
+                'pedidos.lojista_id',
+                'pedidos.entregador_id',
+                'pedidos.valor_total',
+                'pedidos.taxa_entrega',
+                'pedidos.endereco_entrega',
+                'pedidos.descricao',
+                'pedidos.status',
+                'pedidos.lat_entrega',
+                'pedidos.lng_entrega',
+                'pedidos.forma_pagamento',
+                'pedidos.avaliacao_do_entregador_concluida',
+                'pedidos.created_at',
+                'pedidos.updated_at'
+            )
             ->where(function($query) use ($dadosDoEntregador, $usuarioAutenticado) {
                 if ($dadosDoEntregador) {
                     $query->where('pedidos.entregador_id', $dadosDoEntregador->id);
                 }
                 $query->orWhere('pedidos.entregador_id', $usuarioAutenticado->id);
             })
-            // Adicionado 'entregue' e 'Entregue' para o card não voltar após finalizar
             ->whereNotIn('pedidos.status', ['finalizado', 'cancelado', 'entregue', 'Entregue'])
             ->first();
 
-        // Formata os dados da loja para a navegação do Vue
+        // Formata os dados da loja para a navegação
         if ($pedidoAtivoDoEntregador) {
             $dadosDaLoja = DB::table('lojista')->where('lojista.id', $pedidoAtivoDoEntregador->lojista_id)->first();
             if ($dadosDaLoja) {
@@ -74,7 +89,7 @@ class EntregadorController extends Controller
             ]);
 
         return response()->json([
-            'message' => 'Veículo atualizado com sucesso!',
+            'message' => 'Veículo updated com sucesso!',
             'veiculo' => [
                 'modelo' => $usuarioAutenticado->modelo_veiculo,
                 'placa' => $usuarioAutenticado->placa_veiculo
@@ -91,10 +106,9 @@ class EntregadorController extends Controller
             ->select(
                 'pedidos.id',
                 'pedidos.taxa_entrega',
-                'pedidos.codigo_entrega',
                 'pedidos.endereco_entrega',
-                'pedidos.lat_entrega', // Pega o GPS Real
-                'pedidos.lng_entrega', // Pega o GPS Real
+                'pedidos.lat_entrega',
+                'pedidos.lng_entrega',
                 'users.name as nome_loja',
                 'lojista.endereco as loja_endereco'
             )
@@ -116,11 +130,10 @@ class EntregadorController extends Controller
             'loja' => $pedidoDisponivel->nome_loja,
             'loja_endereco' => $pedidoDisponivel->loja_endereco,
             'taxa_entrega' => $pedidoDisponivel->taxa_entrega,
-            'codigo' => $pedidoDisponivel->codigo_entrega,
             'endereco' => $textoDoEndereco,
             'endereco_entrega' => $pedidoDisponivel->endereco_entrega,
-            'lat_entrega' => $pedidoDisponivel->lat_entrega, // Envia o GPS pro front
-            'lng_entrega' => $pedidoDisponivel->lng_entrega  // Envia o GPS pro front
+            'lat_entrega' => $pedidoDisponivel->lat_entrega, 
+            'lng_entrega' => $pedidoDisponivel->lng_entrega  
         ], 200);
     }
 

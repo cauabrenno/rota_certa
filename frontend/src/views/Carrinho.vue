@@ -410,6 +410,7 @@ const buscarEnderecos = async () => {
       }))
       // Pré-seleciona o primeiro endereço
       enderecoEntrega.value = enderecosSalvos.value[0]
+      await calcularFreteDinamico()
     }
   } catch (error) {
     console.error("Erro ao buscar endereços no carrinho:", error)
@@ -426,6 +427,7 @@ const fecharModal = () => { modalAtivo.value = null }
 const selecionarEndereco = (end) => {
   enderecoEntrega.value = end
   fecharModal()
+  calcularFreteDinamico()
 }
 
 // === SALVAR ENDEREÇO ===
@@ -455,10 +457,85 @@ const salvarEndereco = async () => {
     fecharModal()
     // Limpando o form, agora incluindo bairro e cidade
     novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
+    await calcularFreteDinamico()
     
   } catch (error) {
     console.error("Erro ao salvar endereço:", error)
     alert("Não foi possível salvar o endereço.")
+  }
+}
+
+// === CÁLCULO DINÂMICO DE FRETE ===
+const obterCoordenadasDoEnderecoDeEntrega = async (enderecoParaGeocodificar) => {
+  let latitudeCalculada = null
+  let longitudeCalculada = null
+  let cidadeReal = enderecoParaGeocodificar.cidade || ''
+  let estadoReal = enderecoParaGeocodificar.estado || 'Ceará'
+  
+  const codigoPostalCru = enderecoParaGeocodificar.cep || ''
+  const codigoPostalLimpo = codigoPostalCru.replace(/\D/g, '')
+  if (codigoPostalLimpo.length === 8) {
+      try {
+          const respostaViaCep = await fetch(`https://viacep.com.br/ws/${codigoPostalLimpo}/json/`)
+          const dadosViaCep = await respostaViaCep.json()
+          if (!dadosViaCep.erro) {
+              cidadeReal = dadosViaCep.localidade 
+              estadoReal = dadosViaCep.uf 
+          }
+      } catch (excecaoViaCep) { console.warn("ViaCEP indisponível no momento.") }
+  }
+
+  const rua = enderecoParaGeocodificar.rua || ''
+  const numero = enderecoParaGeocodificar.numero || ''
+  const bairro = enderecoParaGeocodificar.bairro || ''
+  
+  const tentativasDeBusca = []
+  if (cidadeReal) {
+      tentativasDeBusca.push(`${rua}, ${numero}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`)
+      tentativasDeBusca.push(`${rua}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`)
+      tentativasDeBusca.push(`${rua}, ${cidadeReal}, ${estadoReal}, Brasil`)
+      tentativasDeBusca.push(`${cidadeReal}, ${estadoReal}, Brasil`)
+  } else {
+      tentativasDeBusca.push(`${rua}, ${numero}, ${bairro}, Brasil`)
+      tentativasDeBusca.push(`${rua}, ${bairro}, Brasil`)
+  }
+
+  for (let busca of tentativasDeBusca) {
+      let buscaLimpa = busca.replace(/,\s*,/g, ', ').replace(/\s+/g, ' ').trim()
+      try {
+          const respostaNominatim = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(buscaLimpa)}`)
+          const dadosNominatim = await respostaNominatim.json()
+          if (dadosNominatim && dadosNominatim.length > 0) {
+              latitudeCalculada = parseFloat(dadosNominatim[0].lat)
+              longitudeCalculada = parseFloat(dadosNominatim[0].lon)
+              break 
+          }
+      } catch (excecaoNominatim) {}
+  }
+  
+  return { latitude: latitudeCalculada, longitude: longitudeCalculada }
+}
+
+const calcularFreteDinamico = async () => {
+  if (!enderecoEntrega.value) return
+  if (itensNoCarrinho.value.length === 0) return
+
+  try {
+    const coordenadasObtidas = await obterCoordenadasDoEnderecoDeEntrega(enderecoEntrega.value)
+    
+    const identificadorDoLojista = itensNoCarrinho.value[0]?.lojista_id || 1
+    
+    const respostaCalculo = await api.post('/frete/calcular', {
+      lojista_id: identificadorDoLojista,
+      latitude_destino: coordenadasObtidas.latitude,
+      longitude_destino: coordenadasObtidas.longitude
+    })
+
+    if (respostaCalculo.data && respostaCalculo.data.valor_frete !== undefined) {
+      frete.value = parseFloat(respostaCalculo.data.valor_frete)
+    }
+  } catch (erroDeCalculo) {
+    console.error("Erro ao calcular frete dinamicamente:", erroDeCalculo)
   }
 }
 
@@ -475,58 +552,14 @@ const finalizarCompra = async () => {
   carregandoPedido.value = true
 
   try {
-    let lat = null;
-    let lng = null;
-    let cidadeReal = enderecoEntrega.value.cidade || '';
-    let estadoReal = enderecoEntrega.value.estado || 'Ceará'; // Padrão
-    
-    // 1. ✨ INTEGRAÇÃO VIACEP
-    const cepCru = enderecoEntrega.value.cep || '';
-    const cepLimpo = cepCru.replace(/\D/g, '');
-    if (cepLimpo.length === 8) {
-        try {
-            const viaCepRes = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-            const viaCepData = await viaCepRes.json();
-            if (!viaCepData.erro) {
-                cidadeReal = viaCepData.localidade; 
-                estadoReal = viaCepData.uf; 
-            }
-        } catch (e) { console.warn("ViaCEP indisponível no momento."); }
-    }
+    const coordenadasObtidas = await obterCoordenadasDoEnderecoDeEntrega(enderecoEntrega.value)
+    const latitude = coordenadasObtidas.latitude
+    const longitude = coordenadasObtidas.longitude
 
-    // 2. ✨ SATÉLITE BLINDADO (TENTATIVAS EM CASCATA)
     const rua = enderecoEntrega.value.rua || '';
     const numero = enderecoEntrega.value.numero || '';
     const bairro = enderecoEntrega.value.bairro || '';
-    
-    // Lista de tentativas do mais exato para o mais genérico
-    const tentativas = [];
-    if(cidadeReal) {
-        tentativas.push(`${rua}, ${numero}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`);
-        tentativas.push(`${rua}, ${bairro}, ${cidadeReal}, ${estadoReal}, Brasil`);
-        tentativas.push(`${rua}, ${cidadeReal}, ${estadoReal}, Brasil`);
-        tentativas.push(`${cidadeReal}, ${estadoReal}, Brasil`); // Fallback infalível pra cidade!
-    } else {
-        tentativas.push(`${rua}, ${numero}, ${bairro}, Brasil`);
-        tentativas.push(`${rua}, ${bairro}, Brasil`);
-    }
-
-    console.log("🔍 Iniciando busca de satélite...");
-    
-    for (let query of tentativas) {
-        // Limpa vírgulas duplas e espaços
-        let qLimpa = query.replace(/,\s*,/g, ', ').replace(/\s+/g, ' ').trim();
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qLimpa)}`);
-            const data = await res.json();
-            if (data && data.length > 0) {
-                lat = parseFloat(data[0].lat);
-                lng = parseFloat(data[0].lon);
-                console.log("📍 Coordenada encontrada com a busca:", qLimpa);
-                break; // Achou a coordenada? Para o loop na hora!
-            }
-        } catch(e) {}
-    }
+    const cidadeReal = enderecoEntrega.value.cidade || '';
 
     const enderecoCompleto = JSON.stringify({
       rua: rua,
@@ -543,8 +576,8 @@ const finalizarCompra = async () => {
       taxa_entrega: parseFloat(frete.value),
       pontos_ganhos: pontosGanhos.value,
       lojista_id: itensNoCarrinho.value[0]?.lojista_id || 1, 
-      lat_entrega: lat, 
-      lng_entrega: lng, 
+      lat_entrega: latitude, 
+      lng_entrega: longitude, 
       itens: itensNoCarrinho.value.map(item => ({
         id: item.id,                 
         produto_id: item.id,         
