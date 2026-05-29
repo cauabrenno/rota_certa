@@ -17,21 +17,21 @@ public function meuPerfil()
         }
 
         // Tenta ler o JSON. Se o banco tiver apenas um texto normal (ou vazio), ele cria o objeto zerado.
-        $enderecoObj = json_decode($lojista->endereco);
+        $enderecoObjeto = json_decode($lojista->endereco);
         
-        if (!is_object($enderecoObj)) {
-            $enderecoObj = (object) [
+        if (!is_object($enderecoObjeto)) {
+            $enderecoObjeto = (object) [
                 'cep' => '', 'cidade' => 'Juazeiro do Norte - CE', 'rua' => '', 'numero' => '', 'bairro' => ''
             ];
         }
 
         return response()->json([
             'nome'      => $user->name,
-            'logo_loja' => $user->logo_loja, 
+            'logo_loja' => \App\Helpers\FormatadorDeImagem::obterCaminhoCompletoDaImagem($user->logo_loja), 
             'cnpj'      => $lojista->cnpj,
             'telefone'  => $lojista->telefone,
             'aberto'    => (bool) $lojista->aberto,
-            'endereco'  => $enderecoObj
+            'endereco'  => $enderecoObjeto
         ], 200);
     }
 
@@ -72,12 +72,12 @@ public function atualizarPerfil(Request $request)
         DB::commit();
         return response()->json(['message' => 'Sucesso total!'], 200);
 
-    } catch (\Exception $e) {
+    } catch (\Exception $excecaoLancada) {
         DB::rollBack();
         // Esse retorno vai te mostrar o erro real no console do navegador
         return response()->json([
             'message' => 'Erro interno no servidor',
-            'debug' => $e->getMessage()
+            'debug' => $excecaoLancada->getMessage()
         ], 500);
     }
 }
@@ -89,7 +89,12 @@ public function listarLojas()
             ->select('lojista.id', 'users.name as nome_loja', 'users.logo_loja', 'lojista.aberto')
             ->get();
 
-        return response()->json($lojas, 200);
+        $lojasFormatadas = $lojas->map(function ($loja) {
+            $loja->logo_loja = \App\Helpers\FormatadorDeImagem::obterCaminhoCompletoDaImagem($loja->logo_loja);
+            return $loja;
+        });
+
+        return response()->json($lojasFormatadas, 200);
     }
 
     public function obterQuantidadeDeEntregadoresOnline()

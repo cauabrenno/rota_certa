@@ -670,28 +670,31 @@ const checkSwipeFases = async () => {
 
 // ✨ CONFIRMAR ENTREGA COM PIN
 const confirmarEntrega = async () => {
-  if (codigoCliente.value === String(pinCorretoGerado.value)) {
-    try {
-      await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'entregue' }, getAuth());
-      
-      alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
-      
-      showPinModal.value = false
-      atualizarStatus(null);
-      atualizarPin('');
-      codigoCliente.value = '';
-      salvarCorrida(null); 
-      
-      // ✨ ATUALIZAÇÃO DO SALDO DE FORMA DINÂMICA
-      await buscarDadosIniciaisEntregador(); 
-      
-      iniciarPolling();
+  try {
+    await api.put(`/pedidos/${corridaAtual.value.id}/status`, { 
+      status: 'entregue',
+      codigo_entrega: codigoCliente.value
+    }, getAuth());
+    
+    alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
+    
+    showPinModal.value = false
+    atualizarStatus(null);
+    atualizarPin('');
+    codigoCliente.value = '';
+    salvarCorrida(null); 
+    
+    // ✨ ATUALIZAÇÃO DO SALDO DE FORMA DINÂMICA
+    await buscarDadosIniciaisEntregador(); 
+    
+    iniciarPolling();
 
-    } catch (error) {
-      alert("Erro ao finalizar a corrida no servidor.");
+  } catch (erroDeFinalizacao) {
+    if (erroDeFinalizacao.response && erroDeFinalizacao.response.data && erroDeFinalizacao.response.data.message === 'Código incorreto') {
+      alert("⚠️ Código incorreto!")
+    } else {
+      alert("Erro ao finalizar a corrida no servidor.")
     }
-  } else {
-    alert("⚠️ Código incorreto! O código desta entrega é: " + pinCorretoGerado.value)
   }
 }
 

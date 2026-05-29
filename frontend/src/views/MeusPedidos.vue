@@ -269,6 +269,66 @@
             </div>
           </div>
 
+          </div>
+
+        <!-- AVALIAÇÃO DO ENTREGADOR (ESTILO IFOOD) -->
+        <div v-if="pedidoSelecionado.statusIndex === 4 && !pedidoSelecionado.avaliacaoConcluida" class="bg-gradient-to-r from-[#F0FDF4] to-[#DCFCE7] rounded-3xl p-6 border border-green-200 mb-6 md:mb-8 animate-in fade-in duration-300">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="p-2 bg-green-100 text-green-700 rounded-xl"><Star :size="20" class="fill-green-600" /></span>
+            <div>
+              <h4 class="font-black text-sm uppercase tracking-tight text-green-800">Avalie o seu entregador</h4>
+              <p class="text-xs text-green-700">Como foi a entrega realizada por <strong>{{ pedidoSelecionado.entregadorNome }}</strong>?</p>
+            </div>
+          </div>
+
+          <div class="flex justify-center gap-2.5 my-5">
+            <button 
+              v-for="estrela in 5" 
+              :key="estrela" 
+              @click="selecionarNotaDeAvaliacao(estrela)"
+              class="transition-transform duration-200 hover:scale-125 focus:outline-none"
+            >
+              <Star 
+                :size="32" 
+                class="transition-colors duration-200" 
+                :class="estrela <= notaSelecionada ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'"
+              />
+            </button>
+          </div>
+
+          <div v-if="notaSelecionada > 0" class="space-y-4">
+            <p class="text-center text-[10px] font-black uppercase tracking-wider text-green-700">O que motivou a sua nota?</p>
+            
+            <div class="flex flex-wrap justify-center gap-2">
+              <button 
+                v-for="sugestao in obterSugestoesDeAvaliacao(notaSelecionada)" 
+                :key="sugestao"
+                @click="alternarSugestaoSelecionada(sugestao)"
+                :class="sugestoesSelecionadas.includes(sugestao) ? 'bg-[#1A1A1A] text-white border-transparent' : 'bg-white/80 text-gray-700 border-gray-200 hover:bg-white'"
+                class="py-2 px-4 rounded-xl border text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+              >
+                {{ sugestao }}
+              </button>
+            </div>
+
+            <div class="space-y-1.5 mt-4">
+              <label class="text-[9px] font-black uppercase tracking-widest text-green-800">Comentários Adicionais (opcional)</label>
+              <textarea 
+                v-model="comentarioAdicional" 
+                placeholder="Conte-nos mais detalhes sobre a entrega..."
+                class="w-full p-4 text-xs font-semibold bg-white border border-green-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all resize-none h-20"
+              ></textarea>
+            </div>
+
+            <button 
+              @click="enviarAvaliacaoDoEntregador" 
+              :disabled="enviandoAvaliacao"
+              class="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-black active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span v-if="enviandoAvaliacao">Enviando...</span>
+              <span v-else>Enviar Avaliação</span>
+            </button>
+          </div>
         </div>
 
         <!-- BOTÕES DINÂMICOS DO MODAL -->
@@ -315,7 +375,8 @@ import {
   Bike, 
   ArrowRight, 
   X, 
-  CreditCard 
+  CreditCard,
+  Star
 } from 'lucide-vue-next'
 
 const roteador = useRouter()
@@ -379,6 +440,8 @@ const carregarPedidos = async () => {
       pagamento: p.forma_pagamento,
       data: formatarDataBR(p.created_at),
       descricaoItens: p.descricao,
+      avaliacaoConcluida: p.avaliacao_do_entregador_concluida === 1 || p.avaliacao_do_entregador_concluida === true,
+      entregadorNome: p.entregador?.nome || 'Entregador Rota Certa',
       itens: p.produtos ? p.produtos.map(prod => ({
         nome: prod.nome,
         qtd: prod.pivot.quantidade,
@@ -415,6 +478,74 @@ const abrirDetalhes = (pedido) => {
 
 const fecharDetalhes = () => {
   pedidoSelecionado.value = null
+  notaSelecionada.value = 0
+  sugestoesSelecionadas.value = []
+  comentarioAdicional.value = ''
+}
+
+// === ESTADOS E FUNÇÕES DE AVALIAÇÃO DO ENTREGADOR ===
+const notaSelecionada = ref(0)
+const sugestoesSelecionadas = ref([])
+const comentarioAdicional = ref('')
+const enviandoAvaliacao = ref(false)
+
+const selecionarNotaDeAvaliacao = (nota) => {
+  notaSelecionada.value = nota
+  sugestoesSelecionadas.value = []
+}
+
+const obterSugestoesDeAvaliacao = (nota) => {
+  if (nota >= 1 && nota <= 2) {
+    return ['Atraso', 'Embalagem danificada', 'Pedido frio', 'Entregador rude', 'Desatencioso']
+  } else if (nota === 3) {
+    return ['Entrega mediana', 'Sem problemas', 'Demora aceitável']
+  } else if (nota >= 4 && nota <= 5) {
+    return ['Entregador simpático', 'Cuidado com o pedido', 'Muito rápido', 'Excelente atendimento', 'Trabalho impecável']
+  }
+  return []
+}
+
+const alternarSugestaoSelecionada = (sugestao) => {
+  const index = sugestoesSelecionadas.value.indexOf(sugestao)
+  if (index > -1) {
+    sugestoesSelecionadas.value.splice(index, 1)
+  } else {
+    sugestoesSelecionadas.value.push(sugestao)
+  }
+}
+
+const enviarAvaliacaoDoEntregador = async () => {
+  if (notaSelecionada.value < 1 || notaSelecionada.value > 5) {
+    return alert("Por favor, selecione uma nota de 1 a 5 estrelas.")
+  }
+
+  enviandoAvaliacao.value = true
+  try {
+    const payload = {
+      nota_da_avaliacao: notaSelecionada.value,
+      motivos_da_avaliacao: sugestoesSelecionadas.value.join(', '),
+      comentarios_adicionais: comentarioAdicional.value
+    }
+
+    await api.post(`/pedidos/${pedidoSelecionado.value.dbId}/avaliar-entregador`, payload)
+
+    alert("✅ Avaliação enviada com sucesso! Muito obrigado pelo seu feedback.")
+    
+    pedidoSelecionado.value.avaliacaoConcluida = true
+    
+    notaSelecionada.value = 0
+    sugestoesSelecionadas.value = []
+    comentarioAdicional.value = ''
+    
+    await carregarPedidos()
+
+  } catch (erro) {
+    console.error("Erro ao enviar avaliação:", erro)
+    const mensagemErro = erro.response?.data?.mensagem || "Erro ao enviar a avaliação. Tente novamente."
+    alert(mensagemErro)
+  } finally {
+    enviandoAvaliacao.value = false
+  }
 }
 
 const alertAjuda = () => {

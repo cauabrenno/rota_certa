@@ -15,6 +15,7 @@ use App\Http\Middleware\VerificaTipoUsuario;
 use App\Http\Controllers\ResetSenhaController;
 use App\Http\Controllers\EntregadorController;
 use App\Http\Controllers\LojistaController;
+use App\Http\Controllers\AvaliacaoDoEntregadorController;
 
 // --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -68,6 +69,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::get('/meus-pedidos', [PedidoController::class, 'meusPedidos']);
         Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
+        Route::post('/pedidos/{id}/avaliar-entregador', [AvaliacaoDoEntregadorController::class, 'salvarAvaliacaoDoEntregador']);
     });
 
     // --- ÁREA DO LOJISTA ---
