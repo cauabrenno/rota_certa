@@ -1,13 +1,13 @@
 <template>
   <div>
     <!-- Conteiner de Toasts (Notificações Flutuantes no Canto Superior Direito) -->
-    <div class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+    <div class="conteinerDeNotificacoesFlutuantes">
       <transition-group name="animacao-toast">
         <div
           v-for="notificacao in listaDeNotificacoes"
           :key="notificacao.identificadorUnico"
           @click="executarCliqueNaNotificacao(notificacao)"
-          class="pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-black/5 shadow-xl transition-all duration-300 transform"
+          class="cartaoDeNotificacaoIndividual pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-black/5 shadow-xl transition-all duration-300 transform"
           :class="[obterClasseDoTipo(notificacao.tipo), notificacao.funcaoAoClicar ? 'cursor-pointer hover:bg-gray-50' : '']"
         >
           <div class="flex-shrink-0 mt-0.5">
@@ -135,6 +135,48 @@ const executarCliqueNaNotificacao = (notificacao) => {
 </script>
 
 <style scoped>
+.conteinerDeNotificacoesFlutuantes {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 384px;
+  pointer-events: none;
+}
+
+.cartaoDeNotificacaoIndividual {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cartaoDeNotificacaoIndividual p {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+@media (max-width: 767px) {
+  .conteinerDeNotificacoesFlutuantes {
+    top: 16px;
+    right: 5vw;
+    left: 5vw;
+    width: 90vw;
+    max-width: 90vw;
+  }
+  .cartaoDeNotificacaoIndividual {
+    max-width: 90vw;
+  }
+}
+
 .vetor-icone {
   color: #1A1A1A;
 }
