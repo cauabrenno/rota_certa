@@ -60,6 +60,8 @@ class ProdutoController extends Controller
         }
 
         try {
+            $imagemProcessada = \App\Helpers\FormatadorDeImagem::salvarImagemBase64($requisicao->imagem_url, 'produtos');
+
             DB::table('produtos')->insert([
                 'lojista_id'   => $lojista->id,
                 'nome'         => $requisicao->nome,
@@ -67,7 +69,7 @@ class ProdutoController extends Controller
                 'categoria'    => $requisicao->categoria,
                 'preco'        => $requisicao->preco,
                 'preco_antigo' => $requisicao->preco_antigo,
-                'imagem_url'   => $requisicao->imagem_url,
+                'imagem_url'   => $imagemProcessada,
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
@@ -85,6 +87,8 @@ class ProdutoController extends Controller
         $lojista = DB::table('lojista')->where('user_id', $usuarioAutenticado->id)->first();
 
         try {
+            $imagemProcessada = \App\Helpers\FormatadorDeImagem::salvarImagemBase64($requisicao->imagem_url, 'produtos');
+
             DB::table('produtos')
                 ->where('id', $identificadorDoProduto)
                 ->where('lojista_id', $lojista->id)
@@ -94,7 +98,7 @@ class ProdutoController extends Controller
                     'categoria'    => $requisicao->categoria,
                     'preco'        => $requisicao->preco,
                     'preco_antigo' => $requisicao->preco_antigo,
-                    'imagem_url'   => $requisicao->imagem_url,
+                    'imagem_url'   => $imagemProcessada,
                     'updated_at'   => now(),
                 ]);
 

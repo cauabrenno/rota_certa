@@ -35,12 +35,12 @@ public function meuPerfil()
         ], 200);
     }
 
-public function atualizarPerfil(Request $request)
+public function atualizarPerfil(Request $requisicao)
 {
-    $user = auth()->user();
+    $usuarioAutenticado = auth()->user();
     
     // Logica para achar o lojista pelo user_id
-    $lojista = DB::table('lojista')->where('user_id', $user->id)->first();
+    $lojista = DB::table('lojista')->where('user_id', $usuarioAutenticado->id)->first();
 
     if (!$lojista) {
         return response()->json(['message' => 'Lojista não localizado no banco.'], 404);
@@ -49,23 +49,25 @@ public function atualizarPerfil(Request $request)
     try {
         DB::beginTransaction();
 
+        $logoProcessada = \App\Helpers\FormatadorDeImagem::salvarImagemBase64($requisicao->logo_loja, 'lojas');
+
         // 1. Atualiza a tabela USERS (Nome e Logo)
         // Verifique se o nome da coluna no seu pgAdmin é exatamente 'logo_loja'
         DB::table('users')
-            ->where('id', $user->id)
+            ->where('id', $usuarioAutenticado->id)
             ->update([
-                'name' => $request->nome,
-                'logo_loja' => $request->logo_loja
+                'name' => $requisicao->nome,
+                'logo_loja' => $logoProcessada
             ]);
 
         // 2. Atualiza a tabela LOJISTA
         DB::table('lojista')
-            ->where('user_id', $user->id)
+            ->where('user_id', $usuarioAutenticado->id)
             ->update([
-                'cnpj' => $request->cnpj,
-                'telefone' => $request->telefone,
-                'aberto' => $request->aberto,
-                'endereco' => json_encode($request->endereco), // Empacota o objeto
+                'cnpj' => $requisicao->cnpj,
+                'telefone' => $requisicao->telefone,
+                'aberto' => $requisicao->aberto,
+                'endereco' => json_encode($requisicao->endereco), // Empacota o objeto
                 'updated_at' => now()
             ]);
 
