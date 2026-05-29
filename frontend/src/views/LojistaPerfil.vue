@@ -216,6 +216,7 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { exibirNotificacao, solicitarConfirmacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   aplicarMascaraDeTelefone,
   aplicarMascaraDeCadastroNacionalDaPessoaJuridica,
@@ -287,9 +288,9 @@ const buscarPerfil = async () => {
     if (res.data) {
       perfil.value = res.data
     }
-  } catch (error) {
-    console.error("Erro ao puxar dados do banco:", error)
-    alert("Erro ao carregar o seu perfil. Verifique o console (F12).")
+  } catch (erroOcorrido) {
+    console.error("Erro ao puxar dados do banco:", erroOcorrido)
+    exibirNotificacao("Erro ao carregar o seu perfil. Verifique o console (F12).", "erro")
   }
 }
 
@@ -300,17 +301,18 @@ const salvarPerfil = async () => {
     const response = await api.post('/lojista/perfil', perfil.value);
     
     if (response.status === 200) {
-      alert("Perfil salvo no banco de dados!");
+      exibirNotificacao("Perfil salvo no banco de dados!", "sucesso");
       await buscarPerfil(); // Recarrega para ter certeza que veio do banco
     }
-  } catch (error) {
-    console.error("Erro detalhado:", error.response?.data);
-    alert("Opa! O banco recusou os dados. Verifique o console.");
+  } catch (erroOcorrido) {
+    console.error("Erro detalhado:", erroOcorrido.response?.data);
+    exibirNotificacao("Opa! O banco recusou os dados. Verifique o console.", "erro");
   }
 }
 
-const fazerLogout = () => {
-  if(confirm("Deseja sair do painel do lojista?")) {
+const fazerLogout = async () => {
+  const confirmouDeslogar = await solicitarConfirmacao("Deseja sair do painel do lojista?")
+  if (confirmouDeslogar) {
     localStorage.removeItem('token')
     localStorage.removeItem('tipoUsuario')
     roteador.push('/')

@@ -365,6 +365,7 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' 
+import { exibirNotificacao, solicitarConfirmacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   Home, 
   ClipboardList, 
@@ -421,35 +422,67 @@ const formatarDataBR = (dataIso) => {
 
 const carregarPedidos = async () => {
   try {
-    const res = await api.get('/meus-pedidos')
+    const respostaDosPedidos = await api.get('/meus-pedidos')
     
-    todosPedidos.value = res.data.pedidos.map(p => ({
-      dbId: p.id, // O ID real do banco para conseguirmos cancelar!
-      id: `#RC-${p.id.toString().padStart(4, '0')}`,
+    const pedidosCarregados = respostaDosPedidos.data.pedidos.map(pedidoDoBanco => ({
+      identificadorDoBancoDeDados: pedidoDoBanco.id,
+      id: `#RC-${pedidoDoBanco.id.toString().padStart(4, '0')}`,
       
-      // ✨ AQUI ESTÁ A MÁGICA: Pegando o Nome e a Logo do Back-end!
-      loja: p.loja?.nome || 'Loja Parceira', 
-      logo: p.loja?.logo || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png', // Mantém o ícone padrão se o lojista não tiver cadastrado a foto ainda
+      loja: pedidoDoBanco.loja?.nome || 'Loja Parceira', 
+      logo: pedidoDoBanco.loja?.logo || 'https://cdn-icons-png.flaticon.com/512/1384/1384063.png',
       
-      itensCount: p.produtos ? p.produtos.length : 0,
-      total: parseFloat(p.valor_total),
-      taxaEntrega: parseFloat(p.taxa_entrega),
+      itensCount: pedidoDoBanco.produtos ? pedidoDoBanco.produtos.length : 0,
+      total: parseFloat(pedidoDoBanco.valor_total),
+      taxaEntrega: parseFloat(pedidoDoBanco.taxa_entrega),
       previsao: '45-60 min',
-      codigo: p.codigo_entrega,
-      statusIndex: mapearStatusParaIndex(p.status),
-      pagamento: p.forma_pagamento,
-      data: formatarDataBR(p.created_at),
-      descricaoItens: p.descricao,
-      avaliacaoConcluida: p.avaliacao_do_entregador_concluida === 1 || p.avaliacao_do_entregador_concluida === true,
-      entregadorNome: p.entregador?.nome || 'Entregador Rota Certa',
-      itens: p.produtos ? p.produtos.map(prod => ({
-        nome: prod.nome,
-        qtd: prod.pivot.quantidade,
-        preco: parseFloat(prod.pivot.preco_unitario)
+      codigo: pedidoDoBanco.codigo_entrega,
+      statusIndex: mapearStatusParaIndex(pedidoDoBanco.status),
+      pagamento: pedidoDoBanco.forma_pagamento,
+      data: formatarDataBR(pedidoDoBanco.created_at),
+      descricaoItens: pedidoDoBanco.descricao,
+      avaliacaoConcluida: pedidoDoBanco.avaliacao_do_entregador_concluida === 1 || pedidoDoBanco.avaliacao_do_entregador_concluida === true,
+      entregadorNome: pedidoDoBanco.entregador?.nome || 'Entregador Rota Certa',
+      itens: pedidoDoBanco.produtos ? pedidoDoBanco.produtos.map(produtoDoPedido => ({
+        nome: produtoDoPedido.nome,
+        qtd: produtoDoPedido.pivot.quantidade,
+        preco: parseFloat(produtoDoPedido.pivot.preco_unitario)
       })) : []
     }))
-  } catch (error) {
-    console.error("Erro ao buscar histórico de pedidos", error)
+
+    // Se já havia pedidos carregados anteriormente, verificamos a transição de status
+    if (todosPedidos.value.length > 0) {
+      pedidosCarregados.forEach(pedidoNovo => {
+        const pedidoAntigo = todosPedidos.value.find(pedidoAntigoDoHistorico => pedidoAntigoDoHistorico.identificadorDoBancoDeDados === pedidoNovo.identificadorDoBancoDeDados)
+        if (pedidoAntigo) {
+          const statusAntigoMenorQueQuatro = pedidoAntigo.statusIndex < 4
+          const statusNovoIgualAQuatro = pedidoNovo.statusIndex === 4
+          const avaliacaoNaoConcluida = !pedidoNovo.avaliacaoConcluida
+
+          if (statusAntigoMenorQueQuatro && statusNovoIgualAQuatro && avaliacaoNaoConcluida) {
+            const nomeDoEntregador = pedidoNovo.entregadorNome || 'o entregador'
+            exibirNotificacao(
+              `Avalie o entregador ${nomeDoEntregador} clicando aqui`,
+              'sucesso',
+              10000,
+              () => {
+                abrirDetalhes(pedidoNovo)
+              }
+            )
+          }
+        }
+      })
+    }
+
+    todosPedidos.value = pedidosCarregados
+
+    if (pedidoSelecionado.value) {
+      const pedidoAtualizado = pedidosCarregados.find(pedidoAtualizadoDoModal => pedidoAtualizadoDoModal.identificadorDoBancoDeDados === pedidoSelecionado.value.identificadorDoBancoDeDados)
+      if (pedidoAtualizado) {
+        pedidoSelecionado.value = pedidoAtualizado
+      }
+    }
+  } catch (erroOcorrido) {
+    console.error("Erro ao buscar histórico de pedidos", erroOcorrido)
   } finally {
     carregando.value = false
   }
@@ -516,20 +549,21 @@ const alternarSugestaoSelecionada = (sugestao) => {
 
 const enviarAvaliacaoDoEntregador = async () => {
   if (notaSelecionada.value < 1 || notaSelecionada.value > 5) {
-    return alert("Por favor, selecione uma nota de 1 a 5 estrelas.")
+    exibirNotificacao("Por favor, selecione uma nota de 1 a 5 estrelas.", "aviso")
+    return
   }
 
   enviandoAvaliacao.value = true
   try {
-    const payload = {
+    const dadosDaAvaliacao = {
       nota_da_avaliacao: notaSelecionada.value,
       motivos_da_avaliacao: sugestoesSelecionadas.value.join(', '),
       comentarios_adicionais: comentarioAdicional.value
     }
 
-    await api.post(`/pedidos/${pedidoSelecionado.value.dbId}/avaliar-entregador`, payload)
+    await api.post(`/pedidos/${pedidoSelecionado.value.identificadorDoBancoDeDados}/avaliar-entregador`, dadosDaAvaliacao)
 
-    alert("✅ Avaliação enviada com sucesso! Muito obrigado pelo seu feedback.")
+    exibirNotificacao("Avaliação enviada com sucesso! Muito obrigado pelo seu feedback.", "sucesso")
     
     pedidoSelecionado.value.avaliacaoConcluida = true
     
@@ -539,21 +573,21 @@ const enviarAvaliacaoDoEntregador = async () => {
     
     await carregarPedidos()
 
-  } catch (erro) {
-    console.error("Erro ao enviar avaliação:", erro)
-    const mensagemErro = erro.response?.data?.mensagem || "Erro ao enviar a avaliação. Tente novamente."
-    alert(mensagemErro)
+  } catch (erroOcorrido) {
+    console.error("Erro ao enviar avaliação:", erroOcorrido)
+    const mensagemDeErro = erroOcorrido.response?.data?.mensagem || "Erro ao enviar a avaliação. Tente novamente."
+    exibirNotificacao(mensagemDeErro, "erro")
   } finally {
     enviandoAvaliacao.value = false
   }
 }
 
 const alertAjuda = () => {
-  alert("Redirecionando para a central de ajuda...")
+  exibirNotificacao("Redirecionando para a central de ajuda...", "informacao")
 }
 
 const pedirDeNovo = () => {
-  alert("Em breve! Esta função vai recriar o carrinho com estes itens.")
+  exibirNotificacao("Em breve! Esta função vai recriar o carrinho com estes itens.", "informacao")
 }
 
 const irParaCarrinho = () => {
@@ -562,19 +596,20 @@ const irParaCarrinho = () => {
 
 // === FUNÇÃO DE CANCELAR O PEDIDO ===
 const cancelarPedido = async (pedido) => {
-  if (confirm("Tem certeza que deseja cancelar este pedido?")) {
+  const confirmouCancelar = await solicitarConfirmacao("Tem certeza que deseja cancelar este pedido?")
+  if (confirmouCancelar) {
     try {
       // ✨ Mudamos a rota para bater na porta exclusiva do cliente!
-      await api.put(`/pedidos/${pedido.dbId}/cancelar`)
+      await api.put(`/pedidos/${pedido.identificadorDoBancoDeDados}/cancelar`)
       
-      alert("Pedido cancelado com sucesso!")
+      exibirNotificacao("Pedido cancelado com sucesso!", "sucesso")
       fecharDetalhes()
       carregarPedidos() // Atualiza a tela puxando tudo do banco de novo
-    } catch (error) {
-      console.error("Erro ao cancelar:", error)
+    } catch (erroOcorrido) {
+      console.error("Erro ao cancelar:", erroOcorrido)
       // Mostra a mensagem exata do back-end se o restaurante já tiver começado
-      const msgErro = error.response?.data?.message || "Erro ao cancelar. Tente novamente."
-      alert(msgErro)
+      const mensagemDeErro = erroOcorrido.response?.data?.message || "Erro ao cancelar. Tente novamente."
+      exibirNotificacao(mensagemDeErro, "erro")
     }
   }
 }

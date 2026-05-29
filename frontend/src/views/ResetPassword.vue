@@ -80,6 +80,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import iRota from '../assets/iRota.png'
 import api from '../services/api'
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -99,7 +100,7 @@ const formularioEstaValido = computed(() => {
 
 const lidarComRedefinicao = async () => {
   if (!formularioEstaValido.value) {
-    alert("Por favor, preencha os campos de senha corretamente!");
+    exibirNotificacao("Por favor, preencha os campos de senha corretamente!", "aviso");
     return;
   }
 
@@ -111,11 +112,11 @@ const lidarComRedefinicao = async () => {
       password: password.value,
       password_confirmation: password_confirmation.value
     })
-    alert("Senha alterada com sucesso! Você já pode logar.")
+    exibirNotificacao("Senha alterada com sucesso! Você já pode logar.", "sucesso")
     router.push('/login')
-  } catch (error) {
-    console.error(error)
-    alert("Erro! O link expirou, é inválido ou esse e-mail não existe no sistema.")
+  } catch (erroOcorrido) {
+    console.error(erroOcorrido)
+    exibirNotificacao("Erro! O link expirou, é inválido ou esse e-mail não existe no sistema.", "erro")
   } finally {
     carregando.value = false
   }

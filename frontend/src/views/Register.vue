@@ -141,6 +141,7 @@ import {
   validarFormatoDeEmail, 
   validarAlgoritmoDeCadastroDePessoasFisicas 
 } from '../utils/validadoresDeFormatacao.js'
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js'
 
 const mostrarSenha = ref(false)
 const mostrarConfirmarSenha = ref(false)
@@ -207,7 +208,7 @@ const formularioEstaValido = computed(() => {
 
 const lidarComCadastro = async () => {
   if (!formularioEstaValido.value) {
-    alert("Por favor, preencha todos os campos e corrija os erros de validação antes de prosseguir!");
+    exibirNotificacao("Por favor, preencha todos os campos e corrija os erros de validação antes de prosseguir!", "aviso");
     return
   }
 
@@ -229,17 +230,17 @@ const lidarComCadastro = async () => {
 
     const response = await api.post('/register', payload)
 
-    alert("Cadastro realizado com sucesso! Bem-vindo ao RotaCerta.");
+    exibirNotificacao("Cadastro realizado com sucesso! Bem-vindo ao RotaCerta.", "sucesso");
     
     router.push('/login'); 
 
-  } catch (error) {
-    console.error("Erro ao cadastrar:", error)
+  } catch (erroOcorrido) {
+    console.error("Erro ao cadastrar:", erroOcorrido)
     
-    if (error.response && error.response.status === 422) {
-      alert("Erro nos dados: Verifique se este e-mail já está em uso ou se a senha tem no mínimo 8 caracteres.");
+    if (erroOcorrido.response && erroOcorrido.response.status === 422) {
+      exibirNotificacao("Erro nos dados: Verifique se este e-mail já está em uso ou se a senha tem no mínimo 8 caracteres.", "erro");
     } else {
-      alert("Erro no servidor. O 'php artisan serve' está rodando no outro terminal?");
+      exibirNotificacao("Erro no servidor. O 'php artisan serve' está rodando no outro terminal?", "erro");
     }
   }
 }

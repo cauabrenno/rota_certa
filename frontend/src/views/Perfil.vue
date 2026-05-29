@@ -596,6 +596,7 @@ import iRota from '../assets/iRota.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' 
+import { exibirNotificacao, solicitarConfirmacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   validarFormatoDeEmail,
   validarDataDeValidadeDeCartao,
@@ -652,7 +653,7 @@ const carregarTudo = async () => {
     try {
       const resPontos = await api.get('/meus-pontos')
       pontosReais = resPontos.data.pontos
-    } catch(e) { console.log("Sem pontos registrados ainda.") }
+    } catch(erroOcorrido) { console.log("Sem pontos registrados ainda.") }
 
     usuario.value = {
       nome: resUser.data.nome || resUser.data.name || 'Cliente RotaCerta',
@@ -760,17 +761,17 @@ const salvarPerfil = async () => {
       email: formPerfil.value.email,
       telefone: formPerfil.value.telefone
     })
-    alert('Perfil atualizado com sucesso!')
+    exibirNotificacao('Perfil updated com sucesso!', 'sucesso')
     fecharModal()
     carregarTudo() // Atualiza a tela com o novo nome
-  } catch(error) {
-    alert('Erro ao atualizar perfil.')
+  } catch(erroOcorrido) {
+    exibirNotificacao('Erro ao atualizar perfil.', 'erro')
   }
 }
 
 const salvarSenha = async () => {
   if (formSenha.value.nova !== formSenha.value.confirmar) {
-    alert('As novas senhas não coincidem!')
+    exibirNotificacao('As novas senhas não coincidem!', 'aviso')
     return
   }
   try {
@@ -779,11 +780,11 @@ const salvarSenha = async () => {
       nova_senha: formSenha.value.nova,
       nova_senha_confirmation: formSenha.value.confirmar
     })
-    alert('Senha atualizada com segurança!')
+    exibirNotificacao('Senha atualizada com segurança!', 'sucesso')
     fecharModal()
     formSenha.value = { atual: '', nova: '', confirmar: '' }
-  } catch(error) {
-    alert('Erro ao atualizar senha. Verifique se a senha atual está correta.')
+  } catch(erroOcorrido) {
+    exibirNotificacao('Erro ao atualizar senha. Verifique se a senha atual está correta.', 'erro')
   }
 }
 
@@ -818,14 +819,15 @@ const salvarEndereco = async () => {
     mostrandoForm.value = false
     
     carregarTudo() 
-  } catch (error) {
-    console.error("Erro ao salvar endereço:", error)
-    alert("Erro ao salvar endereço.")
+  } catch (erroOcorrido) {
+    console.error("Erro ao salvar endereço:", erroOcorrido)
+    exibirNotificacao("Erro ao salvar endereço.", "erro")
   }
 }
 
 const excluirEndereco = async (id) => {
-  if(confirm("Deseja realmente excluir este endereço?")) {
+  const confirmouExcluir = await solicitarConfirmacao("Deseja realmente excluir este endereço?")
+  if (confirmouExcluir) {
     await api.delete(`/enderecos/${id}`)
     carregarTudo()
   }
@@ -838,13 +840,14 @@ const salvarCartao = async () => {
     novoCartao.value = { numero_cartao: '', nome_impresso: '', validade: '', cvv: '' }
     mostrandoForm.value = false
     carregarTudo() 
-  } catch (error) {
-    alert("Erro ao salvar cartão.")
+  } catch (erroOcorrido) {
+    exibirNotificacao("Erro ao salvar cartão.", "erro")
   }
 }
 
 const excluirCartao = async (id) => {
-  if(confirm("Deseja realmente excluir este cartão?")) {
+  const confirmouExcluir = await solicitarConfirmacao("Deseja realmente excluir este cartão?")
+  if (confirmouExcluir) {
     await api.delete(`/cartoes/${id}`)
     carregarTudo()
   }
@@ -854,11 +857,11 @@ const excluirCartao = async (id) => {
 const enviarSuporte = async () => {
   try {
     await api.post('/suporte', formSuporte.value)
-    alert('Mensagem enviada com sucesso! Nossa equipe retornará em breve.')
+    exibirNotificacao('Mensagem enviada com sucesso! Nossa equipe retornará em breve.', 'sucesso')
     fecharModal()
     formSuporte.value = { assunto: '', mensagem: '' }
-  } catch(error) {
-    alert('Erro ao enviar mensagem para o suporte. Tente novamente mais tarde.')
+  } catch(erroOcorrido) {
+    exibirNotificacao('Erro ao enviar mensagem para o suporte. Tente novamente mais tarde.', 'erro')
   }
 }
 
@@ -866,7 +869,8 @@ const irParaCarrinho = () => { roteador.push('/carrinho') }
 
 // === LOGOUT COM SEGURANÇA ===
 const fazerLogout = async () => {
-  if(confirm("Tem certeza que deseja sair da sua conta?")) {
+  const confirmouSair = await solicitarConfirmacao("Tem certeza que deseja sair da sua conta?")
+  if (confirmouSair) {
     try { 
       await api.post('/logout') 
     } catch (erroDeLogout) {

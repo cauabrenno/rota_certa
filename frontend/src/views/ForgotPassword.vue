@@ -56,6 +56,7 @@ import { ref, computed } from 'vue'
 import iRota from '../assets/iRota.png'
 import api from '../services/api'
 import { validarFormatoDeEmail } from '../utils/validadoresDeFormatacao.js'
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js'
 
 const email = ref('')
 const loading = ref(false)
@@ -66,7 +67,7 @@ const formularioEstaValido = computed(() => email.value && emailEhValido.value &
 
 const solicitarLink = async () => {
   if (!formularioEstaValido.value) {
-    alert("Por favor, preencha um endereço de e-mail válido!");
+    exibirNotificacao("Por favor, preencha um endereço de e-mail válido!", "aviso");
     return
   }
 
@@ -75,9 +76,9 @@ const solicitarLink = async () => {
     // Esse endpoint deve estar configurado no seu Laravel (Fortify ou manualmente)
     await api.post('/esqueceu-senha', { email: email.value })
     linkEnviado.value = true
-  } catch (error) {
-    console.error(error)
-    alert("Erro ao enviar e-mail. Verifique se o endereço está correto.")
+  } catch (erroOcorrido) {
+    console.error(erroOcorrido)
+    exibirNotificacao("Erro ao enviar e-mail. Verifique se o endereço está correto.", "erro")
   } finally {
     loading.value = false
   }

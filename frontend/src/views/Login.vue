@@ -111,6 +111,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api' 
 import { validarFormatoDeEmail } from '../utils/validadoresDeFormatacao.js'
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js'
 
 import rotaLogo from '../assets/rotaLogo.png'
 
@@ -129,7 +130,7 @@ const formularioEstaValido = computed(() => {
 
 const executarLogin = async () => {
   if (!formularioEstaValido.value) {
-    alert("Por favor, preencha o e-mail e a senha corretamente, e concorde com os Termos de Política e Privacidade!");
+    exibirNotificacao("Por favor, preencha o e-mail e a senha corretamente, e concorde com os Termos de Política e Privacidade!", "aviso");
     return;
   }
 
@@ -162,9 +163,9 @@ const executarLogin = async () => {
     console.error("Erro do servidor:", erroOcorrido)
     
     if (erroOcorrido.response && erroOcorrido.response.status === 401) {
-      alert("E-mail ou senha incorretos.");
+      exibirNotificacao("E-mail ou senha incorretos.", "erro");
     } else {
-      alert("Erro ao conectar. O 'php artisan serve' está rodando no outro terminal?");
+      exibirNotificacao("Erro ao conectar. O 'php artisan serve' está rodando no outro terminal?", "erro");
     }
   }
 }

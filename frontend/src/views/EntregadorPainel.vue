@@ -249,6 +249,7 @@ import 'leaflet/dist/leaflet.css'
 import mapsLogo from '../assets/mapsLogo.png'
 import wazeLogo from '../assets/wazeLogo.png'
 import api from '../services/api' 
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   Bike, 
   Star, 
@@ -494,7 +495,7 @@ const buscarDadosIniciaisEntregador = async () => {
 // ✨ SALVAR DADOS DO VEÍCULO
 const salvarDadosVeiculoNoBanco = async () => {
   if (!nomeMoto.value || !placaMoto.value) {
-    return alert("⚠️ Preencha o modelo e a placa corretamente.")
+    return exibirNotificacao("Preencha o modelo e a placa corretamente.", "aviso")
   }
 
   carregandoVeiculo.value = true
@@ -509,10 +510,10 @@ const salvarDadosVeiculoNoBanco = async () => {
     localStorage.setItem('nomeMoto', nomeMoto.value)
     localStorage.setItem('placaMoto', placaMoto.value)
 
-    alert("✅ Veículo atualizado no sistema!")
-  } catch (error) {
-    console.error("Erro ao atualizar veículo:", error)
-    alert("❌ Erro de Autenticação. Faça login novamente.")
+    exibirNotificacao("Veículo atualizado no sistema!", "sucesso")
+  } catch (erroOcorrido) {
+    console.error("Erro ao atualizar veículo:", erroOcorrido)
+    exibirNotificacao("Erro de Autenticação. Faça login novamente.", "erro")
   } finally {
     carregandoVeiculo.value = false
   }
@@ -619,8 +620,8 @@ const checkSwipeAccept = async () => {
         setTimeout(() => prepararNavegacao(-7.7652, -40.2684), 300); // ✨ TRINDADE
       }
 
-    } catch (error) {
-      alert("Ops, parece que outro entregador pegou essa corrida primeiro!");
+    } catch (erroOcorrido) {
+      exibirNotificacao("Ops, parece que outro entregador pegou essa corrida primeiro!", "erro");
       recusarPedido();
     }
   } else {
@@ -659,8 +660,8 @@ const checkSwipeFases = async () => {
         await api.put(`/pedidos/${corridaAtual.value.id}/status`, { status: 'perto' }, getAuth());
         showPinModal.value = true;
       }
-    } catch (error) {
-      alert("Erro ao atualizar status.");
+    } catch (erroOcorrido) {
+      exibirNotificacao("Erro ao atualizar status.", "erro");
     }
     setTimeout(() => { swipeFinishProgress.value = 0; }, 300)
   } else {
@@ -676,7 +677,7 @@ const confirmarEntrega = async () => {
       codigo_entrega: codigoCliente.value
     }, getAuth());
     
-    alert("✅ Entrega finalizada com sucesso! O dinheiro já está na sua carteira.")
+    exibirNotificacao("Entrega finalizada com sucesso! O dinheiro já está na sua carteira.", "sucesso")
     
     showPinModal.value = false
     atualizarStatus(null);
@@ -691,9 +692,9 @@ const confirmarEntrega = async () => {
 
   } catch (erroDeFinalizacao) {
     if (erroDeFinalizacao.response && erroDeFinalizacao.response.data && erroDeFinalizacao.response.data.message === 'Código incorreto') {
-      alert("⚠️ Código incorreto!")
+      exibirNotificacao("Código incorreto!", "erro")
     } else {
-      alert("Erro ao finalizar a corrida no servidor.")
+      exibirNotificacao("Erro ao finalizar a corrida no servidor.", "erro")
     }
   }
 }

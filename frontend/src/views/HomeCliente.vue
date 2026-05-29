@@ -57,10 +57,9 @@
     </div>
 
     <main class="p-4 md:p-6 lg:p-12 max-w-7xl mx-auto space-y-8 lg:space-y-12">
-      
-      <section>
-        <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
-          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+           <section>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[140px] cursor-pointer hover:shadow-xl transition-all">
              <div class="relative z-10 w-2/3">
                <span class="bg-white/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">🔥 Oferta do Dia</span>
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Semana do Consumidor</h4>
@@ -71,7 +70,7 @@
              </div>
           </div>
 
-          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#2D4483] to-blue-600 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+          <div class="bg-gradient-to-br from-[#2D4483] to-blue-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[140px] cursor-pointer hover:shadow-xl transition-all">
              <div class="relative z-10 w-3/4">
                <span class="bg-[#C2F2D9] text-[#1A1A1A] px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">🧀 O melhor queijo</span>
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Laticínios Deleite</h4>
@@ -82,7 +81,7 @@
              </div>
           </div>
           
-          <div class="min-w-[280px] lg:min-w-[400px] bg-gradient-to-br from-[#1A1A1A] to-gray-800 rounded-3xl p-6 text-white shadow-md snap-center relative overflow-hidden flex flex-col justify-center min-h-[140px] lg:min-h-[160px] cursor-pointer hover:shadow-xl transition-all">
+          <div class="bg-gradient-to-br from-[#1A1A1A] to-gray-800 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[140px] cursor-pointer hover:shadow-xl transition-all">
              <div class="relative z-10 w-2/3">
                <span class="bg-white/10 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">🛵 RotaCerta Express</span>
                <h4 class="font-black text-xl lg:text-2xl italic leading-tight mt-3 mb-1">Frete Grátis</h4>
@@ -179,11 +178,11 @@
 
       </div>
 
-<section v-for="secao in catalogo" :key="secao.titulo">
-        <h3 class="text-2xl font-black uppercase italic tracking-tighter mb-6">{{ secao.titulo }}</h3>
+      <section v-for="secao in catalogoAgrupadoPorCategoria" :key="secao.titulo" class="space-y-4">
+        <h3 class="text-2xl font-black uppercase italic tracking-tighter mb-4 pl-2">{{ secao.titulo }}</h3>
         
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
-          <div v-for="prod in secao.itens" :key="prod.id" class="relative group">
+        <div class="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory px-2">
+          <div v-for="prod in secao.itens" :key="prod.id" class="min-w-[240px] md:min-w-[260px] max-w-[280px] snap-start relative group flex-shrink-0">
             <div @click="abrirProduto(prod)" class="bg-white p-4 lg:p-5 rounded-[2rem] lg:rounded-[2.5rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer border border-black/5 h-full flex flex-col relative overflow-hidden">
               <div class="aspect-square bg-white rounded-2xl lg:rounded-[2rem] mb-4 overflow-hidden flex items-center justify-center p-4">
                 <img :src="prod.foto" class="max-h-full max-w-full object-contain transition-transform group-hover:scale-110 duration-500" />
@@ -207,6 +206,10 @@
           </div>
         </div>
       </section>
+
+      <div v-if="catalogoAgrupadoPorCategoria.length === 0" class="text-center py-20 flex flex-col items-center">
+        <p class="font-black text-gray-400 uppercase tracking-widest text-sm">Nenhum produto encontrado 😕</p>
+      </div>
     </main>
 
     <div v-if="prodSel" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -400,10 +403,8 @@ import iRota from '../assets/iRota.png'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' 
-import { 
-  filtrarApenasLetrasEEspacos,
-  filtrarApenasAlfanumericosComEspaco
-} from '../utils/validadoresDeFormatacao.js' 
+import { filtrarApenasLetrasEEspacos, filtrarApenasAlfanumericosComEspaco } from '../utils/validadoresDeFormatacao.js' 
+import { exibirNotificacao } from '../utils/sistemaDeNotificacoes.js' 
 import { 
   Home, 
   ClipboardList, 
@@ -459,31 +460,47 @@ const termoBusca = ref('')
 const categoriaAtiva = ref('⭐ Todas') 
 const categorias = ['⭐ Todas', '🍏 Hortifruti', '🥩 Açougue', '🧼 Limpeza', '📦 Mercearia', '🥤 Bebidas', '🍞 Padaria', '🧀 Laticínios']
 
-// === CATÁLOGO INTELIGENTE ===
-const catalogo = computed(() => {
-  let filtrados = produtosOriginais.value
+// === CATÁLOGO INTELIGENTE AGRUPADO POR CATEGORIA ===
+const catalogoAgrupadoPorCategoria = computed(() => {
+  let produtosFiltrados = produtosOriginais.value
 
   if (termoBusca.value) {
-    const termo = termoBusca.value.toLowerCase()
-    filtrados = filtrados.filter(p => 
-      p.nome.toLowerCase().includes(termo) || 
-      p.marca.toLowerCase().includes(termo)
+    const termoTratado = termoBusca.value.toLowerCase()
+    produtosFiltrados = produtosFiltrados.filter(produto => 
+      produto.nome.toLowerCase().includes(termoTratado) || 
+      produto.marca.toLowerCase().includes(termoTratado)
     )
   }
 
   if (categoriaAtiva.value !== '⭐ Todas') {
-    const nomeCat = categoriaAtiva.value.split(' ')[1] 
-    filtrados = filtrados.filter(p => p.categoria && p.categoria.includes(nomeCat))
+    const nomeDaCategoriaFiltrada = categoriaAtiva.value.split(' ')[1] 
+    produtosFiltrados = produtosFiltrados.filter(produto => 
+      produto.categoria && produto.categoria.toLowerCase().includes(nomeDaCategoriaFiltrada.toLowerCase())
+    )
   }
 
-  if (filtrados.length === 0) {
-    return [{ titulo: 'Nenhum produto encontrado 😕', itens: [] }]
-  }
+  // Agrupamento por categoria
+  const gruposDeCategorias = {}
+  produtosFiltrados.forEach(produto => {
+    const nomeDaCategoria = produto.categoria || 'Diversos'
+    if (!gruposDeCategorias[nomeDaCategoria]) {
+      gruposDeCategorias[nomeDaCategoria] = []
+    }
+    gruposDeCategorias[nomeDaCategoria].push(produto)
+  })
 
-  return [{
-    titulo: termoBusca.value ? 'Resultados da Busca' : (categoriaAtiva.value !== '⭐ Todas' ? categoriaAtiva.value : '🔥 Novidades e Ofertas'),
-    itens: filtrados
-  }]
+  // Retorna um array de objetos contendo o título da categoria e os itens
+  const secoesDeCategorias = Object.keys(gruposDeCategorias).map(nomeDaCategoria => {
+    return {
+      titulo: nomeDaCategoria,
+      itens: gruposDeCategorias[nomeDaCategoria]
+    }
+  })
+
+  // Ordena as categorias por nome alfabeticamente
+  return secoesDeCategorias.sort((primeiraCategoria, segundaCategoria) => 
+    primeiraCategoria.titulo.localeCompare(segundaCategoria.titulo)
+  )
 })
 
 // === ESTADO DO CARRINHO ===
@@ -527,9 +544,9 @@ const salvarEndereco = async () => {
     fecharModalEnderecos()
     novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
     
-  } catch (error) {
-    console.error("Erro ao salvar endereço:", error)
-    alert("Não foi possível salvar o endereço. Verifique os dados.")
+  } catch (erroOcorrido) {
+    console.error("Erro ao salvar endereço:", erroOcorrido)
+    exibirNotificacao("Não foi possível salvar o endereço. Verifique os dados.", "erro")
   }
 }
 
@@ -606,8 +623,8 @@ const carregarDadosDaHome = async () => {
       enderecoAtual.value = { titulo: 'Sem endereço', rua: 'Clique para adicionar', numero: '' }
     }
 
-  } catch (error) {
-    console.error("Deu ruim ao buscar os dados do Back-end:", error)
+  } catch (erroOcorrido) {
+    console.error("Deu ruim ao buscar os dados do Back-end:", erroOcorrido)
   }
 }
 onMounted(() => {
@@ -617,15 +634,15 @@ onMounted(() => {
 // === INTERAÇÃO COM LOJAS (Círculos no topo) ===
 const irParaLoja = (loja) => {
   if (!loja.aberto) {
-    return alert("⚠️ Esta loja está fechada no momento! Volte mais tarde.")
+    return exibirNotificacao("Esta loja está fechada no momento! Volte mais tarde.", "aviso")
   }
-  alert(`Exibindo ofertas de: ${loja.nome}`)
+  exibirNotificacao(`Exibindo ofertas de: ${loja.nome}`, "informacao")
 }
 
 // === FUNÇÕES DE PRODUTO E CARRINHO ===
 const abrirProduto = (p) => { 
   if (!p.lojaAberta) {
-    return alert("⚠️ Esta loja está fechada! Não é possível visualizar detalhes no momento.")
+    return exibirNotificacao("Esta loja está fechada! Não é possível visualizar detalhes no momento.", "aviso")
   }
 
   const concorrentes = lojas.value
@@ -647,7 +664,7 @@ const salvarCarrinho = () => {
 const adicionarAoCarrinho = (produto, quantidade) => {
   // BLOQUEIO CRÍTICO DE CARRINHO
   if (produto.lojaAberta === false || produto.lojaAberta === 0) {
-    return alert("🛑 Operação bloqueada. O estabelecimento encontra-se fechado.")
+    return exibirNotificacao("Operação bloqueada. O estabelecimento encontra-se fechado.", "erro")
   }
 
   const itemExistente = carrinho.value.find(item => item.id === produto.id)
@@ -659,6 +676,7 @@ const adicionarAoCarrinho = (produto, quantidade) => {
   }
   
   salvarCarrinho()
+  exibirNotificacao("Produto adicionado ao carrinho!", "sucesso")
 }
 
 const adicionarPeloModal = () => { 

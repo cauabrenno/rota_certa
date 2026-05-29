@@ -1,7 +1,10 @@
 <template>
-  <router-view />
+  <div>
+    <router-view />
+    <ComponenteDeNotificacoesGlobais />
+  </div>
 </template>
 
 <script setup>
-// Sem lógica aqui, apenas o roteador
+import ComponenteDeNotificacoesGlobais from './components/ComponenteDeNotificacoesGlobais.vue'
 </script>

@@ -302,6 +302,7 @@ import imgPix from '../assets/pix.png'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api' // Usando nossa conexão protegida
+import { exibirNotificacao, solicitarConfirmacao, removerNotificacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   filtrarApenasLetrasEEspacos,
   filtrarApenasAlfanumericosComEspaco
@@ -376,8 +377,9 @@ const alterarQuantidade = (index, delta) => {
   sincronizarLocalStorage()
 }
 
-const removerDoCarrinho = (index) => {
-  if (confirm("Remover este produto da cesta?")) {
+const removerDoCarrinho = async (index) => {
+  const confirmouRemover = await solicitarConfirmacao("Remover este produto da cesta?")
+  if (confirmouRemover) {
     itensNoCarrinho.value.splice(index, 1)
     sincronizarLocalStorage()
   }
@@ -459,9 +461,9 @@ const salvarEndereco = async () => {
     novoEndereco.value = { titulo: '', cep: '', numero: '', rua: '', bairro: '', cidade: '' }
     await calcularFreteDinamico()
     
-  } catch (error) {
-    console.error("Erro ao salvar endereço:", error)
-    alert("Não foi possível salvar o endereço.")
+  } catch (erroOcorrido) {
+    console.error("Erro ao salvar endereço:", erroOcorrido)
+    exibirNotificacao("Não foi possível salvar o endereço.", "erro")
   }
 }
 
@@ -520,6 +522,8 @@ const calcularFreteDinamico = async () => {
   if (!enderecoEntrega.value) return
   if (itensNoCarrinho.value.length === 0) return
 
+  const identificadorDaNotificacaoDeFrete = exibirNotificacao("Calculando frete...", "informacao", 15000)
+
   try {
     const coordenadasObtidas = await obterCoordenadasDoEnderecoDeEntrega(enderecoEntrega.value)
     
@@ -536,17 +540,21 @@ const calcularFreteDinamico = async () => {
     }
   } catch (erroDeCalculo) {
     console.error("Erro ao calcular frete dinamicamente:", erroDeCalculo)
+  } finally {
+    removerNotificacao(identificadorDaNotificacaoDeFrete)
   }
 }
 
 // === FINALIZAR PEDIDO (COM SATÉLITE EM CASCATA) ===
 const finalizarCompra = async () => {
   if (!enderecoEntrega.value) {
-    return alert("⚠️ Por favor, selecione ou adicione um local de entrega!")
+    exibirNotificacao("Por favor, selecione ou adicione um local de entrega!", "aviso")
+    return
   }
   
   if (itensNoCarrinho.value.length === 0) {
-    return alert("⚠️ Seu carrinho está vazio!")
+    exibirNotificacao("Seu carrinho está vazio!", "aviso")
+    return
   }
 
   carregandoPedido.value = true
@@ -592,12 +600,12 @@ const finalizarCompra = async () => {
     itensNoCarrinho.value = []
     localStorage.removeItem('carrinho')
     
-    alert(`🎉 Pedido realizado! Você ganhou ${pontosConquistados} pontos!`)
+    exibirNotificacao(`Pedido realizado! Você ganhou ${pontosConquistados} pontos!`, "sucesso")
     roteador.push('/meus-pedidos')
 
-  } catch (error) {
-    console.error("Erro ao finalizar compra:", error)
-    alert("Erro ao finalizar o pedido.")
+  } catch (erroOcorrido) {
+    console.error("Erro ao finalizar compra:", erroOcorrido)
+    exibirNotificacao("Erro ao finalizar o pedido.", "erro")
   } finally {
     carregandoPedido.value = false
   }

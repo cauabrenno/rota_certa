@@ -16,6 +16,7 @@ use App\Http\Controllers\ResetSenhaController;
 use App\Http\Controllers\EntregadorController;
 use App\Http\Controllers\LojistaController;
 use App\Http\Controllers\AvaliacaoDoEntregadorController;
+use App\Http\Controllers\CategoriaDeProdutoController;
 
 // --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -93,6 +94,10 @@ Route::middleware('auth:api')->group(function () {
 
         // ✨ ROTA PARA CONTAGEM DE ENTREGADORES ONLINE
         Route::get('/lojista/entregadores-online', [LojistaController::class, 'obterQuantidadeDeEntregadoresOnline']);
+
+        // Rotas para gerenciamento de categorias de produtos
+        Route::get('/lojista/categorias', [CategoriaDeProdutoController::class, 'listarCategorias']);
+        Route::post('/lojista/categorias', [CategoriaDeProdutoController::class, 'criarCategoria']);
     });
  
     // --- ÁREA DO ENTREGADOR ---

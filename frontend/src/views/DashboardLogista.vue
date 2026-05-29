@@ -271,6 +271,7 @@ import iRota from '../assets/iRota.png'
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api'
+import { exibirNotificacao, solicitarConfirmacao } from '../utils/sistemaDeNotificacoes.js'
 import { 
   Zap, 
   ArrowRight, 
@@ -494,8 +495,8 @@ const alternarStatusLojista = async () => {
   try {
     await api.post('/lojista/perfil', { aberto: novoStatus })
     lojaAberta.value = novoStatus
-  } catch (error) {
-    alert("Erro ao mudar o status da loja.")
+  } catch (erroOcorrido) {
+    exibirNotificacao("Erro ao mudar o status da loja.", "erro")
   }
 }
 
@@ -503,7 +504,7 @@ const buscarEntregadoresOnline = async () => {
   try {
     const res = await api.get('/lojista/entregadores-online')
     entregadoresOnline.value = res.data.count || 0
-  } catch (error) {}
+  } catch (erroOcorrido) {}
 }
 
 // === FUNÇÕES DO MODAL E AÇÕES ===
@@ -517,24 +518,26 @@ const fecharModal = () => {
 }
 
 const atualizarStatus = async (pedido, novoStatus) => {
-  if(confirm(`Mudar o status do pedido #${pedido.id} para "${novoStatus}"?`)) {
+  const confirmouMudarStatus = await solicitarConfirmacao(`Mudar o status do pedido #${pedido.id} para "${novoStatus}"?`)
+  if (confirmouMudarStatus) {
     try {
       await api.put(`/lojista/pedidos/${pedido.id}/status`, {
         status: novoStatus
       })
       
-      alert('Status atualizado com sucesso!')
+      exibirNotificacao('Status atualizado com sucesso!', 'sucesso')
       fecharModal()
       buscarPedidos() // Chama a API para trazer os dados novos na mesma hora
-    } catch (error) {
-      console.error("Erro ao atualizar o status no banco:", error)
-      alert("Erro ao tentar atualizar o pedido.")
+    } catch (erroOcorrido) {
+      console.error("Erro ao atualizar o status no banco:", erroOcorrido)
+      exibirNotificacao("Erro ao tentar atualizar o pedido.", "erro")
     }
   }
 }
 
-const fazerLogout = () => {
-  if(confirm("Deseja sair do painel do lojista?")) {
+const fazerLogout = async () => {
+  const confirmouDeslogar = await solicitarConfirmacao("Deseja sair do painel do lojista?")
+  if (confirmouDeslogar) {
     localStorage.removeItem('token')
     localStorage.removeItem('tipoUsuario')
     roteador.push('/')
