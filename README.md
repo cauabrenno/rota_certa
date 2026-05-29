@@ -3,7 +3,7 @@
 O RotaCerta é uma plataforma completa e reativa para o gerenciamento de pedidos e entregas, conectando Clientes, Lojistas e Entregadores em um fluxo síncrono e seguro.
 
 ## 🚀 Tecnologias Utilizadas
-* **Front-end:** Vue.js, Vue Router, CSS customizado (sem frameworks engessados).
+* **Front-end:** Vue.js, Vue Router, Tailwind css.
 * **Back-end:** PHP / Laravel.
 * **Banco de Dados:** PostgreSQL.
 
@@ -13,10 +13,6 @@ O RotaCerta é uma plataforma completa e reativa para o gerenciamento de pedidos
 * **Cálculo de Frete Dinâmico:** Precificação automatizada baseada na distância real entre o estabelecimento e o cliente.
 * **Sistema de Avaliações:** Feedback interativo estilo iFood para entregadores.
 * **Segurança de Código:** Autenticação de entrega em duas pontas, garantindo que o código não vaze nas requisições da API.
-
-## 💻 Padrão de Código e Arquitetura
-Este projeto segue uma regra rígida e inegociável de **Código Limpo e Explícito**.
-É terminantemente proibida a utilização de abreviações no código-fonte. Todas as variáveis, funções, classes, tabelas e métodos possuem nomes descritivos e completos (ex: `identificadorDoIntervaloDeAtualizacao` em vez de `intervalId`), garantindo altíssima legibilidade e facilitando a manutenção pela equipe.
 
 ## 🛠️ Como rodar o projeto localmente
 
