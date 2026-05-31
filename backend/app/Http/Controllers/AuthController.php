@@ -82,7 +82,6 @@ class AuthController extends Controller
     }
 
 
-    // Login atualizado !
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
