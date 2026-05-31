@@ -13,7 +13,7 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // 1. Atualizamos a validação para esperar 'tipo_usuario' do Vue
+        // 1. Atualizamos a validação para esperar 'tipo_usuario' do Vue.
         $request->validate([
             'name'         => 'required|string',
             'email'        => 'required|email|unique:users', 
