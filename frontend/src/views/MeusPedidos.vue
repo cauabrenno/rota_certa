@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] pb-32 md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
+  <div class="conteinerPrincipalComNavegacaoInferior min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
     
 <nav class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-6 md:px-8">
   <div class="flex items-center gap-3">

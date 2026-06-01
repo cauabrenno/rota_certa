@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] pb-32 md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
+  <div class="conteinerPrincipalComNavegacaoInferior min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#E2F7ED] md:pb-24 text-[#1A1A1A] relative overflow-x-hidden">
     
 <nav class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-40 shadow-sm border-b border-black/5 flex justify-between items-center px-6 md:px-8">
   <div class="flex items-center gap-3">
@@ -57,8 +57,8 @@
     </div>
 
     <main class="p-4 md:p-6 lg:p-12 max-w-7xl mx-auto space-y-8 lg:space-y-12">
-           <section>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section>
+        <div class="conteinerDosBannersPromocionais">
           <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[140px] cursor-pointer hover:shadow-xl transition-all">
              <div class="relative z-10 w-2/3">
                <span class="bg-white/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">🔥 Oferta do Dia</span>
@@ -705,5 +705,34 @@ const irParaCarrinho = () => { roteador.push('/carrinho') }
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #94A3B8;
+}
+
+.conteinerDosBannersPromocionais {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 24px;
+  padding-bottom: 16px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.conteinerDosBannersPromocionais::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+.conteinerDosBannersPromocionais > div {
+  flex-shrink: 0;
+  width: 85vw;
+}
+@media (min-width: 768px) {
+  .conteinerDosBannersPromocionais {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+  .conteinerDosBannersPromocionais > div {
+    width: auto;
+    flex-shrink: 1;
+  }
 }
 </style>
