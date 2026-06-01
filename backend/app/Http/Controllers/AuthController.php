@@ -7,12 +7,13 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // 1. Atualizamos a validação para esperar 'tipo_usuario' do Vue
+        // 1. Atualizamos a validação para esperar 'tipo_usuario' do Vue.
         $request->validate([
             'name'         => 'required|string',
             'email'        => 'required|email|unique:users', 
@@ -81,9 +82,37 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
+    public function login(Request $request) 
     {
-        $credentials = $request->only('email', 'password');
+        // 1. Validação forte (Barra campos vazios e e-mails inválidos)
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ], [
+            'email.required' => 'O e-mail é obrigatório.',
+            'email.email' => 'Formato de e-mail inválido.',
+            'password.required' => 'A senha é obrigatória.'
+        ]);
+
+        // 2. Normalizar o e-mail (transforma tudo em minúsculo para evitar bugs)
+        $email_limpo = Str::lower($request->email);
+
+        // 3. Buscar o utilizador para verificar o status ANTES de autenticar
+        $user = User::where('email', $email_limpo)->first();
+
+        // Verifica se o usuário existe e se está inativo/banido
+        // (Usa isset() para não quebrar caso a coluna status não exista em alguns casos)
+        if ($user && isset($user->status) && in_array($user->status, ['inativo', 'banido'])) {
+            return response()->json([
+                'message' => 'Acesso negado. Esta conta foi suspensa ou está inativa.'
+            ], 403);
+        }
+
+        // 4. Autenticação (AGORA SIM usando o e-mail limpo!)
+        $credentials = [
+            'email' => $email_limpo,
+            'password' => $request->password
+        ];
 
         if (!$token = JWTAuth::attempt($credentials)) {
             return response()->json([

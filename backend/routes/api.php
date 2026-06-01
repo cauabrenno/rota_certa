@@ -21,8 +21,9 @@ use App\Http\Controllers\CategoriaDeProdutoController;
 // --- ROTAS PÚBLICAS ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::get('/busca', [BuscaController::class, 'index']);
-// ✨ PÚBLICA: Traz todos os produtos do banco para o app do cliente
+//  PÚBLICA: Traz todos os produtos do banco para o app do cliente
 Route::get('/produtos', [ProdutoController::class, 'index']); 
 Route::post('/frete/calcular', [FreteController::class, 'calcular']);
 Route::get('/lojistas', function () { return response()->json(Lojista::all()); });
@@ -52,13 +53,13 @@ Route::middleware('auth:api')->group(function () {
             ], 200);
         });        
         
-        // 📍 Endereços (Listar, Salvar e Excluir)
+        //  Endereços (Listar, Salvar e Excluir)
         Route::get('/enderecos', [EnderecoController::class, 'index']);
         Route::post('/enderecos', [EnderecoController::class, 'store']);
         Route::delete('/enderecos/{id}', [EnderecoController::class, 'destroy']);
         Route::put('/enderecos/{id}', [EnderecoController::class, 'update']);
         
-        // 💳 Cartões (Listar, Salvar e Excluir)
+        //  Cartões (Listar, Salvar e Excluir)
         Route::get('/cartoes', [CartaoController::class, 'index']);
         Route::post('/cartoes', [CartaoController::class, 'store']);
         Route::delete('/cartoes/{id}', [CartaoController::class, 'destroy']);
@@ -81,18 +82,18 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/produtos/{id}', [ProdutoController::class, 'update']);
         Route::delete('/produtos/{id}', [ProdutoController::class, 'destroy']);
         
-        // ROTAS DO PERFIL CORRIGIDAS ✨
+        // ROTAS DO PERFIL CORRIGIDAS 
         Route::get('/lojista/perfil', [LojistaController::class, 'meuPerfil']); 
         Route::post('/lojista/perfil', [LojistaController::class, 'atualizarPerfil']); // ✨ POST para as fotos funcionarem!
 
-        // ✨ ROTA DA LOJA ABERTA/FECHADA (Restaurada)
+        //  ROTA DA LOJA ABERTA/FECHADA (Restaurada)
         Route::put('/lojista/status', [LojistaController::class, 'toggleAberto']);
 
-        // ROTAS DE PEDIDOS DO LOJISTA ✨
+        // ROTAS DE PEDIDOS DO LOJISTA 
         Route::get('/lojista/pedidos', [PedidoController::class, 'pedidosDoLojista']);
         Route::put('/lojista/pedidos/{id}/status', [PedidoController::class, 'atualizarStatusLojista']);
 
-        // ✨ ROTA PARA CONTAGEM DE ENTREGADORES ONLINE
+        //  ROTA PARA CONTAGEM DE ENTREGADORES ONLINE
         Route::get('/lojista/entregadores-online', [LojistaController::class, 'obterQuantidadeDeEntregadoresOnline']);
 
         // Rotas para gerenciamento de categorias de produtos
@@ -106,10 +107,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/entregador/perfil', [EntregadorController::class, 'meuPerfil']);
         Route::put('/entregador/veiculo', [EntregadorController::class, 'atualizarVeiculo']);
         
-        // ✨ ROTA PARA ATUALIZAR STATUS DE DISPONIBILIDADE DO ENTREGADOR
+        //  ROTA PARA ATUALIZAR STATUS DE DISPONIBILIDADE DO ENTREGADOR
         Route::put('/entregador/status', [EntregadorController::class, 'atualizarStatusDeDisponibilidade']);
 
-        // ✨ NOVAS ROTAS DE CORRIDA DO ENTREGADOR
+        //  NOVAS ROTAS DE CORRIDA DO ENTREGADOR
         Route::get('/entregador/buscar-corrida', [EntregadorController::class, 'buscarPedidoDisponivel']);
         Route::put('/entregador/aceitar-corrida/{id}', [EntregadorController::class, 'aceitarPedido']);
     });
