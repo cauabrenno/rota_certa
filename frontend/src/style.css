@@ -11,3 +11,9 @@
 body {
   background-color: var(--rc-green);
 }
+
+@media (max-width: 767px) {
+  .conteinerPrincipalComNavegacaoInferior {
+    padding-bottom: 112px !important;
+  }
+}
