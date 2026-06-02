@@ -147,3 +147,23 @@ Route::get('/limpar-tudo', function () {
         return 'Erro ao limpar: ' . $e->getMessage();
     }
 });
+
+Route::get('/forcar-email', function () {
+    // 1. Pega o primeiríssimo usuário que existir no banco de dados
+    $user = \App\Models\User::first();
+    
+    if (!$user) {
+        return 'ERRO: O banco de dados está VAZIO. Não há ninguém cadastrado.';
+    }
+
+    try {
+        // 2. Tenta enviar o e-mail forçadamente para ele
+        $status = \Illuminate\Support\Facades\Password::broker()->sendResetLink(
+            ['email' => $user->email]
+        );
+        
+        return 'SUCESSO! O sistema tentou enviar para [' . $user->email . ']. O Laravel respondeu: ' . $status;
+    } catch (\Exception $e) {
+        return 'ERRO DO BREVO/SMTP: ' . $e->getMessage();
+    }
+});
