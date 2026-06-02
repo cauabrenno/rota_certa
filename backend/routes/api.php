@@ -127,3 +127,12 @@ Route::get('/instalar-banco-render', function () {
         return 'Deu erro: ' . $e->getMessage();
     }
 });
+
+Route::get('/linkar-storage', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'Link do storage criado com sucesso! As imagens devem aparecer agora.';
+    } catch (\Exception $e) {
+        return 'Erro: ' . $e->getMessage();
+    }
+});
