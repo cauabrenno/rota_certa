@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Confirme se essa é a porta que seu Laravel está rodando
-  baseURL: 'http://127.0.0.1:8000/api', 
+  // URL oficial da API hospedada no Render
+  baseURL: 'https://rota-certa-zihl.onrender.com/api', 
 });
 
 // O "Porteiro" do Vue: Antes de QUALQUER requisição sair pro Laravel, ele roda isso:
