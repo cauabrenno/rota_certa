@@ -121,7 +121,7 @@ Route::middleware('auth:api')->group(function () {
 Route::get('/instalar-banco-render', function () {
     try {
         // O ':fresh' apaga tudo e recria do zero usando os arquivos do VS Code
-        Artisan::call('migrate:fresh', ['--force' => true]);
+        Artisan::call('migrate', ['--force' => true]);
         return 'Reset de fábrica concluído! Tabelas recriadas com sucesso! 🚀';
     } catch (\Exception $e) {
         return 'Deu erro: ' . $e->getMessage();
