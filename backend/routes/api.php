@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ProdutoController;
@@ -116,8 +117,6 @@ Route::middleware('auth:api')->group(function () {
     });
 
 });
-
-use Illuminate\Support\Facades\Artisan;
 
 Route::get('/instalar-banco-render', function () {
     try {
