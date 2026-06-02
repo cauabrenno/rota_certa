@@ -136,3 +136,14 @@ Route::get('/linkar-storage', function () {
         return 'Erro: ' . $e->getMessage();
     }
 });
+
+Route::get('/limpar-tudo', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        return 'Toda a cache do Laravel foi limpa com sucesso!';
+    } catch (\Exception $e) {
+        return 'Erro ao limpar: ' . $e->getMessage();
+    }
+});
