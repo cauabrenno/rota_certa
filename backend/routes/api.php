@@ -148,32 +148,3 @@ Route::get('/limpar-tudo', function () {
     }
 });
 
-Route::get('/forcar-email', function () {
-    // 1. FORÇANDO as credenciais na marra (ignora o Render e o .env)
-    config([
-        'mail.mailers.smtp.host' => 'smtp-relay.brevo.com',
-        'mail.mailers.smtp.port' => 2525,
-        'mail.mailers.smtp.encryption' => 'tls',
-        'mail.mailers.smtp.username' => 'cauabrenno007@gmail.com',
-        'mail.mailers.smtp.password' => 'xsmtpsib-5592cf9e444ec0129a2a2280354c98284ddd1e8fb6c9e041a501a4537839948d-R3aXQh7mrOY5ISwx',
-        'mail.from.address' => 'nao.responda.rotacerta@gmail.com',
-        'mail.from.name' => 'RotaCerta',
-    ]);
-
-    // 2. Pega o primeiro usuário do banco
-    $user = \App\Models\User::first();
-    
-    if (!$user) {
-        return 'ERRO: Banco de dados vazio.';
-    }
-
-    // 3. Dispara o e-mail
-    try {
-        $status = \Illuminate\Support\Facades\Password::broker()->sendResetLink(
-            ['email' => $user->email]
-        );
-        return 'SUCESSO ABSOLUTO! O e-mail foi enviado para: ' . $user->email;
-    } catch (\Exception $e) {
-        return 'ERRO REAL DO BREVO: ' . $e->getMessage();
-    }
-});
