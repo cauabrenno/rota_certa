@@ -115,6 +115,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/entregador/buscar-corrida', [EntregadorController::class, 'buscarPedidoDisponivel']);
         Route::put('/entregador/aceitar-corrida/{id}', [EntregadorController::class, 'aceitarPedido']);
     });
+    
 
 });
 
