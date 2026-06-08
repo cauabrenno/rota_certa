@@ -30,7 +30,7 @@ class ResetSenhaController extends Controller
 
         return $status === Password::RESET_LINK_SENT
             ? response()->json(['message' => 'E-mail de recuperação enviado com sucesso!'], 200)
-            : response()->json(['message' => 'RAIO-X: Usuário existe, mas o Laravel falhou ao gerar o token de reset.'], 400);
+            : response()->json(['message' => 'RAIO-X: O Laravel bloqueou pelo motivo: ' . $status], 400);
     }
 
     // 2. Recebe o token e a nova senha
