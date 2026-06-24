@@ -82,6 +82,7 @@ class AuthController extends Controller
         }
     }
 
+
     public function login(Request $request) 
     {
         // 1. Validação forte (Barra campos vazios e e-mails inválidos)
